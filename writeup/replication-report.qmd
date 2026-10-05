@@ -1,6 +1,6 @@
 ---
-title: "Replication of Problems 1 and 2 of Tversky & Kahneman (1981, *Science*)"
-author: "Your Name (your.email@stanford.edu)"
+title: "Replication of Experiment 1 of Zeelenberg et al. (1996, *Organizational Behavior and Human Decision Processes*)"
+author: "Nick Madibekov (alikhanm@stanford.edu)"
 date: today
 date-format: long
 format:
@@ -75,37 +75,19 @@ original_p_loss <- original$risky[original$condition == "loss"] / original$n[ori
 ::: {.callout-note appearance="simple" icon=false}
 ## Project links
 
-- **Original paper:** Tversky, A., & Kahneman, D. (1981). The framing of decisions and the
-  psychology of choice. *Science, 211*(4481), 453–458. <https://doi.org/10.1126/science.7455683>
+- **Original paper:** Zeelenberg, M., Beattie, J., van der Pligt, J., & de Vries, N. K. (1996).
+  Consequences of regret aversion: Effects of expected feedback on risky decision making.
+  *Organizational Behavior and Human Decision Processes, 65*(2), 148–158. <https://doi.org/10.1006/obhd.1996.0013>
 - **Preregistration:** [OSF registration](https://osf.io/XXXXX) *(registered YYYY-MM-DD, before final data collection)*
-- **Live experiment:** <https://psych251.github.io/your-repo/> (take the study exactly as participants did)
-- **Repository:** <https://github.com/psych251/your-repo> (experiment code, data, and this report)
+- **Live experiment:** <https://psych251.github.io/zeelenberg1996/> (take the study exactly as participants did)
+- **Repository:** <https://github.com/psych251/zeelenberg1996> (experiment code, data, and this report)
 :::
 
 # AI use statement
 
-::: {.callout-tip icon=false}
-## Guidance
-
-This statement comes first so a reader knows how the work was produced before reading it. Keep
-it current from the start of the project rather than reconstructing it at the end.
-
-**Course policy: you write all of the text in this report yourself.** AI tools may help with
-code, and may comment on drafts you have written, but they may not write, rewrite or paraphrase
-any of the report's text. That includes "polishing" a paragraph.
-
-List every AI tool you used on this project, what you used it for, and how you checked what it
-produced. Include coding assistants (for example Claude Code, Codex, Copilot) and chat
-assistants. Name the model and version where you know it. "How you checked" is the important
-column: say what you verified yourself, not that the output "looked right". If you used no AI
-tools, replace the table with a sentence saying so.
-:::
-
 | Tool and model | What it was used for | How you checked the output |
 |---|---|---|
-| *e.g., Claude Code (Claude Opus 5)* | *Implemented the experiment from the original Methods section* | *Ran the automated tests; took the study myself; compared every screen with the original materials* |
-| *e.g., Claude Code (Claude Opus 5)* | *Drafted the analysis code* | *Checked the exclusion counts by hand; confirmed the key test matches the preregistration* |
-| *e.g., ChatGPT* | *Comments on my draft of the Introduction (no text generated)* | *Decided which comments to act on and made every change myself; checked any factual claim against the source* |
+| *Claude Opus 5.5* | *Setup help (Git, Quarto, Java)* | *Confirmed the versions installed* |
 
 I wrote all of the text in this report myself. AI tools were not used to write, rewrite or
 paraphrase it, and were not used to generate, alter, or impute any participant data. I take full
@@ -236,6 +218,13 @@ bind_rows(
 # Phase 1: Replication
 
 ## Introduction
+
+"What if the other option would have turned out better?" Regret depends on being able to answer that question. If I never learn how the path I passed up would have gone, I have nothing to compare my outcome against, and so nothing to regret. Some decisions hide that answer, and others reveal it whether I want it or not, and people can therefore protect themselves from regret without being more cautious, simply by choosing the option that keeps the alternative out of view.
+
+Zeelenberg et al. (1996) used this idea to challenge the view that anticipated regret makes people cautious. Experiment 1 separated avoiding risk and avoiding regret by telling participants in advance which of two gambles would have its outcome revealed regardless of their choice. Participants followed the feedback, not the risk: most chose the risky gamble when its outcome would always be shown, and few did when the safe gamble's outcome would be. I replicated this comparison. It matters for my research on regret and agency, where I study how people delegate decisions and how it impacts outcome ownership and regret.
+
+To run the study, I built its procedure in jsPsych and recruited on Prolific. After adjusting a safe gamble to be as attractive as a risky one, participants learned which gamble's outcome they would see regardless of their choice: the risky one, the safe one, or only the one they chose. They then chose a gamble, rated the strength of their preference, and wrote their reasons. Not having the exact feedback instructions that were presumably in Dutch originally made it harder to replicate. The key test was a chi-square test of gamble choice by feedback condition, comparing risky feedback with safe feedback (original: 16 of 26 versus 6 of 26 chose the risky gamble, χ²(1) = 7.88, p < .005). A possible extension would add a comprehension check on the feedback instruction and test in another domain that is not gambling related.
+
 
 ::: {.callout-tip icon=false}
 ## Guidance
