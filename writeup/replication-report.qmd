@@ -225,16 +225,6 @@ Zeelenberg et al. (1996) used this idea to challenge the view that anticipated r
 
 To run the study, I built its procedure in jsPsych and recruited on Prolific. After adjusting a safe gamble to be as attractive as a risky one, participants learned which gamble's outcome they would see regardless of their choice: the risky one, the safe one, or only the one they chose. They then chose a gamble, rated the strength of their preference, and wrote their reasons. Not having the exact feedback instructions that were presumably in Dutch originally made it harder to replicate. The key test was a chi-square test of gamble choice by feedback condition, comparing risky feedback with safe feedback (original: 16 of 26 versus 6 of 26 chose the risky gamble, χ²(1) = 7.88, p < .005). A possible extension would add a comprehension check on the feedback instruction and test in another domain that is not gambling related.
 
-
-::: {.callout-tip icon=false}
-## Guidance
-
-One or two paragraphs, no abstract and no literature review: that is in the original paper.
-Say what the original study found, which specific finding you are replicating, and why it
-matters to you. Write the Introduction and Methods in the past tense, even though you write
-them before collecting data.
-:::
-
 ## Methods
 
 ### Power analysis

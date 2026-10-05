@@ -1,0 +1,4 @@
+- source: replication-report.qmd
+  posit-connect-cloud:
+    - id: 01a109e5-f033-0cd5-9b42-726d6d3f9d05
+      url: https://connect.posit.cloud/nickmadibekov/content/01a109e5-f033-0cd5-9b42-726d6d3f9d05
