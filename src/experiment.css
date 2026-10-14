@@ -3,9 +3,18 @@
 .jspsych-content h1, .jspsych-content h2 { text-align: center; }
 .consent { font-size: 15px; line-height: 1.5; }
 .consent .buttons { text-align: center; }
-.stimulus { font-size: 44px; text-align: center; font-family: monospace; letter-spacing: 0.05em; }
-.fixation { font-size: 44px; text-align: center; }
-.framing { font-size: 18px; line-height: 1.6; }
-.framing .programs { margin: 1em 0; padding-left: 1.2em; }
+.gamble-page { font-size: 18px; line-height: 1.6; }
+.gambles { margin: 1.2em auto; border-collapse: collapse; font-size: 18px; }
+.gambles th, .gambles td { padding: 0.35em 1.2em; text-align: center; }
+.gambles th { border-bottom: 1px solid #999; text-transform: uppercase; letter-spacing: 0.04em; }
+.gambles .vs { padding: 0.35em 0.4em; color: #666; }
+.quiz-retry { color: #9b1c1c; background: #fdecec; padding: 0.5em 0.9em; border-radius: 4px; font-weight: 600; }
+.feedback-rule { border-left: 4px solid #1E6E76; padding: 0.4em 0.9em; background: #f3f7f7; }
+/* Slightly narrower rating buttons so a 12-point scale fits on one line. */
+.sd-rating__item--fixed-size { min-width: 42px; width: 42px; height: 42px; }
+.end-form { font-size: 16px; line-height: 1.5; }
+.end-form .item { margin-bottom: 1.6em; }
+.end-form label { display: block; margin: 0.2em 0; }
+.end-form textarea { width: 100%; box-sizing: border-box; }
 #jspsych-html-button-response-btngroup { text-align: center; }
 .thanks { text-align: center; }

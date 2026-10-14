@@ -1,20 +1,23 @@
 /*
- * Psych 251 experiment template: demo experiment.
+ * Replication of Zeelenberg, Beattie, van der Pligt & de Vries (1996), Experiment 1:
+ * "Consequences of regret aversion: Effects of expected feedback on risky decision making."
  *
- * This file is the one you edit. It builds a jsPsych 8 timeline and wires it to DataSaver
- * (src/save.js), which writes to your Firebase project. Everything below is a working
- * example you can replace piece by piece:
+ * Design
+ *   IV (between subjects, random 1 of 3): condition = choice_only | risky_feedback | safe_feedback,
+ *     i.e. whose outcome participants expect to learn whatever they choose (none / Gamble R / Gamble S).
+ *   DVs: choice ("risky" / "safe") on the task "choice" row (key DV); strength (1-12) and
+ *     risk_preference = (+1 risky / -1 safe) x (strength - 0.5) on "preference_strength";
+ *     matched_x on "matching"; attract_r, attract_s (1-12) on "attractiveness"; reasons on "reasons".
+ *     Exploratory, after all original measures: regret_1..regret_5 (1-7) and regret_score (mean,
+ *     item 5 reversed) on "regret_scale" (Schwartz et al., 2002 Regret Scale).
+ *   Trials: one of each. The feedback instructions and a 5-item comprehension quiz repeat until all
+ *     five answers are correct (quiz_attempt counts the tries; no cap).
+ *   Randomization: condition drawn at random per participant. Gamble order and button order are
+ *     fixed (R first, then S), as in the original.
+ *   Exclusions (for now): incomplete sessions. A bot / AI-agent risk-score filter is added later.
  *
- *   1. consent           course-wide consent text (required at the start of every study)
- *   2. instructions
- *   3. demographics      a multi-question survey page (jsPsych "survey" plugin, SurveyJS)
- *   4. framing task      a between-subjects manipulation with random assignment
- *   5. lexical decision  a short keyboard reaction-time block (trial-level data)
- *   6. feedback          Likert + free text
- *   7. debrief           saves data, then shows thanks or redirects to Prolific
- *
- * The example manipulation is the classic "Asian disease" framing problem
- * (Tversky & Kahneman, 1981): people are risk-averse for gains and risk-seeking for losses.
+ * The original questionnaire was not published. Participant-facing wording follows the paper's own
+ * description of the materials (pp. 151-152), turned into the second person; f130 becomes $130.
  */
 
 // ---------------------------------------------------------------------------
@@ -25,7 +28,7 @@ window.TEMPLATE_VERSION = "0.1.0";
 const EXPERIMENT = {
   // Firestore path: experiments/<id>/participants/... Change it when you start a new study
   // so pilot data and real data never mix (e.g. "smith2016-pilot-a", "smith2016-final").
-  id: "framing-demo",
+  id: "zeelenberg1996-pilot-a-test",
 
   // Trials per Firestore write. 1 = save every trial the moment it finishes (dropouts leave
   // partial data). The free tier allows 20,000 writes/day: with 200 participants x 100 trials
@@ -43,12 +46,14 @@ const EXPERIMENT = {
   // Contact shown in consent and debrief.
   contact_email: "stanfordpsych251@gmail.com",
 
-  // Does this study need a physical keyboard? The demo does (the word task uses F and J).
-  // On a phone or tablet no keyboard appears, so a participant cannot answer those trials;
-  // they would time out silently and the session would still look complete. When true, such
-  // devices are turned away before consent. Set to false if your study is buttons/touch only.
+  // Turn away phones and tablets before consent. There are no keyboard trials, but participants
+  // type their reasons and the study is meant to be taken on a computer (also set Prolific to
+  // desktop only).
   requires_keyboard: true,
 };
+
+// The three between-subjects feedback conditions.
+const CONDITIONS = ["choice_only", "risky_feedback", "safe_feedback"];
 
 // True on anything with a mouse, trackpad, or stylus, including laptops with touchscreens.
 // False on phones and tablets without a pointing device, which are also the devices with no
@@ -66,6 +71,58 @@ const CHUNK_SIZE = Number(URL_PARAMS.get("chunk_size")) || EXPERIMENT.chunk_size
 // Test-only: `?cc=CODE` sets a Prolific completion code during emulator runs, so the test
 // suite can check the screen a participant sees once you have set yours. Ignored in live runs.
 if (USE_EMULATOR && URL_PARAMS.get("cc")) EXPERIMENT.prolific_completion_code = URL_PARAMS.get("cc");
+// Test-only: `?condition=<name>` forces a feedback condition during emulator runs, so each
+// condition's screens can be checked. Ignored in live runs, where assignment is always random.
+const FORCED_CONDITION =
+  USE_EMULATOR && CONDITIONS.includes(URL_PARAMS.get("condition")) ? URL_PARAMS.get("condition") : null;
+
+// ---------------------------------------------------------------------------
+// Stimuli
+// ---------------------------------------------------------------------------
+// "$70", "$69.50": how a dollar amount is shown to participants.
+function money(v) {
+  return "$" + (Number.isInteger(v) ? String(v) : v.toFixed(2));
+}
+
+// The two gambles as laid out in the paper (p. 151). Before matching, X is shown as "$X";
+// afterwards it is the participant's own matched value.
+function gambleTable(x) {
+  const sx = x === null ? "$X" : money(x);
+  return `
+    <table class="gambles">
+      <thead><tr><th>Gamble R</th><th></th><th>Gamble S</th></tr></thead>
+      <tbody>
+        <tr><td>$130 with 35%</td><td class="vs">vs</td><td>${sx} with 65%</td></tr>
+        <tr><td>$0 with 65%</td><td></td><td>$0 with 35%</td></tr>
+      </tbody>
+    </table>`;
+}
+
+// What participants read about feedback before choosing (paper pp. 151-152, second person).
+// The risky and safe texts are exact mirror images, so the conditions differ only in R vs S.
+const FEEDBACK_TEXT = {
+  choice_only:
+    "You would only know the outcome of the gamble that you choose. You would not be able to " +
+    "compare your outcome with the outcome of the non-chosen gamble.",
+  risky_feedback:
+    "You would always know the outcome of Gamble R and the outcome of the gamble you choose. " +
+    "You would be able to compare your outcome with the outcome of the non-chosen gamble if you " +
+    "select Gamble S, but not if you select Gamble R.",
+  safe_feedback:
+    "You would always know the outcome of Gamble S and the outcome of the gamble you choose. " +
+    "You would be able to compare your outcome with the outcome of the non-chosen gamble if you " +
+    "select Gamble R, but not if you select Gamble S.",
+};
+
+// A 12-point scale with labelled ends, as used for attractiveness and strength of preference.
+function scale12(name, title, minText, maxText) {
+  return {
+    type: "rating", name, title, isRequired: true,
+    rateMin: 1, rateMax: 12, displayMode: "buttons",
+    // End labels go under the scale, so all 12 points fit on one line.
+    minRateDescription: minText, maxRateDescription: maxText, rateDescriptionLocation: "bottom",
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Boot: connect the saver first so even a crash in the first trial gets logged.
@@ -91,7 +148,7 @@ if (USE_EMULATOR && URL_PARAMS.get("cc")) EXPERIMENT.prolific_completion_code = 
       '<div id="device-unsupported" class="jspsych-content" style="max-width:640px;margin:15vh auto;font:16px/1.6 system-ui,sans-serif;">' +
       "<h2>Please use a computer</h2>" +
       "<p>This study needs a computer with a physical keyboard, because part of it is answered " +
-      "by pressing keys. Phones and tablets cannot be used.</p>" +
+      "by typing. Phones and tablets cannot be used.</p>" +
       "<p>Please reopen this link on a laptop or desktop computer. If you were sent here from " +
       "Prolific, you can return the study and take it later on a computer; nothing has been recorded " +
       "against you.</p>" +
@@ -143,12 +200,17 @@ if (USE_EMULATOR && URL_PARAMS.get("cc")) EXPERIMENT.prolific_completion_code = 
     experiment_id: EXPERIMENT.id,
   });
 
-  // Random assignment to a between-subjects condition, recorded on every trial and on the
-  // participant document. (For exact counterbalancing you would need a server; random
-  // assignment is fine at course sample sizes.)
-  const condition = jsPsych.randomization.sampleWithoutReplacement(["gain", "loss"], 1)[0];
+  // Random assignment to a feedback condition, recorded on every trial and on the participant
+  // document. (For exact counterbalancing you would need a server; random assignment is fine at
+  // course sample sizes.)
+  const condition = FORCED_CONDITION || jsPsych.randomization.sampleWithoutReplacement(CONDITIONS, 1)[0];
   jsPsych.data.addProperties({ condition: condition });
   saver.updateParticipant({ condition: condition });
+
+  // Responses that later screens depend on.
+  let matchedX = null;    // the participant's X from the matching task
+  let chosen = null;      // "risky" or "safe"
+  let quizAttempt = 0;
 
   // -------------------------------------------------------------------------
   // 1. Consent (course-wide IRB text; edit only the contact address)
@@ -179,159 +241,362 @@ if (USE_EMULATOR && URL_PARAMS.get("cc")) EXPERIMENT.prolific_completion_code = 
   };
 
   // -------------------------------------------------------------------------
-  // 2. Instructions
+  // 2. Welcome
   // -------------------------------------------------------------------------
-  const instructions = {
+  const welcome = {
     type: jsPsychInstructions,
     pages: [
       `<h2>Welcome</h2>
-       <p>This short study has three parts: a few questions about you, one decision problem,
-       and a quick word task. It takes about three minutes.</p>`,
-      `<p>Please complete the study in one sitting, in a quiet place, on a laptop or desktop
-       computer. Use the buttons or the arrow keys to move between pages.</p>`,
+       <p>In this study you will consider two gambles and answer some questions about them. The
+       gambles are hypothetical: no real money is involved, but please answer as if it were.</p>
+       <p>There are no right or wrong answers; we are interested in your own preferences. The study
+       takes about five minutes. Please complete it in one sitting, on a laptop or desktop computer.</p>`,
     ],
     show_clickable_nav: true,
     data: { task: "instructions" },
   };
 
   // -------------------------------------------------------------------------
-  // 3. Demographics (survey plugin: one page, several question types)
+  // 3. Matching (original phase 1): make Gamble S as attractive as Gamble R
   // -------------------------------------------------------------------------
-  const demographics = {
+  const matching = {
     type: jsPsychSurvey,
     survey_json: {
       showQuestionNumbers: "off",
       completeText: "Continue",
-      pages: [
-        {
-          elements: [
-            // The consent text promises participants may decline any question, so nothing here is required.
-            { type: "text", name: "age", title: "How old are you?", inputType: "number", min: 18, max: 120 },
-            {
-              type: "radiogroup", name: "gender", title: "What is your gender?",
-              choices: ["Woman", "Man", "Non-binary"], showOtherItem: true, showNoneItem: true, noneText: "Prefer not to say",
-            },
-            { type: "boolean", name: "native_english", title: "Is English your first language?", labelTrue: "Yes", labelFalse: "No" },
-          ],
-        },
-      ],
+      pages: [{
+        elements: [
+          { type: "html", name: "gambles", html: `<div class="gamble-page"><p>Consider the following two gambles.</p>${gambleTable(null)}</div>` },
+          {
+            type: "text", name: "x", inputType: "number", isRequired: true,
+            title: "Make Gamble S exactly as attractive as Gamble R: write down the value of X for which you find the gambles equally attractive.",
+            description: "Enter an amount in dollars.",
+            // X must lie strictly between $0 and $130, so that neither gamble simply dominates
+            // the other. (The paper set no range.)
+            validators: [{
+              type: "expression", expression: "{x} > 0 and {x} < 130",
+              text: "Please enter an amount more than $0 and less than $130.",
+            }],
+          },
+        ],
+      }],
     },
-    data: { task: "demographics" },
+    data: { task: "matching" },
+    on_finish: (data) => {
+      matchedX = Number(data.response.x);
+      data.matched_x = matchedX;
+    },
   };
 
   // -------------------------------------------------------------------------
-  // 4. Framing problem (between-subjects: gain vs loss frame)
+  // 4. Attractiveness ratings of both gambles, with the participant's X filled in
   // -------------------------------------------------------------------------
-  const framingText = {
-    gain: {
-      a: "If Program A is adopted, 200 people will be saved.",
-      b: "If Program B is adopted, there is a one-third probability that 600 people will be saved, and a two-thirds probability that no people will be saved.",
-    },
-    loss: {
-      a: "If Program A is adopted, 400 people will die.",
-      b: "If Program B is adopted, there is a one-third probability that nobody will die, and a two-thirds probability that 600 people will die.",
+  const attractiveness = {
+    type: jsPsychSurvey,
+    survey_json: () => ({
+      showQuestionNumbers: "off",
+      completeText: "Continue",
+      pages: [{
+        elements: [
+          {
+            type: "html", name: "gambles",
+            html: `<div class="gamble-page">${gambleTable(matchedX)}
+              <p>Rate the attractiveness of each option on a scale ranging from not attractive (1)
+              to very attractive (12).</p></div>`,
+          },
+          scale12("attract_r", "Gamble R", "not attractive", "very attractive"),
+          scale12("attract_s", "Gamble S", "not attractive", "very attractive"),
+        ],
+      }],
+    }),
+    data: { task: "attractiveness" },
+    on_finish: (data) => {
+      data.attract_r = data.response.attract_r;
+      data.attract_s = data.response.attract_s;
+      data.matched_x = matchedX;
     },
   };
-  const framing = {
+
+  // -------------------------------------------------------------------------
+  // 5. Feedback instructions + comprehension quiz, repeated until all 5 answers are correct
+  // -------------------------------------------------------------------------
+  // After a failed quiz the same page is shown again with a notice on top. (A separate notice
+  // trial would leave a gap in trial_index whenever it is skipped.)
+  const feedbackInstructions = {
     type: jsPsychHtmlButtonResponse,
     stimulus: () => `
-      <div class="framing">
-        <p>Imagine that the country is preparing for the outbreak of an unusual disease, which is
-        expected to kill 600 people. Two alternative programs to combat the disease have been
-        proposed. Assume that the exact scientific estimates of the consequences of the programs
-        are as follows:</p>
-        <ul class="programs">
-          <li>${framingText[condition].a}</li>
-          <li>${framingText[condition].b}</li>
-        </ul>
-        <p>Which of the two programs would you favor?</p>
+      <div class="gamble-page" data-condition="${condition}">
+        ${quizAttempt > 0
+          ? '<p class="quiz-retry">Some of your answers were incorrect. Please read the instructions again.</p>'
+          : ""}
+        <p>Although you have made the gambles equally attractive, you are required to choose
+        between them.</p>
+        ${gambleTable(matchedX)}
+        <p>Before you choose, please note:</p>
+        <p class="feedback-rule">${FEEDBACK_TEXT[condition]}</p>
       </div>`,
-    choices: ["Program A", "Program B"],
-    data: { task: "framing" },
+    choices: ["Continue"],
+    data: { task: "feedback_instructions" },
     on_finish: (data) => {
-      // Program A is the certain option in both frames; B is the risky gamble.
-      data.choice = data.response === 0 ? "certain" : "risky";
+      data.instructions_view = quizAttempt + 1; // 1 = first reading, 2+ = after a failed quiz
+    },
+  };
+
+  // Correct answers. Items 4 and 5 depend on the condition: only the gamble whose outcome is
+  // always shown is learned when the other one is chosen.
+  const QUIZ_KEY = {
+    q1: "35",
+    q2: "65",
+    q3: "yes",
+    q4: condition === "safe_feedback" ? "yes" : "no",
+    q5: condition === "risky_feedback" ? "yes" : "no",
+  };
+  const yesNo = [{ value: "yes", text: "Yes" }, { value: "no", text: "No" }];
+  const quiz = {
+    type: jsPsychSurvey,
+    survey_json: () => ({
+      showQuestionNumbers: "on",
+      completeText: "Check my answers",
+      pages: [{
+        elements: [
+          { type: "html", name: "intro", html: "<p>Before you choose, please answer these questions.</p>" },
+          {
+            type: "radiogroup", name: "q1", isRequired: true,
+            title: "What is the chance of winning $130 with Gamble R?",
+            choices: [{ value: "35", text: "35%" }, { value: "65", text: "65%" }],
+          },
+          {
+            type: "radiogroup", name: "q2", isRequired: true,
+            title: `What is the chance of winning ${money(matchedX)} with Gamble S?`,
+            choices: [{ value: "65", text: "65%" }, { value: "35", text: "35%" }],
+          },
+          { type: "radiogroup", name: "q3", isRequired: true, choices: yesNo,
+            title: "Would you know the outcome of the gamble you choose?" },
+          { type: "radiogroup", name: "q4", isRequired: true, choices: yesNo,
+            title: "If you choose Gamble R, would you know the outcome of Gamble S?" },
+          { type: "radiogroup", name: "q5", isRequired: true, choices: yesNo,
+            title: "If you choose Gamble S, would you know the outcome of Gamble R?" },
+        ],
+      }],
+    }),
+    data: { task: "comprehension" },
+    on_finish: (data) => {
+      quizAttempt += 1;
+      data.quiz_attempt = quizAttempt;
+      let nCorrect = 0;
+      for (const q of Object.keys(QUIZ_KEY)) {
+        data[q + "_correct"] = data.response[q] === QUIZ_KEY[q];
+        if (data[q + "_correct"]) nCorrect += 1;
+      }
+      data.quiz_n_correct = nCorrect;
+      data.quiz_passed = nCorrect === Object.keys(QUIZ_KEY).length;
+    },
+  };
+
+  const lastQuizPassed = () =>
+    jsPsych.data.get().filter({ task: "comprehension" }).last(1).values()[0].quiz_passed;
+
+  const comprehensionLoop = {
+    timeline: [feedbackInstructions, quiz],
+    loop_function: () => !lastQuizPassed(),
+  };
+
+  // -------------------------------------------------------------------------
+  // 6. Choice (key DV), with the feedback rule still in view
+  // -------------------------------------------------------------------------
+  const choice = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: () => `
+      <div class="gamble-page" data-condition="${condition}">
+        ${gambleTable(matchedX)}
+        <p class="feedback-rule">${FEEDBACK_TEXT[condition]}</p>
+        <p><strong>Which gamble do you choose?</strong></p>
+      </div>`,
+    choices: ["Gamble R", "Gamble S"],
+    data: { task: "choice" },
+    on_finish: (data) => {
+      // Button order is fixed: 0 = Gamble R (risky), 1 = Gamble S (safe).
+      chosen = data.response === 0 ? "risky" : "safe";
+      data.choice = chosen;
+      data.matched_x = matchedX;
     },
   };
 
   // -------------------------------------------------------------------------
-  // 5. Lexical decision (short RT block with trial-level logging)
+  // 7. Strength of preference
   // -------------------------------------------------------------------------
-  const ldInstructions = {
-    type: jsPsychInstructions,
-    pages: [
-      `<h2>Word task</h2>
-       <p>You will see a string of letters. Press <strong>F</strong> if it is a real English word
-       and <strong>J</strong> if it is not. Respond as quickly and accurately as you can.
-       Place your fingers on F and J now.</p>`,
-    ],
-    show_clickable_nav: true,
-    data: { task: "instructions" },
+  const strength = {
+    type: jsPsychSurvey,
+    survey_json: () => ({
+      showQuestionNumbers: "off",
+      completeText: "Continue",
+      pages: [{
+        elements: [
+          { type: "html", name: "chosen", html: `<p>You chose <strong>Gamble ${chosen === "risky" ? "R" : "S"}</strong>.</p>` },
+          scale12("strength",
+            "Indicate the strength of your preference for the chosen option on a scale ranging from weak preference (1) to strong preference (12).",
+            "weak preference", "strong preference"),
+        ],
+      }],
+    }),
+    data: { task: "preference_strength" },
+    on_finish: (data) => {
+      data.strength = data.response.strength;
+      data.choice = chosen;
+      // The paper's risk-preference score (p. 152): -11.5 = extreme risk aversion, 11.5 = extreme risk seeking.
+      data.risk_preference = (chosen === "risky" ? 1 : -1) * (data.strength - 0.5);
+    },
   };
-  const ldItems = [
-    { word: "TABLE", is_word: true }, { word: "GARDEN", is_word: true },
-    { word: "PLANET", is_word: true }, { word: "SILVER", is_word: true },
-    { word: "FLIRP", is_word: false }, { word: "MANTOR", is_word: false },
-    { word: "BRENDLE", is_word: false }, { word: "TOSKIN", is_word: false },
+
+  // -------------------------------------------------------------------------
+  // 8. Reasons
+  // -------------------------------------------------------------------------
+  const reasons = {
+    type: jsPsychSurvey,
+    survey_json: {
+      showQuestionNumbers: "off",
+      completeText: "Continue",
+      pages: [{
+        elements: [
+          { type: "comment", name: "reasons", isRequired: true, rows: 4,
+            title: "Write down the reasons for your choice." },
+        ],
+      }],
+    },
+    data: { task: "reasons" },
+    on_finish: (data) => {
+      data.reasons = data.response.reasons;
+    },
+  };
+
+  // -------------------------------------------------------------------------
+  // 9. Choice Regret Scale (Schwartz et al., 2002). Exploratory; not part of the original study,
+  //    so it comes after every original measure. Item 5 is reverse-scored.
+  // -------------------------------------------------------------------------
+  const REGRET_ITEMS = [
+    "Whenever I make a choice, I'm curious about what would have happened if I had chosen differently.",
+    "Whenever I make a choice, I try to get information about how the other alternatives turned out.",
+    "If I make a choice and it turns out well, I still feel like something of a failure if I find out that another choice would have turned out better.",
+    "When I think about how I'm doing in life, I often assess opportunities I have passed up.",
+    "Once I make a decision, I don't look back.",
   ];
-  const fixation = {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: '<div class="fixation">+</div>',
-    choices: "NO_KEYS",
-    trial_duration: 500,
-    data: { task: "fixation" },
-  };
-  const ldTrial = {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: () => `<div class="stimulus">${jsPsych.evaluateTimelineVariable("word")}</div>`,
-    choices: ["f", "j"],
-    trial_duration: 3000,
-    data: {
-      task: "lexical_decision",
-      word: jsPsych.timelineVariable("word"),
-      is_word: jsPsych.timelineVariable("is_word"),
-    },
-    on_finish: (data) => {
-      const expected = data.is_word ? "f" : "j";
-      data.correct = data.response === expected;
-      data.timed_out = data.response === null;
-    },
-  };
-  const lexicalDecision = {
-    timeline: [fixation, ldTrial],
-    timeline_variables: ldItems,
-    randomize_order: true,
-  };
-
-  // -------------------------------------------------------------------------
-  // 6. Feedback
-  // -------------------------------------------------------------------------
-  const feedback = {
+  const regretScale = {
     type: jsPsychSurveyLikert,
-    questions: [
-      {
-        prompt: "How clear were the instructions?", name: "instructions_clear", required: false,
-        labels: ["Very unclear", "Unclear", "Neutral", "Clear", "Very clear"],
-      },
-    ],
-    data: { task: "feedback_likert" },
-  };
-  const comments = {
-    type: jsPsychSurveyText,
-    questions: [{ prompt: "Any comments about the study? (optional)", name: "comments", rows: 4 }],
-    data: { task: "feedback_text" },
+    preamble: "<p>Please read each statement and indicate how much you agree with it, from 1 " +
+      "(completely disagree) to 7 (completely agree). There are no right or wrong answers.</p>",
+    questions: REGRET_ITEMS.map((prompt, i) => ({
+      prompt, name: `regret_${i + 1}`, required: true,
+      labels: ["1<br>Completely disagree", "2", "3", "4", "5", "6", "7<br>Completely agree"],
+    })),
+    button_label: "Continue",
+    data: { task: "regret_scale" },
+    on_finish: (data) => {
+      // The plugin records the label index (0-6); store the 1-7 scale value.
+      const items = REGRET_ITEMS.map((_, i) => data.response[`regret_${i + 1}`] + 1);
+      items.forEach((v, i) => { data[`regret_${i + 1}`] = v; });
+      const scored = items.map((v, i) => (i === 4 ? 8 - v : v)); // reverse-score item 5
+      data.regret_score = scored.reduce((a, b) => a + b, 0) / scored.length;
+    },
   };
 
   // -------------------------------------------------------------------------
-  // 7. Debrief
+  // 10. End form: feedback (optional), gambling history, demographics. Each of the other questions
+  //     must be answered, but always offers "Prefer not to say", as the consent text promises.
+  // -------------------------------------------------------------------------
+  const PREFER_NOT = "Prefer not to say";
+  const radios = (name, options) =>
+    options.map((o) => `<label><input type="radio" name="${name}" value="${o}" required> ${o}</label>`).join("");
+  const ageOptions = ['<option value="" selected disabled>Select…</option>']
+    .concat(Array.from({ length: 83 }, (_, i) => `<option value="${i + 18}">${i + 18}</option>`))
+    .concat([`<option value="${PREFER_NOT}">${PREFER_NOT}</option>`])
+    .join("");
+
+  const endSurvey = {
+    type: jsPsychSurveyHtmlForm,
+    preamble: "<p>Please answer a few last questions. The feedback box is optional; for every " +
+      "other question you can choose \"Prefer not to say\".</p>",
+    html: `
+      <div class="end-form">
+        <div class="item">
+          <label for="feedback"><strong>Feedback</strong></label>
+          <textarea name="feedback" id="feedback" rows="4"
+            placeholder="Please provide any feedback you have about the study (optional)."></textarea>
+        </div>
+
+        <div class="item">
+          <div><strong>In the past 12 months, how often have you gambled</strong> (for example at a
+          casino, the lottery, sports betting, or scratch cards)?</div>
+          ${radios("gamble_freq_12mo", ["Never", "A few times", "About once a month", "About once a week",
+            "Daily or almost daily", PREFER_NOT])}
+        </div>
+
+        <div class="item">
+          <div><strong>How much did the information about which outcomes you would learn influence
+          your choice?</strong></div>
+          ${radios("feedback_reliance", ["Not at all", "Somewhat", "A lot", PREFER_NOT])}
+        </div>
+
+        <div class="item">
+          <label for="age"><strong>Age</strong></label>
+          <select name="age" id="age" required>${ageOptions}</select>
+        </div>
+
+        <div class="item">
+          <div><strong>Gender</strong></div>
+          ${radios("gender", ["Female", "Male", "Non-binary", "Other", PREFER_NOT])}
+          <label>If other, please specify: <input type="text" name="gender_other" style="width:50%;"></label>
+        </div>
+
+        <div class="item">
+          <div><strong>Race</strong></div>
+          ${radios("race", ["White", "Black/African American", "American Indian/Alaska Native", "Asian",
+            "Native Hawaiian/Pacific Islander", "Multiracial/Mixed", "Other", PREFER_NOT])}
+          <label>If other, please specify: <input type="text" name="race_other" style="width:50%;"></label>
+        </div>
+
+        <div class="item">
+          <div><strong>Ethnicity</strong></div>
+          ${radios("ethnicity", ["Hispanic", "Non-Hispanic", PREFER_NOT])}
+        </div>
+      </div>`,
+    button_label: "Continue",
+    data: { task: "end_survey" },
+    on_finish: (data) => {
+      // "Other" text is kept in its own field. Age is a number, or "Prefer not to say".
+      const r = data.response;
+      const text = (v) => (typeof v === "string" && v.trim() !== "" ? v.trim() : null);
+      const age = parseInt(r.age, 10);
+      data.response = {
+        feedback: text(r.feedback),
+        gamble_freq_12mo: r.gamble_freq_12mo ?? null,
+        feedback_reliance: r.feedback_reliance ?? null,
+        age: Number.isNaN(age) ? (r.age || null) : age,
+        gender: r.gender ?? null,
+        gender_other: text(r.gender_other),
+        race: r.race ?? null,
+        race_other: text(r.race_other),
+        ethnicity: r.ethnicity ?? null,
+      };
+    },
+  };
+
+  // -------------------------------------------------------------------------
+  // 11. Debrief
   // -------------------------------------------------------------------------
   const debrief = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
       <h2>Debrief</h2>
-      <p>Thank you. In this study we tested whether describing the same outcomes as lives saved or
-      as lives lost changes which program people choose. Different participants saw different
-      wordings. If you have questions about this research, contact
+      <p>Thank you for taking part. This study tested whether knowing which outcomes you will
+      learn after a decision changes which option people choose. Everyone made the same two gambles
+      equally attractive, but participants read different information: some would always learn the
+      outcome of Gamble R, some would always learn the outcome of Gamble S, and some would learn
+      only the outcome of the gamble they chose.</p>
+      <p>Finding out that the option you turned down would have done better can lead to regret, so
+      people may prefer the option that keeps the other outcome hidden, even when it is the riskier
+      one. This study repeats an experiment by Zeelenberg and colleagues (1996).</p>
+      <p>The gambles were hypothetical, so neither gamble was played and there is no outcome to
+      show you. If you have questions about this research, contact
       <a href="mailto:${EXPERIMENT.contact_email}">${EXPERIMENT.contact_email}</a>.
       Press the button to save your responses and finish.</p>`,
     choices: ["Finish"],
@@ -340,13 +605,15 @@ if (USE_EMULATOR && URL_PARAMS.get("cc")) EXPERIMENT.prolific_completion_code = 
 
   await jsPsych.run([
     consent,
-    instructions,
-    demographics,
-    framing,
-    ldInstructions,
-    lexicalDecision,
-    feedback,
-    comments,
+    welcome,
+    matching,
+    attractiveness,
+    comprehensionLoop,
+    choice,
+    strength,
+    reasons,
+    regretScale,
+    endSurvey,
     debrief,
   ]);
 })();
