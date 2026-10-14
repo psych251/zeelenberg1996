@@ -60,3 +60,7 @@ identifiers.csv
 
 # agent worktrees
 .claude/worktrees/
+
+# Claude Code files local to one machine (the skills in .claude/skills/ are shared and committed)
+.claude/settings.local.json
+.claude/launch.json
