@@ -498,7 +498,7 @@ function scale12(name, title, minText, maxText) {
         elements: [
           { type: "html", name: "chosen", html: `<p>You chose <strong>Gamble ${chosen === "risky" ? "R" : "S"}</strong>.</p>` },
           scale12("strength",
-            "Indicate the strength of your preference for the chosen option on a scale ranging from weak preference (1) to strong preference (12).",
+            "Indicate the strength of your preference for the chosen option.",
             "weak preference", "strong preference"),
         ],
       }],
