@@ -55,7 +55,10 @@ const SECTION_OF = {
   choice: "decision", preference_strength: "decision", reasons: "decision",
   regret_scale: "regret_scale", end_survey: "about_you", debrief: "debrief",
 };
-const REASONS_TEXT = "Robot participant says hi.";
+// The reasons answer needs at least 30 characters. The robot first tries a 26-character answer,
+// which is refused, then adds more.
+const REASONS_SHORT = "Robot participant says hi.";
+const REASONS_TEXT = REASONS_SHORT + " I chose Gamble R.";
 
 async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, tabAway = false } = {}) {
   // 1. consent
@@ -97,10 +100,13 @@ async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, 
   // 7. strength of preference
   await page.locator('[data-name="strength"]').getByText("9", { exact: true }).click();
   await page.locator('input[value="Continue"]').click();
-  // 8. reasons: typed key by key (each key is counted), then a paste attempt, which is blocked
-  // and announced under the box.
+  // 8. reasons: typed key by key (each key is counted). A 26-character answer is refused (the
+  // minimum is 30), more is typed, then a paste attempt is blocked and announced under the box.
   const box = page.locator('[data-name="reasons"] textarea');
-  await box.pressSequentially(REASONS_TEXT);
+  await box.pressSequentially(REASONS_SHORT);
+  await page.locator('input[value="Continue"]').click();
+  await expect(page.getByText("Please write at least 30 characters.")).toBeVisible();
+  await box.pressSequentially(REASONS_TEXT.slice(REASONS_SHORT.length));
   await box.evaluate((el) => {
     const clip = new DataTransfer();
     clip.setData("text/plain", "PASTED FROM ELSEWHERE");
@@ -246,6 +252,8 @@ test.describe("experiment", () => {
     expect(strength.risk_preference).toBe(8.5);
     const reasons = trials.find((t) => t.task === "reasons");
     expect(reasons.reasons).toBe(REASONS_TEXT);
+    expect(reasons.reasons_chars).toBe(REASONS_TEXT.trim().length);
+    expect(reasons.too_short_attempts).toBe(1);
     expect(reasons.keystrokes).toBe(REASONS_TEXT.length);
     expect(reasons.paste_attempts).toBe(1);
     const regret = trials.find((t) => t.task === "regret_scale");

@@ -517,8 +517,12 @@ function scale12(name, title, minText, maxText) {
   //    answer written elsewhere (e.g. by a chatbot) cannot simply be pasted in. Blocked attempts
   //    and keystrokes are counted.
   // -------------------------------------------------------------------------
+  // The answer must be at least MIN_REASON_CHARS characters long, not counting spaces at the start
+  // or end. (The original set no minimum; this is a deviation for data quality.)
+  const MIN_REASON_CHARS = 30;
   let pasteAttempts = 0;
   let keystrokes = 0;
+  let tooShortAttempts = 0;   // clicks on Continue that were refused (empty or too short)
   const reasons = {
     type: jsPsychSurvey,
     survey_json: {
@@ -532,6 +536,18 @@ function scale12(name, title, minText, maxText) {
       }],
     },
     survey_function: (survey) => {
+      // Minimum length. An empty box already gets SurveyJS's own "Response required".
+      survey.onValidateQuestion.add((_, options) => {
+        if (options.name !== "reasons") return;
+        const chars = String(options.value || "").trim().length;
+        if (chars > 0 && chars < MIN_REASON_CHARS) {
+          options.error = `Please write at least ${MIN_REASON_CHARS} characters.`;
+        }
+      });
+      // Counted once per refused click on Continue.
+      survey.onValidatedErrorsOnCurrentPage.add((_, options) => {
+        if (options.errors.length > 0) tooShortAttempts += 1;
+      });
       // Runs again if SurveyJS redraws the question (e.g. to show "Response required").
       survey.onAfterRenderQuestion.add((_, options) => {
         if (options.question.name !== "reasons") return;
@@ -558,6 +574,8 @@ function scale12(name, title, minText, maxText) {
     data: { task: "reasons", section: "decision" },
     on_finish: (data) => {
       data.reasons = data.response.reasons;
+      data.reasons_chars = String(data.reasons || "").trim().length;
+      data.too_short_attempts = tooShortAttempts;
       data.paste_attempts = pasteAttempts;
       data.keystrokes = keystrokes;
     },
@@ -680,7 +698,7 @@ function scale12(name, title, minText, maxText) {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
       <div class="illustration">${window.ILLUSTRATIONS.thanks}</div>
-      <h2>Debrief</h2>
+      <h2>Thank You!</h2>
       <p>Thank you for taking part. This study tested whether knowing which outcomes you will
       learn after a decision changes which option people choose.</p>
       <p>The gambles were hypothetical, so neither gamble was played and there is no outcome to
