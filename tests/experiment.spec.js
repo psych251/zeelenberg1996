@@ -48,7 +48,16 @@ async function answerQuiz(page, answers) {
 // Returns the condition shown on the feedback instructions. Pass `condition` to check it
 // (the URL can force one in emulator runs), and `quizWrongOnce` to fail the quiz on the
 // first try so the instructions and quiz repeat.
-async function runUntilDebrief(page, { condition = null, quizWrongOnce = false } = {}) {
+// The part of the study each screen belongs to, mirroring `section` in experiment.js.
+const SECTION_OF = {
+  consent: "intro", instructions: "intro", matching: "matching", attractiveness: "matching",
+  feedback_instructions: "feedback_rules", comprehension: "feedback_rules",
+  choice: "decision", preference_strength: "decision", reasons: "decision",
+  regret_scale: "regret_scale", end_survey: "about_you", debrief: "debrief",
+};
+const REASONS_TEXT = "Robot participant says hi.";
+
+async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, tabAway = false } = {}) {
   // 1. consent
   await page.getByRole("button", { name: "I agree to participate" }).click();
   // 2. welcome (one page)
@@ -56,6 +65,13 @@ async function runUntilDebrief(page, { condition = null, quizWrongOnce = false }
   // 3. matching: an X outside ($0, $130) is refused, then X = 70. SurveyJS commits a typed
   // value on blur, which the real click on Continue provides.
   const x = page.locator('[data-name="x"] input');
+  if (tabAway) {
+    // Simulate switching to another tab for ~300 ms (jsPsych listens to window blur/focus).
+    await x.waitFor();
+    await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+    await page.waitForTimeout(300);
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  }
   await x.fill("150");
   await page.locator('input[value="Continue"]').click();
   await expect(page.getByText("more than $0 and less than $130")).toBeVisible();
@@ -81,8 +97,17 @@ async function runUntilDebrief(page, { condition = null, quizWrongOnce = false }
   // 7. strength of preference
   await page.locator('[data-name="strength"]').getByText("9", { exact: true }).click();
   await page.locator('input[value="Continue"]').click();
-  // 8. reasons
-  await page.locator('[data-name="reasons"] textarea').fill("Robot participant says hi.");
+  // 8. reasons: typed key by key (each key is counted), then a paste attempt, which is blocked
+  // and announced under the box.
+  const box = page.locator('[data-name="reasons"] textarea');
+  await box.pressSequentially(REASONS_TEXT);
+  await box.evaluate((el) => {
+    const clip = new DataTransfer();
+    clip.setData("text/plain", "PASTED FROM ELSEWHERE");
+    el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: clip, bubbles: true, cancelable: true }));
+  });
+  await expect(page.getByText("Pasting is turned off for this question")).toBeVisible();
+  await expect(box).toHaveValue(REASONS_TEXT);
   await page.locator('input[value="Continue"]').click();
   // 9. regret scale: required, so an empty submit stays on the page. The plugin's radio
   // values are label indices (0-6).
@@ -158,7 +183,9 @@ test.describe("experiment", () => {
     expect(mode).toBe(EMULATOR ? "emulator" : "offline");
 
     // `?condition=` is honoured only in emulator runs; offline runs get a random condition.
-    await runThroughExperiment(page, { condition: EMULATOR ? "risky_feedback" : null, quizWrongOnce: true });
+    await runThroughExperiment(page, {
+      condition: EMULATOR ? "risky_feedback" : null, quizWrongOnce: true, tabAway: true,
+    });
 
     // No uncaught errors from the experiment itself.
     expect(consoleErrors, "uncaught page errors").toEqual([]);
@@ -218,7 +245,9 @@ test.describe("experiment", () => {
     expect(strength.strength).toBe(9);
     expect(strength.risk_preference).toBe(8.5);
     const reasons = trials.find((t) => t.task === "reasons");
-    expect(reasons.reasons).toBe("Robot participant says hi.");
+    expect(reasons.reasons).toBe(REASONS_TEXT);
+    expect(reasons.keystrokes).toBe(REASONS_TEXT.length);
+    expect(reasons.paste_attempts).toBe(1);
     const regret = trials.find((t) => t.task === "regret_scale");
     expect([1, 2, 3, 4, 5].map((i) => regret[`regret_${i}`])).toEqual(REGRET_ANSWERS);
     expect(regret.regret_score).toBe(4.8);
@@ -231,6 +260,21 @@ test.describe("experiment", () => {
     // Every trial row must carry the same participant id as its participant document,
     // otherwise trials.csv and participants.csv cannot be joined in the analysis.
     expect([...new Set(trials.map((t) => t.participant_id))]).toEqual([uid]);
+
+    // Timing: every row carries its part of the study and its tab-away counts. The robot left
+    // the tab once, for ~300 ms, on the matching screen.
+    for (const t of trials) expect(t.section, `section of ${t.task}`).toBe(SECTION_OF[t.task]);
+    expect(trials.every((t) => Number.isInteger(t.blur_count) && Number.isInteger(t.ms_away))).toBe(true);
+    const matchingRow = trials.find((t) => t.task === "matching");
+    expect(matchingRow.blur_count).toBe(1);
+    expect(matchingRow.ms_away).toBeGreaterThanOrEqual(250);
+    expect(trials.filter((t) => t.task !== "matching").every((t) => t.blur_count === 0)).toBe(true);
+    expect(pdoc.blur_count_total).toBe(1);
+    expect(pdoc.ms_away_total).toBe(matchingRow.ms_away);
+    // Time per part covers every part and adds up exactly to the total.
+    expect(Object.keys(pdoc.section_ms).sort()).toEqual([...new Set(Object.values(SECTION_OF))].sort());
+    expect(Object.values(pdoc.section_ms).reduce((a, b) => a + b, 0)).toBe(pdoc.total_ms);
+    expect(pdoc.total_ms).toBe(Math.max(...trials.map((t) => t.time_elapsed)));
   });
 
   test("chunked writes (chunk_size > 1) save every trial", async ({ page }) => {

@@ -1,20 +1,264 @@
-/* Experiment-specific styles. jsPsych's defaults are in lib/jspsych.css. */
-.jspsych-content { max-width: 720px; text-align: left; }
-.jspsych-content h1, .jspsych-content h2 { text-align: center; }
-.consent { font-size: 15px; line-height: 1.5; }
-.consent .buttons { text-align: center; }
-.gamble-page { font-size: 18px; line-height: 1.6; }
-.gambles { margin: 1.2em auto; border-collapse: collapse; font-size: 18px; }
-.gambles th, .gambles td { padding: 0.35em 1.2em; text-align: center; }
-.gambles th { border-bottom: 1px solid #999; text-transform: uppercase; letter-spacing: 0.04em; }
-.gambles .vs { padding: 0.35em 0.4em; color: #666; }
-.quiz-retry { color: #9b1c1c; background: #fdecec; padding: 0.5em 0.9em; border-radius: 4px; font-weight: 600; }
-.feedback-rule { border-left: 4px solid #1E6E76; padding: 0.4em 0.9em; background: #f3f7f7; }
-/* Slightly narrower rating buttons so a 12-point scale fits on one line. */
-.sd-rating__item--fixed-size { min-width: 42px; width: 42px; height: 42px; }
-.end-form { font-size: 16px; line-height: 1.5; }
-.end-form .item { margin-bottom: 1.6em; }
-.end-form label { display: block; margin: 0.2em 0; }
-.end-form textarea { width: 100%; box-sizing: border-box; }
+/* Experiment-specific styles. jsPsych's defaults are in lib/jspsych.css.
+ *
+ * Styling only: no task screen changes its words, numbers or order. Both choice buttons (and
+ * both consent buttons) share one style, so the look cannot nudge a choice.
+ */
+:root {
+  --ink: #1f2a30;
+  --muted: #5b6b73;
+  --page: #f6f1e9;          /* warm off-white page */
+  --card: #ffffff;
+  --line: #e6ddd0;
+  --panel: #fbf8f3;         /* light card inside a card (question blocks) */
+  --brand: #1E6E76;         /* deep teal */
+  --brand-deep: #155259;
+  --brand-soft: #e7f2f2;
+  --danger: #9b1c1c;
+  --danger-soft: #fdecec;
+  --radius: 20px;
+  --shadow: 0 12px 32px rgba(31, 42, 48, 0.08), 0 2px 6px rgba(31, 42, 48, 0.05);
+}
+
+/* ---- Page and screen card ------------------------------------------------ */
+.jspsych-display-element {
+  background: var(--page);
+  color: var(--ink);
+  accent-color: var(--brand);     /* native radios, checkboxes and selects */
+}
+.jspsych-content-wrapper { padding: 28px 16px; box-sizing: border-box; }
+.jspsych-content {
+  max-width: 760px;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 36px 44px;
+  text-align: left;
+}
+/* The end-of-study message is written inside the same card. */
+#finish-message { padding: 8px 0; }
+.jspsych-content h1, .jspsych-content h2, #finish-message h2 {
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0.2em 0 0.6em;
+}
+
+/* Each new screen fades in briefly (restarted per trial in experiment.js). */
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.jspsych-content.screen-in { animation: screen-in 150ms ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .jspsych-content.screen-in { animation: none; }
+}
+
+/* ---- Illustrations --------------------------------------------------------- */
+.illustration { display: flex; justify-content: center; margin: -8px 0 8px; }
+.illustration svg { width: 240px; max-width: 70%; height: auto; }
+
+/* ---- Buttons: one style for every button ------------------------------- */
+.jspsych-btn {
+  padding: 11px 26px;
+  margin: 0.6em;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--brand);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 2px 0 var(--brand-deep);
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+.jspsych-btn:hover { background-color: var(--brand-deep); transform: translateY(-1px); }
+.jspsych-btn:active { background-color: var(--brand-deep); transform: none; box-shadow: none; }
+.jspsych-btn:focus-visible { outline: 3px solid rgba(30, 110, 118, 0.35); outline-offset: 2px; }
+.jspsych-btn:disabled {
+  background-color: #d9d3c9; color: #8a8a8a; box-shadow: none; transform: none; cursor: not-allowed;
+}
 #jspsych-html-button-response-btngroup { text-align: center; }
+
+/* ---- Progress bar ------------------------------------------------------------ */
+#jspsych-progressbar-container { background: transparent; border: 0; padding-top: 14px; color: var(--muted); }
+#jspsych-progressbar-container span { font-size: 13px; }
+#jspsych-progressbar-outer { background: var(--line); border: 0; border-radius: 999px; height: 8px; overflow: hidden; }
+#jspsych-progressbar-inner { background: var(--brand); border-radius: 999px; }
+
+/* ---- Consent ------------------------------------------------------------------ */
+.consent { font-size: 15px; line-height: 1.6; }
+.consent .buttons { text-align: center; }
+
+/* ---- Gambles: two identical cards, R left and S right -------------------- */
+.gamble-page { font-size: 18px; line-height: 1.6; }
+.gambles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 1.2em auto;
+}
+.gamble-card {
+  min-width: 170px;
+  padding: 14px 22px 16px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  text-align: center;
+}
+/* !important so SurveyJS's own text styles cannot restyle the cards on its screens. */
+.gambles .gamble-card .gamble-name {
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  font-size: 15px !important;
+  color: var(--brand);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.gambles .gamble-card .gamble-line { font-size: 18px !important; line-height: 1.6 !important; }
+.gamble-vs { color: var(--muted); font-size: 15px; font-style: italic; }
+
+.feedback-rule {
+  border-left: 4px solid var(--brand);
+  background: var(--brand-soft);
+  border-radius: 0 14px 14px 0;
+  padding: 12px 18px;
+}
+.quiz-retry {
+  color: var(--danger);
+  background: var(--danger-soft);
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+/* ---- SurveyJS screens (matching, ratings, quiz, strength, reasons) ------
+ * The survey plugin applies its own grey theme as inline variables after any setup hook, so the
+ * theme colours here need !important to win. */
+.jspsych-content .sd-root-modern {
+  --sjs-general-backcolor-dim: transparent !important;
+  --sjs-general-backcolor-dim-light: var(--panel) !important;
+  --sjs-primary-backcolor: var(--brand) !important;
+  --sjs-primary-backcolor-dark: var(--brand-deep) !important;
+  --sjs-primary-backcolor-light: rgba(30, 110, 118, 0.1) !important;
+  --sjs-shadow-small: 0 0 0 1px var(--line) !important;
+  --sjs-shadow-inner: inset 0 0 0 1.5px #c9bcaa !important;   /* visible radio circles and inputs */
+  --sjs-corner-radius: 14px !important;
+  --sjs-font-family: "Open Sans", "Arial", sans-serif !important;
+  background: transparent !important;
+}
+/* The plugin gives the survey a minimum width of 800px, wider than the card. */
+.jspsych-content .jspsych-survey-container { min-width: 0 !important; width: 100%; }
+/* SurveyJS pads its body by 40px a side; the card already has padding, so use its full width
+ * (this is what lets the 12-point scales fit on one line). */
+.jspsych-content .sd-body,
+.jspsych-content .sd-page { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
+.jspsych-content .sd-question { background: var(--panel); }
+/* SurveyJS draws the box outline outside the box, where the container clips its left and right
+ * edges; draw it inside instead. */
+.jspsych-content .sd-question.sd-element--with-frame { box-shadow: inset 0 0 0 1px var(--line) !important; }
+/* Plain text blocks (the gambles, instructions) sit on the card itself, not in a panel. */
+.jspsych-content .sd-question.sd-question--html {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+.jspsych-content .sd-html { font-size: 18px; line-height: 1.6; }
+/* SurveyJS leaves 80px of empty space under each survey and pads its button bar; trim both so the
+ * card ends just below the button, and centre the button like on every other screen. */
+.jspsych-content .sd-body { padding-bottom: 0 !important; }
+.jspsych-content .sd-footer.sd-body__navigation {
+  padding: 18px 0 6px !important;   /* a little room below so the button's edge is not clipped */
+  justify-content: center;
+}
+/* Same size and look as the other buttons (.jspsych-btn). */
+.jspsych-content .sd-navigation__complete-btn,
+.jspsych-content .sd-btn--action {
+  border-radius: 999px !important;
+  padding: 11px 26px !important;
+  min-width: 0 !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 0 var(--brand-deep) !important;
+}
+/* The matching answer is a dollar amount, so a short box is enough. */
+.jspsych-content [data-name="x"] .sd-input { max-width: 220px; }
+/* Slightly narrower rating buttons so a 12-point scale fits on one line. */
+.sd-rating__item--fixed-size { min-width: 40px; width: 40px; height: 40px; }
+.paste-note { margin-top: 8px; color: var(--danger); font-size: 14px; font-weight: 600; }
+
+/* ---- Regret scale (survey-likert plugin) -----------------------------------
+ * The plugin writes each statement and its scale as separate siblings. Styled as the top and
+ * bottom halves of one bordered card, with a clear gap before the next item, so it is obvious
+ * which scale belongs to which statement. */
+#jspsych-survey-likert-form { text-align: left; }
+.jspsych-survey-likert-statement {
+  display: block;
+  font-weight: 600 !important;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  padding: 16px 20px 6px !important;
+  margin: 22px 0 0 !important;
+}
+.jspsych-survey-likert-opts {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+  padding: 8px 0 12px !important;
+  margin: 0 !important;
+  box-sizing: border-box;     /* the plugin sets width: 100%; keep the border inside it */
+  overflow: hidden;           /* keep the scale's track line inside the card */
+}
+.jspsych-survey-likert-opt-label { font-size: 14px; color: var(--muted); line-height: 1.3; cursor: pointer; }
+/* Bigger radio buttons (the plugin's default is the browser's ~13px). The track line behind them
+ * is moved down to run through their centres. */
+.jspsych-survey-likert-opts li input[type=radio] {
+  width: 24px;
+  height: 24px;
+  margin: 0 0 6px -12px !important;
+  cursor: pointer;
+}
+.jspsych-survey-likert-opts:before { top: 14px !important; }
+.jspsych-survey-likert-opt-label:has(input:checked) { color: var(--brand); font-weight: 700; }
+#jspsych-survey-likert-next { display: block; margin: 22px auto 0; }
+
+/* ---- End form (survey-html-form plugin) ------------------------------------ */
+.end-form { font-size: 16px; line-height: 1.5; }
+.end-form .item {
+  margin-bottom: 14px;
+  padding: 14px 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.end-form label { display: block; margin: 0.2em 0; }
+.end-form textarea, .end-form select, .end-form input[type=text] {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  background: #ffffff;
+}
+.end-form textarea { width: 100%; box-sizing: border-box; }
+#jspsych-survey-html-form-next { display: block; margin: 18px auto 0; }
+
+/* ---- End of study ------------------------------------------------------------ */
 .thanks { text-align: center; }
+.confetti-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 1000; }
+.confetti-layer i {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation-name: confetti-fall;
+  animation-timing-function: cubic-bezier(0.25, 0.7, 0.5, 1);
+  animation-fill-mode: forwards;
+}
+@keyframes confetti-fall {
+  to { transform: translate(var(--drift), 105vh) rotate(var(--spin)); opacity: 0.85; }
+}

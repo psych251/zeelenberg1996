@@ -84,19 +84,30 @@ function money(v) {
   return "$" + (Number.isInteger(v) ? String(v) : v.toFixed(2));
 }
 
-// The two gambles as laid out in the paper (p. 151). Before matching, X is shown as "$X";
+// The two gambles as laid out in the paper (p. 151): R on the left, S on the right, the win line
+// above the zero line. Shown as two identical cards. Before matching, X is shown as "$X";
 // afterwards it is the participant's own matched value.
-function gambleTable(x) {
+function gambleCards(x) {
   const sx = x === null ? "$X" : money(x);
   return `
-    <table class="gambles">
-      <thead><tr><th>Gamble R</th><th></th><th>Gamble S</th></tr></thead>
-      <tbody>
-        <tr><td>$130 with 35%</td><td class="vs">vs</td><td>${sx} with 65%</td></tr>
-        <tr><td>$0 with 65%</td><td></td><td>$0 with 35%</td></tr>
-      </tbody>
-    </table>`;
+    <div class="gambles">
+      <div class="gamble-card">
+        <div class="gamble-name">Gamble R</div>
+        <div class="gamble-line">$130 with 35%</div>
+        <div class="gamble-line">$0 with 65%</div>
+      </div>
+      <div class="gamble-vs">vs</div>
+      <div class="gamble-card">
+        <div class="gamble-name">Gamble S</div>
+        <div class="gamble-line">${sx} with 65%</div>
+        <div class="gamble-line">$0 with 35%</div>
+      </div>
+    </div>`;
 }
+
+// The parts of the study, recorded as `section` on every row so the time spent on each part can
+// be added up. Listed in the order participants meet them.
+const SECTIONS = ["intro", "matching", "feedback_rules", "decision", "regret_scale", "about_you", "debrief"];
 
 // What participants read about feedback before choosing (paper pp. 151-152, second person).
 // The risky and safe texts are exact mirror images, so the conditions differ only in R vs S.
@@ -156,11 +167,58 @@ function scale12(name, title, minText, maxText) {
     return;
   }
 
+  // Tab-away tracking. jsPsych reports every time the window loses ("blur") or regains ("focus")
+  // focus, e.g. when the participant switches tab or app. Counted per screen and in total.
+  let away = { count: 0, ms: 0, since: null };
+  const awayTotal = { count: 0, ms: 0 };
+
   const jsPsych = initJsPsych({
     show_progress_bar: true,
     auto_update_progress_bar: true,
+    on_trial_start: () => {
+      // Restart the fade-in on the (reused) content element for every new screen.
+      const content = document.querySelector(".jspsych-content");
+      if (content) {
+        content.classList.remove("screen-in");
+        void content.offsetWidth;
+        content.classList.add("screen-in");
+      }
+    },
+    on_interaction_data_update: (record) => {
+      if (record.event === "blur") {
+        away.count += 1;
+        away.since = record.time;
+      } else if (record.event === "focus" && away.since !== null) {
+        away.ms += record.time - away.since;
+        away.since = null;
+      }
+    },
+    // Runs before on_data_update, so these fields reach both the per-trial saves and full_data.
+    on_trial_finish: (data) => {
+      data.blur_count = away.count;
+      data.ms_away = Math.round(away.ms);
+      awayTotal.count += away.count;
+      awayTotal.ms += away.ms;
+      away = { count: 0, ms: 0, since: away.since };
+    },
     on_data_update: (trial) => saver.onTrial(trial),
     on_finish: async () => {
+      // Time per part of the study. Each screen runs from the end of the previous one to its own
+      // end (time_elapsed), so the parts add up exactly to total_ms.
+      const sectionMs = {};
+      let previous = 0;
+      for (const row of jsPsych.data.get().values()) {
+        const key = row.section || "other";
+        sectionMs[key] = (sectionMs[key] || 0) + (row.time_elapsed - previous);
+        previous = row.time_elapsed;
+      }
+      saver.updateParticipant({
+        section_ms: sectionMs,
+        total_ms: previous,
+        blur_count_total: awayTotal.count,
+        ms_away_total: Math.round(awayTotal.ms),
+      });
+
       const el = jsPsych.getDisplayElement();
       el.innerHTML = '<div id="finish-message"><p class="thanks">Saving your responses…</p></div>';
       // finish() flushes remaining trials, marks the participant complete, and (only if
@@ -184,11 +242,13 @@ function scale12(name, title, minText, maxText) {
       // In emulator/test runs we stay on the page instead of navigating to Prolific, so that
       // setting a completion code can never turn `npm test` or CI red. Live runs redirect above.
       msg.innerHTML =
+        (result.ok ? "<div class='illustration'>" + window.ILLUSTRATIONS.sent + "</div>" : "") +
         "<h2 class='thanks'>All done</h2>" +
         (result.ok ? "<p class='thanks'>Your responses were saved. Thank you for participating!</p>" : "") +
         (EXPERIMENT.prolific_completion_code
           ? "<p class='thanks'>Your completion code is <strong>" + EXPERIMENT.prolific_completion_code + "</strong>.</p>"
           : "");
+      if (result.ok) window.celebrate();
     },
   });
 
@@ -215,6 +275,9 @@ function scale12(name, title, minText, maxText) {
   // -------------------------------------------------------------------------
   // 1. Consent (course-wide IRB text; edit only the contact address)
   // -------------------------------------------------------------------------
+  // "I do not agree" on the left, "I agree to participate" on the right. Consent is read from the
+  // button's label, not its position, so reordering the buttons can never flip the answer.
+  const CONSENT_CHOICES = ["I do not agree", "I agree to participate"];
   const consent = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -229,10 +292,10 @@ function scale12(name, title, minText, maxText) {
         the researchers who have requested your participation will not receive any personal
         information about you.</p>
       </div>`,
-    choices: ["I agree to participate", "I do not agree"],
-    data: { task: "consent" },
+    choices: CONSENT_CHOICES,
+    data: { task: "consent", section: "intro" },
     on_finish: (data) => {
-      data.consented = data.response === 0;
+      data.consented = CONSENT_CHOICES[data.response] === "I agree to participate";
       if (!data.consented) {
         // No end message here: jsPsych would paint it over the screen that on_finish renders.
         jsPsych.abortExperiment();
@@ -246,14 +309,15 @@ function scale12(name, title, minText, maxText) {
   const welcome = {
     type: jsPsychInstructions,
     pages: [
-      `<h2>Welcome</h2>
+      `<div class="illustration">${window.ILLUSTRATIONS.welcome}</div>
+       <h2>Welcome</h2>
        <p>In this study you will consider two gambles and answer some questions about them. The
        gambles are hypothetical: no real money is involved, but please answer as if it were.</p>
        <p>There are no right or wrong answers; we are interested in your own preferences. The study
        takes about five minutes. Please complete it in one sitting, on a laptop or desktop computer.</p>`,
     ],
     show_clickable_nav: true,
-    data: { task: "instructions" },
+    data: { task: "instructions", section: "intro" },
   };
 
   // -------------------------------------------------------------------------
@@ -266,7 +330,7 @@ function scale12(name, title, minText, maxText) {
       completeText: "Continue",
       pages: [{
         elements: [
-          { type: "html", name: "gambles", html: `<div class="gamble-page"><p>Consider the following two gambles.</p>${gambleTable(null)}</div>` },
+          { type: "html", name: "gambles", html: `<div class="gamble-page"><p>Consider the following two gambles.</p>${gambleCards(null)}</div>` },
           {
             type: "text", name: "x", inputType: "number", isRequired: true,
             title: "Make Gamble S exactly as attractive as Gamble R: write down the value of X for which you find the gambles equally attractive.",
@@ -281,7 +345,7 @@ function scale12(name, title, minText, maxText) {
         ],
       }],
     },
-    data: { task: "matching" },
+    data: { task: "matching", section: "matching" },
     on_finish: (data) => {
       matchedX = Number(data.response.x);
       data.matched_x = matchedX;
@@ -300,7 +364,7 @@ function scale12(name, title, minText, maxText) {
         elements: [
           {
             type: "html", name: "gambles",
-            html: `<div class="gamble-page">${gambleTable(matchedX)}
+            html: `<div class="gamble-page">${gambleCards(matchedX)}
               <p>Rate the attractiveness of each option on a scale ranging from not attractive (1)
               to very attractive (12).</p></div>`,
           },
@@ -309,7 +373,7 @@ function scale12(name, title, minText, maxText) {
         ],
       }],
     }),
-    data: { task: "attractiveness" },
+    data: { task: "attractiveness", section: "matching" },
     on_finish: (data) => {
       data.attract_r = data.response.attract_r;
       data.attract_s = data.response.attract_s;
@@ -331,12 +395,12 @@ function scale12(name, title, minText, maxText) {
           : ""}
         <p>Although you have made the gambles equally attractive, you are required to choose
         between them.</p>
-        ${gambleTable(matchedX)}
+        ${gambleCards(matchedX)}
         <p>Before you choose, please note:</p>
         <p class="feedback-rule">${FEEDBACK_TEXT[condition]}</p>
       </div>`,
     choices: ["Continue"],
-    data: { task: "feedback_instructions" },
+    data: { task: "feedback_instructions", section: "feedback_rules" },
     on_finish: (data) => {
       data.instructions_view = quizAttempt + 1; // 1 = first reading, 2+ = after a failed quiz
     },
@@ -379,7 +443,7 @@ function scale12(name, title, minText, maxText) {
         ],
       }],
     }),
-    data: { task: "comprehension" },
+    data: { task: "comprehension", section: "feedback_rules" },
     on_finish: (data) => {
       quizAttempt += 1;
       data.quiz_attempt = quizAttempt;
@@ -408,12 +472,12 @@ function scale12(name, title, minText, maxText) {
     type: jsPsychHtmlButtonResponse,
     stimulus: () => `
       <div class="gamble-page" data-condition="${condition}">
-        ${gambleTable(matchedX)}
+        ${gambleCards(matchedX)}
         <p class="feedback-rule">${FEEDBACK_TEXT[condition]}</p>
         <p><strong>Which gamble do you choose?</strong></p>
       </div>`,
     choices: ["Gamble R", "Gamble S"],
-    data: { task: "choice" },
+    data: { task: "choice", section: "decision" },
     on_finish: (data) => {
       // Button order is fixed: 0 = Gamble R (risky), 1 = Gamble S (safe).
       chosen = data.response === 0 ? "risky" : "safe";
@@ -439,7 +503,7 @@ function scale12(name, title, minText, maxText) {
         ],
       }],
     }),
-    data: { task: "preference_strength" },
+    data: { task: "preference_strength", section: "decision" },
     on_finish: (data) => {
       data.strength = data.response.strength;
       data.choice = chosen;
@@ -449,8 +513,12 @@ function scale12(name, title, minText, maxText) {
   };
 
   // -------------------------------------------------------------------------
-  // 8. Reasons
+  // 8. Reasons. Pasting, dropping, copying and cutting text are blocked in the answer box, so an
+  //    answer written elsewhere (e.g. by a chatbot) cannot simply be pasted in. Blocked attempts
+  //    and keystrokes are counted.
   // -------------------------------------------------------------------------
+  let pasteAttempts = 0;
+  let keystrokes = 0;
   const reasons = {
     type: jsPsychSurvey,
     survey_json: {
@@ -463,9 +531,35 @@ function scale12(name, title, minText, maxText) {
         ],
       }],
     },
-    data: { task: "reasons" },
+    survey_function: (survey) => {
+      // Runs again if SurveyJS redraws the question (e.g. to show "Response required").
+      survey.onAfterRenderQuestion.add((_, options) => {
+        if (options.question.name !== "reasons") return;
+        const box = options.htmlElement.querySelector("textarea");
+        if (!box || box.dataset.pasteGuard) return;
+        box.dataset.pasteGuard = "on";
+        const note = document.createElement("div");
+        note.className = "paste-note";
+        note.textContent = "Pasting is turned off for this question. Please type your answer.";
+        note.hidden = true;
+        box.insertAdjacentElement("afterend", note);
+        const blockInsert = (e) => {
+          e.preventDefault();
+          pasteAttempts += 1;
+          note.hidden = false;
+        };
+        box.addEventListener("paste", blockInsert);
+        box.addEventListener("drop", blockInsert);
+        box.addEventListener("copy", (e) => e.preventDefault());
+        box.addEventListener("cut", (e) => e.preventDefault());
+        box.addEventListener("keydown", () => { keystrokes += 1; });
+      });
+    },
+    data: { task: "reasons", section: "decision" },
     on_finish: (data) => {
       data.reasons = data.response.reasons;
+      data.paste_attempts = pasteAttempts;
+      data.keystrokes = keystrokes;
     },
   };
 
@@ -489,7 +583,7 @@ function scale12(name, title, minText, maxText) {
       labels: ["1<br>Completely disagree", "2", "3", "4", "5", "6", "7<br>Completely agree"],
     })),
     button_label: "Continue",
-    data: { task: "regret_scale" },
+    data: { task: "regret_scale", section: "regret_scale" },
     on_finish: (data) => {
       // The plugin records the label index (0-6); store the 1-7 scale value.
       const items = REGRET_ITEMS.map((_, i) => data.response[`regret_${i + 1}`] + 1);
@@ -513,14 +607,13 @@ function scale12(name, title, minText, maxText) {
 
   const endSurvey = {
     type: jsPsychSurveyHtmlForm,
-    preamble: "<p>Please answer a few last questions. The feedback box is optional; for every " +
-      "other question you can choose \"Prefer not to say\".</p>",
+    preamble: "<p>Please answer a few last questions.</p>",
     html: `
       <div class="end-form">
         <div class="item">
           <label for="feedback"><strong>Feedback</strong></label>
           <textarea name="feedback" id="feedback" rows="4"
-            placeholder="Please provide any feedback you have about the study (optional)."></textarea>
+            placeholder="Please provide any feedback you have about the study."></textarea>
         </div>
 
         <div class="item">
@@ -560,7 +653,7 @@ function scale12(name, title, minText, maxText) {
         </div>
       </div>`,
     button_label: "Continue",
-    data: { task: "end_survey" },
+    data: { task: "end_survey", section: "about_you" },
     on_finish: (data) => {
       // "Other" text is kept in its own field. Age is a number, or "Prefer not to say".
       const r = data.response;
@@ -586,21 +679,19 @@ function scale12(name, title, minText, maxText) {
   const debrief = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
+      <div class="illustration">${window.ILLUSTRATIONS.thanks}</div>
       <h2>Debrief</h2>
       <p>Thank you for taking part. This study tested whether knowing which outcomes you will
-      learn after a decision changes which option people choose. Everyone made the same two gambles
-      equally attractive, but participants read different information: some would always learn the
-      outcome of Gamble R, some would always learn the outcome of Gamble S, and some would learn
-      only the outcome of the gamble they chose.</p>
-      <p>Finding out that the option you turned down would have done better can lead to regret, so
-      people may prefer the option that keeps the other outcome hidden, even when it is the riskier
-      one. This study repeats an experiment by Zeelenberg and colleagues (1996).</p>
+      learn after a decision changes which option people choose.</p>
       <p>The gambles were hypothetical, so neither gamble was played and there is no outcome to
       show you. If you have questions about this research, contact
       <a href="mailto:${EXPERIMENT.contact_email}">${EXPERIMENT.contact_email}</a>.
       Press the button to save your responses and finish.</p>`,
     choices: ["Finish"],
-    data: { task: "debrief" },
+    data: { task: "debrief", section: "debrief" },
+    // Every question is answered by now, and every participant sees this screen (once a Prolific
+    // code is set, real participants go straight from "Saving…" to Prolific and never see "All done").
+    on_load: () => window.celebrate(),
   };
 
   await jsPsych.run([
