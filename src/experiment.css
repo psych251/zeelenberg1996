@@ -119,6 +119,8 @@
   border-bottom: 1px solid var(--line);
 }
 .gambles .gamble-card .gamble-line { font-size: 18px !important; line-height: 1.6 !important; }
+/* The live X preview: same text size as the rest of the line, even inside a SurveyJS block. */
+.gambles .gamble-card .x-value { font: inherit !important; color: inherit !important; }
 .gamble-vs { color: var(--muted); font-size: 15px; font-style: italic; }
 
 .feedback-rule {
@@ -188,6 +190,9 @@
 .jspsych-content [data-name="x"] .sd-input { max-width: 220px; }
 /* Slightly narrower rating buttons so a 12-point scale fits on one line. */
 .sd-rating__item--fixed-size { min-width: 40px; width: 40px; height: 40px; }
+/* Question descriptions (e.g. the explanation of X) in a darker grey than SurveyJS's default, so
+ * they read as instructions rather than fine print. */
+.jspsych-content .sd-description { color: var(--muted) !important; font-size: 16px; }
 .paste-note { margin-top: 8px; color: var(--danger); font-size: 14px; font-weight: 600; }
 
 /* ---- Regret scale (survey-likert plugin) -----------------------------------

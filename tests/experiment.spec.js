@@ -75,10 +75,17 @@ async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, 
     await page.waitForTimeout(300);
     await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   }
+  // The Gamble S card previews X as it is typed, and goes back to "$X" when the box is empty.
+  const preview = page.locator(".x-value");
+  await expect(preview).toHaveText("$X");
   await x.fill("150");
+  await expect(preview).toHaveText("$150");
   await page.locator('input[value="Continue"]').click();
   await expect(page.getByText("more than $0 and less than $130")).toBeVisible();
+  await x.fill("");
+  await expect(preview).toHaveText("$X");
   await x.fill("70");
+  await expect(preview).toHaveText("$70");
   await page.locator('input[value="Continue"]').click();
   // 4. attractiveness of each gamble (1-12)
   await page.locator('[data-name="attract_r"]').getByText("7", { exact: true }).click();

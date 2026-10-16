@@ -99,7 +99,7 @@ function gambleCards(x) {
       <div class="gamble-vs">vs</div>
       <div class="gamble-card">
         <div class="gamble-name">Gamble S</div>
-        <div class="gamble-line">${sx} with 65%</div>
+        <div class="gamble-line"><span class="x-value">${sx}</span> with 65%</div>
         <div class="gamble-line">$0 with 35%</div>
       </div>
     </div>`;
@@ -330,11 +330,15 @@ function scale12(name, title, minText, maxText) {
       completeText: "Continue",
       pages: [{
         elements: [
-          { type: "html", name: "gambles", html: `<div class="gamble-page"><p>Consider the following two gambles.</p>${gambleCards(null)}</div>` },
+          // Plain-language explanation around the paper's question (added for online participants;
+          // listed as a difference from the original). Deliberately no example values for X.
+          { type: "html", name: "gambles", html: `<div class="gamble-page"><p>Consider the following two gambles. In each one, you either win the amount shown or win nothing, with the chances shown.</p>${gambleCards(null)}</div>` },
           {
             type: "text", name: "x", inputType: "number", isRequired: true,
             title: "Make Gamble S exactly as attractive as Gamble R: write down the value of X for which you find the gambles equally attractive.",
-            description: "Enter an amount in dollars.",
+            description: "X is an amount of money that you choose. Pick the amount that would make you " +
+              "equally happy to play either gamble, so you would not mind which one you got. There is " +
+              "no right or wrong answer. Enter an amount in dollars.",
             // X must lie strictly between $0 and $130, so that neither gamble simply dominates
             // the other. (The paper set no range.)
             validators: [{
@@ -344,6 +348,29 @@ function scale12(name, title, minText, maxText) {
           },
         ],
       }],
+    },
+    // Live preview: while the participant types X, the Gamble S card shows that amount
+    // ("$70 with 65%"); an empty box shows "$X" again. Display only; the saved X is what they typed.
+    survey_function: (survey) => {
+      const syncPreview = () => {
+        const box = document.querySelector('.jspsych-content [data-name="x"] input');
+        const shown = document.querySelector(".jspsych-content .x-value");
+        if (!box || !shown) return;
+        const raw = box.value.trim();
+        const x = Number(raw);
+        shown.textContent = raw === "" || !Number.isFinite(x) ? "$X" : money(x);
+      };
+      // Also re-sync after SurveyJS redraws a question (e.g. to show an error message).
+      survey.onAfterRenderQuestion.add((_, options) => {
+        if (options.question.name === "x") {
+          const box = options.htmlElement.querySelector("input");
+          if (box && !box.dataset.preview) {
+            box.dataset.preview = "on";
+            box.addEventListener("input", syncPreview);
+          }
+        }
+        syncPreview();
+      });
     },
     data: { task: "matching", section: "matching" },
     on_finish: (data) => {
