@@ -730,8 +730,8 @@ function scale12(name, title, minText, maxText) {
       learn after a decision changes which option people choose.</p>
       <p>The gambles were hypothetical, so neither gamble was played and there is no outcome to
       show you. If you have questions about this research, contact
-      <a href="mailto:${EXPERIMENT.contact_email}">${EXPERIMENT.contact_email}</a>.
-      Press the button to save your responses and finish.</p>`,
+      <a href="mailto:${EXPERIMENT.contact_email}">${EXPERIMENT.contact_email}</a>.</p>
+      <p><strong>Press the button to save your responses and finish.</strong></p>`,
     choices: ["Finish"],
     data: { task: "debrief", section: "debrief" },
     // Every question is answered by now, and every participant sees this screen (once a Prolific
