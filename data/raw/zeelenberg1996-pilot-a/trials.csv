@@ -1,0 +1,275 @@
+participant_id,trial_index,task,condition,trial_type,rt,response,time_elapsed,section,stimulus,plugin_version,experiment_id,consented,blur_count,ms_away,view_history,matched_x,attract_r,attract_s,instructions_view,quiz_attempt,q1_correct,q2_correct,q3_correct,q4_correct,q5_correct,quiz_n_correct,quiz_passed,choice,strength,risk_preference,reasons,reasons_chars,too_short_attempts,paste_attempts,keystrokes,question_order,regret_1,regret_2,regret_3,regret_4,regret_5,regret_score
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,0,consent,safe_feedback,html-button-response,15929,1,15952,intro,"
+      <div class=""consent"">
+        <h2>Consent</h2>
+        <p>By answering the following questions, you are participating in a study being performed by
+        cognitive scientists in the Stanford Department of Psychology. If you have questions about
+        this research, please contact us at <a href=""mailto:stanfordpsych251@gmail.com"">stanfordpsych251@gmail.com</a>.
+        You must be at least 18 years old to participate. Your participation in this research is
+        voluntary. You may decline to answer any or all of the following questions. You may decline
+        further participation, at any time, without adverse consequences. Your anonymity is assured;
+        the researchers who have requested your participation will not receive any personal
+        information about you.</p>
+      </div>",2.1.0,zeelenberg1996-pilot-a,true,0,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,1,instructions,safe_feedback,instructions,17045,,33140,intro,,2.1.0,zeelenberg1996-pilot-a,,0,0,"[{""page_index"":0,""viewing_time"":17045}]",,,,,,,,,,,,,,,,,,,,,,,,,,,
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,2,matching,safe_feedback,survey,116197,"{""x"":129,""gambles"":null}",149378,matching,,4.0.0,zeelenberg1996-pilot-a,,0,0,,129,,,,,,,,,,,,,,,,,,,,,,,,,,
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,3,attractiveness,safe_feedback,survey,43541,"{""attract_r"":4,""attract_s"":12,""gambles"":null}",192943,matching,,4.0.0,zeelenberg1996-pilot-a,,0,0,,129,4,12,,,,,,,,,,,,,,,,,,,,,,,,
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,4,feedback_instructions,safe_feedback,html-button-response,37487,0,230432,feedback_rules,"
+      <div class=""gamble-page"" data-condition=""safe_feedback"">
+        
+        <p>Although you have made the gambles equally attractive, you are required to choose
+        between them.</p>
+        
+    <div class=""gambles"">
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble R</div>
+        <div class=""gamble-line"">$130 with 35%</div>
+        <div class=""gamble-line"">$0 with 65%</div>
+      </div>
+      <div class=""gamble-vs"">vs</div>
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble S</div>
+        <div class=""gamble-line""><span class=""x-value"">$129</span> with 65%</div>
+        <div class=""gamble-line"">$0 with 35%</div>
+      </div>
+    </div>
+        <p>Before you choose, please note:</p>
+        <p class=""feedback-rule"">You would always know the outcome of Gamble S and the outcome of the gamble you choose. You would be able to compare your outcome with the outcome of the non-chosen gamble if you select Gamble R, but not if you select Gamble S.</p>
+      </div>",2.1.0,zeelenberg1996-pilot-a,,0,0,,,,,1,,,,,,,,,,,,,,,,,,,,,,,
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,5,comprehension,safe_feedback,survey,28810,"{""q1"":""35"",""q2"":""65"",""q3"":""yes"",""q4"":""yes"",""q5"":""no"",""intro"":null}",259270,feedback_rules,,4.0.0,zeelenberg1996-pilot-a,,1,1999,,,,,,1,true,true,true,true,true,5,true,,,,,,,,,,,,,,,
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,6,choice,safe_feedback,html-button-response,19393,1,278665,decision,"
+      <div class=""gamble-page"" data-condition=""safe_feedback"">
+        
+    <div class=""gambles"">
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble R</div>
+        <div class=""gamble-line"">$130 with 35%</div>
+        <div class=""gamble-line"">$0 with 65%</div>
+      </div>
+      <div class=""gamble-vs"">vs</div>
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble S</div>
+        <div class=""gamble-line""><span class=""x-value"">$129</span> with 65%</div>
+        <div class=""gamble-line"">$0 with 35%</div>
+      </div>
+    </div>
+        <p class=""feedback-rule"">You would always know the outcome of Gamble S and the outcome of the gamble you choose. You would be able to compare your outcome with the outcome of the non-chosen gamble if you select Gamble R, but not if you select Gamble S.</p>
+        <p><strong>Which gamble do you choose?</strong></p>
+      </div>",2.1.0,zeelenberg1996-pilot-a,,0,0,,129,,,,,,,,,,,,safe,,,,,,,,,,,,,,
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,7,preference_strength,safe_feedback,survey,17815,"{""strength"":12,""chosen"":null}",296503,decision,,4.0.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,safe,12,-11.5,,,,,,,,,,,,
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,8,reasons,safe_feedback,survey,45630,"{""reasons"":""I chose it because the probability of getting the money is higher.""}",342151,decision,,4.0.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,I chose it because the probability of getting the money is higher.,66,0,0,79,,,,,,,
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,9,regret_scale,safe_feedback,survey-likert,50792,"{""regret_1"":3,""regret_2"":1,""regret_3"":2,""regret_4"":1,""regret_5"":5}",392945,regret_scale,,2.2.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,,,,,,"[0,1,2,3,4]",4,2,3,2,6,2.6
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,10,end_survey,safe_feedback,survey-html-form,27279,"{""feedback"":null,""gamble_freq_12mo"":""Never"",""feedback_reliance"":""A lot"",""age"":19,""gender"":""Female"",""gender_other"":null,""race"":""Asian"",""race_other"":null,""ethnicity"":""Non-Hispanic""}",420230,about_you,,2.1.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b,11,debrief,safe_feedback,html-button-response,1960,0,422193,debrief,"
+      <div class=""illustration""><svg viewBox=""0 0 320 200"" xmlns=""http://www.w3.org/2000/svg"" aria-hidden=""true"" focusable=""false"">
+    <ellipse cx=""160"" cy=""100"" rx=""128"" ry=""80"" fill=""#e7f2f2""/>
+    <circle cx=""160"" cy=""100"" r=""58"" fill=""#1E6E76""/>
+    <circle cx=""160"" cy=""100"" r=""46"" fill=""none"" stroke=""#ffffff"" stroke-opacity=""0.35"" stroke-width=""3"" stroke-dasharray=""4 8"" stroke-linecap=""round""/>
+    <path d=""M136 102 l16 16 l32 -34"" fill=""none"" stroke=""#ffffff"" stroke-width=""11"" stroke-linecap=""round"" stroke-linejoin=""round""/>
+    <path d=""M80 42 Q82.16 51.84 92 54 Q82.16 56.16 80 66 Q77.84 56.16 68 54 Q77.84 51.84 80 42 Z"" fill=""#f2b544""/><path d=""M240 42 Q242.16 51.84 252 54 Q242.16 56.16 240 66 Q237.84 56.16 228 54 Q237.84 51.84 240 42 Z"" fill=""#f2b544""/><path d=""M78 139 Q79.62 146.38 87 148 Q79.62 149.62 78 157 Q76.38 149.62 69 148 Q76.38 146.38 78 139 Z"" fill=""#8fc1b5""/><path d=""M242 139 Q243.62 146.38 251 148 Q243.62 149.62 242 157 Q240.38 149.62 233 148 Q240.38 146.38 242 139 Z"" fill=""#8fc1b5""/>
+    <circle cx=""110"" cy=""30"" r=""4"" fill=""#e98a6b""/><circle cx=""210"" cy=""30"" r=""4"" fill=""#e98a6b""/><circle cx=""46"" cy=""100"" r=""3.5"" fill=""#1E6E76""/><circle cx=""274"" cy=""100"" r=""3.5"" fill=""#1E6E76""/><circle cx=""112"" cy=""172"" r=""3.5"" fill=""#f2b544""/><circle cx=""208"" cy=""172"" r=""3.5"" fill=""#f2b544""/></svg></div>
+      <h2>Thank You!</h2>
+      <p>Thank you for taking part. This study tested whether knowing which outcomes you will
+      learn after a decision changes which option people choose.</p>
+      <p>The gambles were hypothetical, so neither gamble was played and there is no outcome to
+      show you. If you have questions about this research, contact
+      <a href=""mailto:stanfordpsych251@gmail.com"">stanfordpsych251@gmail.com</a>.</p>
+      <p><strong>Press the button to save your responses and finish.</strong></p>",2.1.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,0,consent,risky_feedback,html-button-response,2288,1,2297,intro,"
+      <div class=""consent"">
+        <h2>Consent</h2>
+        <p>By answering the following questions, you are participating in a study being performed by
+        cognitive scientists in the Stanford Department of Psychology. If you have questions about
+        this research, please contact us at <a href=""mailto:stanfordpsych251@gmail.com"">stanfordpsych251@gmail.com</a>.
+        You must be at least 18 years old to participate. Your participation in this research is
+        voluntary. You may decline to answer any or all of the following questions. You may decline
+        further participation, at any time, without adverse consequences. Your anonymity is assured;
+        the researchers who have requested your participation will not receive any personal
+        information about you.</p>
+      </div>",2.1.0,zeelenberg1996-pilot-a,true,0,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,1,instructions,risky_feedback,instructions,9393,,11692,intro,,2.1.0,zeelenberg1996-pilot-a,,0,0,"[{""page_index"":0,""viewing_time"":9393}]",,,,,,,,,,,,,,,,,,,,,,,,,,,
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,2,matching,risky_feedback,survey,25579,"{""x"":65,""gambles"":null}",37304,matching,,4.0.0,zeelenberg1996-pilot-a,,0,0,,65,,,,,,,,,,,,,,,,,,,,,,,,,,
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,3,attractiveness,risky_feedback,survey,9959,"{""attract_r"":6,""attract_s"":8,""gambles"":null}",47283,matching,,4.0.0,zeelenberg1996-pilot-a,,0,0,,65,6,8,,,,,,,,,,,,,,,,,,,,,,,,
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,4,feedback_instructions,risky_feedback,html-button-response,14598,0,61884,feedback_rules,"
+      <div class=""gamble-page"" data-condition=""risky_feedback"">
+        
+        <p>Although you have made the gambles equally attractive, you are required to choose
+        between them.</p>
+        
+    <div class=""gambles"">
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble R</div>
+        <div class=""gamble-line"">$130 with 35%</div>
+        <div class=""gamble-line"">$0 with 65%</div>
+      </div>
+      <div class=""gamble-vs"">vs</div>
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble S</div>
+        <div class=""gamble-line""><span class=""x-value"">$65</span> with 65%</div>
+        <div class=""gamble-line"">$0 with 35%</div>
+      </div>
+    </div>
+        <p>Before you choose, please note:</p>
+        <p class=""feedback-rule"">You would always know the outcome of Gamble R and the outcome of the gamble you choose. You would be able to compare your outcome with the outcome of the non-chosen gamble if you select Gamble S, but not if you select Gamble R.</p>
+      </div>",2.1.0,zeelenberg1996-pilot-a,,0,0,,,,,1,,,,,,,,,,,,,,,,,,,,,,,
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,5,comprehension,risky_feedback,survey,8459,"{""q1"":""35"",""q2"":""65"",""q3"":""yes"",""q4"":""no"",""q5"":""yes"",""intro"":null}",70368,feedback_rules,,4.0.0,zeelenberg1996-pilot-a,,0,0,,,,,,1,true,true,true,true,true,5,true,,,,,,,,,,,,,,,
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,6,choice,risky_feedback,html-button-response,2991,0,73360,decision,"
+      <div class=""gamble-page"" data-condition=""risky_feedback"">
+        
+    <div class=""gambles"">
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble R</div>
+        <div class=""gamble-line"">$130 with 35%</div>
+        <div class=""gamble-line"">$0 with 65%</div>
+      </div>
+      <div class=""gamble-vs"">vs</div>
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble S</div>
+        <div class=""gamble-line""><span class=""x-value"">$65</span> with 65%</div>
+        <div class=""gamble-line"">$0 with 35%</div>
+      </div>
+    </div>
+        <p class=""feedback-rule"">You would always know the outcome of Gamble R and the outcome of the gamble you choose. You would be able to compare your outcome with the outcome of the non-chosen gamble if you select Gamble S, but not if you select Gamble R.</p>
+        <p><strong>Which gamble do you choose?</strong></p>
+      </div>",2.1.0,zeelenberg1996-pilot-a,,0,0,,65,,,,,,,,,,,,risky,,,,,,,,,,,,,,
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,7,preference_strength,risky_feedback,survey,5320,"{""strength"":4,""chosen"":null}",78690,decision,,4.0.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,risky,4,3.5,,,,,,,,,,,,
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,8,reasons,risky_feedback,survey,18741,"{""reasons"":""I would like to avoid counterfactuals, so I chose R. But that is a weak pref tho.""}",97444,decision,,4.0.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,"I would like to avoid counterfactuals, so I chose R. But that is a weak pref tho.",81,0,0,87,,,,,,,
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,9,regret_scale,risky_feedback,survey-likert,14884,"{""regret_1"":6,""regret_2"":6,""regret_3"":4,""regret_4"":3,""regret_5"":5}",112331,regret_scale,,2.2.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,,,,,,"[0,1,2,3,4]",7,7,5,4,6,5
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,10,end_survey,risky_feedback,survey-html-form,25766,"{""feedback"":""cool study!"",""gamble_freq_12mo"":""Never"",""feedback_reliance"":""Somewhat"",""age"":20,""gender"":""Male"",""gender_other"":null,""race"":""Other"",""race_other"":""Central Asian"",""ethnicity"":""Non-Hispanic""}",138104,about_you,,2.1.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+PLfpMNPp1zer0Vqka7eU6VyjFtk2-1139b965,11,debrief,risky_feedback,html-button-response,30336,0,168442,debrief,"
+      <div class=""illustration""><svg viewBox=""0 0 320 200"" xmlns=""http://www.w3.org/2000/svg"" aria-hidden=""true"" focusable=""false"">
+    <ellipse cx=""160"" cy=""100"" rx=""128"" ry=""80"" fill=""#e7f2f2""/>
+    <circle cx=""160"" cy=""100"" r=""58"" fill=""#1E6E76""/>
+    <circle cx=""160"" cy=""100"" r=""46"" fill=""none"" stroke=""#ffffff"" stroke-opacity=""0.35"" stroke-width=""3"" stroke-dasharray=""4 8"" stroke-linecap=""round""/>
+    <path d=""M136 102 l16 16 l32 -34"" fill=""none"" stroke=""#ffffff"" stroke-width=""11"" stroke-linecap=""round"" stroke-linejoin=""round""/>
+    <path d=""M80 42 Q82.16 51.84 92 54 Q82.16 56.16 80 66 Q77.84 56.16 68 54 Q77.84 51.84 80 42 Z"" fill=""#f2b544""/><path d=""M240 42 Q242.16 51.84 252 54 Q242.16 56.16 240 66 Q237.84 56.16 228 54 Q237.84 51.84 240 42 Z"" fill=""#f2b544""/><path d=""M78 139 Q79.62 146.38 87 148 Q79.62 149.62 78 157 Q76.38 149.62 69 148 Q76.38 146.38 78 139 Z"" fill=""#8fc1b5""/><path d=""M242 139 Q243.62 146.38 251 148 Q243.62 149.62 242 157 Q240.38 149.62 233 148 Q240.38 146.38 242 139 Z"" fill=""#8fc1b5""/>
+    <circle cx=""110"" cy=""30"" r=""4"" fill=""#e98a6b""/><circle cx=""210"" cy=""30"" r=""4"" fill=""#e98a6b""/><circle cx=""46"" cy=""100"" r=""3.5"" fill=""#1E6E76""/><circle cx=""274"" cy=""100"" r=""3.5"" fill=""#1E6E76""/><circle cx=""112"" cy=""172"" r=""3.5"" fill=""#f2b544""/><circle cx=""208"" cy=""172"" r=""3.5"" fill=""#f2b544""/></svg></div>
+      <h2>Thank You!</h2>
+      <p>Thank you for taking part. This study tested whether knowing which outcomes you will
+      learn after a decision changes which option people choose.</p>
+      <p>The gambles were hypothetical, so neither gamble was played and there is no outcome to
+      show you. If you have questions about this research, contact
+      <a href=""mailto:stanfordpsych251@gmail.com"">stanfordpsych251@gmail.com</a>.
+      Press the button to save your responses and finish.</p>",2.1.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,0,consent,safe_feedback,html-button-response,1877,1,1895,intro,"
+      <div class=""consent"">
+        <h2>Consent</h2>
+        <p>By answering the following questions, you are participating in a study being performed by
+        cognitive scientists in the Stanford Department of Psychology. If you have questions about
+        this research, please contact us at <a href=""mailto:stanfordpsych251@gmail.com"">stanfordpsych251@gmail.com</a>.
+        You must be at least 18 years old to participate. Your participation in this research is
+        voluntary. You may decline to answer any or all of the following questions. You may decline
+        further participation, at any time, without adverse consequences. Your anonymity is assured;
+        the researchers who have requested your participation will not receive any personal
+        information about you.</p>
+      </div>",2.1.0,zeelenberg1996-pilot-a,true,0,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,1,instructions,safe_feedback,instructions,4239,,6136,intro,,2.1.0,zeelenberg1996-pilot-a,,0,0,"[{""page_index"":0,""viewing_time"":4239}]",,,,,,,,,,,,,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,2,matching,safe_feedback,survey,44945,"{""x"":85,""gambles"":null}",51115,matching,,4.0.0,zeelenberg1996-pilot-a,,0,0,,85,,,,,,,,,,,,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,3,attractiveness,safe_feedback,survey,19366,"{""attract_r"":8,""attract_s"":7,""gambles"":null}",70508,matching,,4.0.0,zeelenberg1996-pilot-a,,0,0,,85,8,7,,,,,,,,,,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,4,feedback_instructions,safe_feedback,html-button-response,8479,0,78989,feedback_rules,"
+      <div class=""gamble-page"" data-condition=""safe_feedback"">
+        
+        <p>Although you have made the gambles equally attractive, you are required to choose
+        between them.</p>
+        
+    <div class=""gambles"">
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble R</div>
+        <div class=""gamble-line"">$130 with 35%</div>
+        <div class=""gamble-line"">$0 with 65%</div>
+      </div>
+      <div class=""gamble-vs"">vs</div>
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble S</div>
+        <div class=""gamble-line""><span class=""x-value"">$85</span> with 65%</div>
+        <div class=""gamble-line"">$0 with 35%</div>
+      </div>
+    </div>
+        <p>Before you choose, please note:</p>
+        <p class=""feedback-rule"">You would always know the outcome of Gamble S and the outcome of the gamble you choose. You would be able to compare your outcome with the outcome of the non-chosen gamble if you select Gamble R, but not if you select Gamble S.</p>
+      </div>",2.1.0,zeelenberg1996-pilot-a,,0,0,,,,,1,,,,,,,,,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,5,comprehension,safe_feedback,survey,20568,"{""q1"":""35"",""q2"":""65"",""q3"":""yes"",""q4"":""no"",""q5"":""no"",""intro"":null}",99587,feedback_rules,,4.0.0,zeelenberg1996-pilot-a,,0,0,,,,,,1,true,true,true,false,true,4,false,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,6,feedback_instructions,safe_feedback,html-button-response,33275,0,132867,feedback_rules,"
+      <div class=""gamble-page"" data-condition=""safe_feedback"">
+        <p class=""quiz-retry"">Some of your answers were incorrect. Please read the instructions again.</p>
+        <p>Although you have made the gambles equally attractive, you are required to choose
+        between them.</p>
+        
+    <div class=""gambles"">
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble R</div>
+        <div class=""gamble-line"">$130 with 35%</div>
+        <div class=""gamble-line"">$0 with 65%</div>
+      </div>
+      <div class=""gamble-vs"">vs</div>
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble S</div>
+        <div class=""gamble-line""><span class=""x-value"">$85</span> with 65%</div>
+        <div class=""gamble-line"">$0 with 35%</div>
+      </div>
+    </div>
+        <p>Before you choose, please note:</p>
+        <p class=""feedback-rule"">You would always know the outcome of Gamble S and the outcome of the gamble you choose. You would be able to compare your outcome with the outcome of the non-chosen gamble if you select Gamble R, but not if you select Gamble S.</p>
+      </div>",2.1.0,zeelenberg1996-pilot-a,,0,0,,,,,2,,,,,,,,,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,7,comprehension,safe_feedback,survey,16591,"{""q1"":""35"",""q2"":""65"",""q3"":""yes"",""q4"":""yes"",""q5"":""yes"",""intro"":null}",149484,feedback_rules,,4.0.0,zeelenberg1996-pilot-a,,0,0,,,,,,2,true,true,true,true,false,4,false,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,8,feedback_instructions,safe_feedback,html-button-response,1477,0,150965,feedback_rules,"
+      <div class=""gamble-page"" data-condition=""safe_feedback"">
+        <p class=""quiz-retry"">Some of your answers were incorrect. Please read the instructions again.</p>
+        <p>Although you have made the gambles equally attractive, you are required to choose
+        between them.</p>
+        
+    <div class=""gambles"">
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble R</div>
+        <div class=""gamble-line"">$130 with 35%</div>
+        <div class=""gamble-line"">$0 with 65%</div>
+      </div>
+      <div class=""gamble-vs"">vs</div>
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble S</div>
+        <div class=""gamble-line""><span class=""x-value"">$85</span> with 65%</div>
+        <div class=""gamble-line"">$0 with 35%</div>
+      </div>
+    </div>
+        <p>Before you choose, please note:</p>
+        <p class=""feedback-rule"">You would always know the outcome of Gamble S and the outcome of the gamble you choose. You would be able to compare your outcome with the outcome of the non-chosen gamble if you select Gamble R, but not if you select Gamble S.</p>
+      </div>",2.1.0,zeelenberg1996-pilot-a,,0,0,,,,,3,,,,,,,,,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,9,comprehension,safe_feedback,survey,8322,"{""q1"":""35"",""q2"":""65"",""q3"":""yes"",""q4"":""yes"",""q5"":""no"",""intro"":null}",159304,feedback_rules,,4.0.0,zeelenberg1996-pilot-a,,1,2162,,,,,,3,true,true,true,true,true,5,true,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,10,choice,safe_feedback,html-button-response,3927,0,163235,decision,"
+      <div class=""gamble-page"" data-condition=""safe_feedback"">
+        
+    <div class=""gambles"">
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble R</div>
+        <div class=""gamble-line"">$130 with 35%</div>
+        <div class=""gamble-line"">$0 with 65%</div>
+      </div>
+      <div class=""gamble-vs"">vs</div>
+      <div class=""gamble-card"">
+        <div class=""gamble-name"">Gamble S</div>
+        <div class=""gamble-line""><span class=""x-value"">$85</span> with 65%</div>
+        <div class=""gamble-line"">$0 with 35%</div>
+      </div>
+    </div>
+        <p class=""feedback-rule"">You would always know the outcome of Gamble S and the outcome of the gamble you choose. You would be able to compare your outcome with the outcome of the non-chosen gamble if you select Gamble R, but not if you select Gamble S.</p>
+        <p><strong>Which gamble do you choose?</strong></p>
+      </div>",2.1.0,zeelenberg1996-pilot-a,,0,0,,85,,,,,,,,,,,,risky,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,11,preference_strength,safe_feedback,survey,7038,"{""strength"":9,""chosen"":null}",170294,decision,,4.0.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,risky,9,8.5,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,12,reasons,safe_feedback,survey,15785,"{""reasons"":""130 dollars is a bigger number objectively and thus more attractive ""}",186097,decision,,4.0.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,130 dollars is a bigger number objectively and thus more attractive ,67,0,0,82,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,13,regret_scale,safe_feedback,survey-likert,27304,"{""regret_1"":5,""regret_2"":5,""regret_3"":4,""regret_4"":5,""regret_5"":4}",213406,regret_scale,,2.2.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,,,,,,"[0,1,2,3,4]",6,6,5,6,5,5.2
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,14,end_survey,safe_feedback,survey-html-form,39101,"{""feedback"":""Feels like sometimes descriptions are really long. And I feel like there can be more visuals instead of words."",""gamble_freq_12mo"":""Never"",""feedback_reliance"":""Somewhat"",""age"":21,""gender"":""Male"",""gender_other"":null,""race"":""Asian"",""race_other"":null,""ethnicity"":""Non-Hispanic""}",252521,about_you,,2.1.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+r40scbN7f9dNJyGeZfSTKH5IafD3-cde03366,15,debrief,safe_feedback,html-button-response,7293,0,259819,debrief,"
+      <div class=""illustration""><svg viewBox=""0 0 320 200"" xmlns=""http://www.w3.org/2000/svg"" aria-hidden=""true"" focusable=""false"">
+    <ellipse cx=""160"" cy=""100"" rx=""128"" ry=""80"" fill=""#e7f2f2""/>
+    <circle cx=""160"" cy=""100"" r=""58"" fill=""#1E6E76""/>
+    <circle cx=""160"" cy=""100"" r=""46"" fill=""none"" stroke=""#ffffff"" stroke-opacity=""0.35"" stroke-width=""3"" stroke-dasharray=""4 8"" stroke-linecap=""round""/>
+    <path d=""M136 102 l16 16 l32 -34"" fill=""none"" stroke=""#ffffff"" stroke-width=""11"" stroke-linecap=""round"" stroke-linejoin=""round""/>
+    <path d=""M80 42 Q82.16 51.84 92 54 Q82.16 56.16 80 66 Q77.84 56.16 68 54 Q77.84 51.84 80 42 Z"" fill=""#f2b544""/><path d=""M240 42 Q242.16 51.84 252 54 Q242.16 56.16 240 66 Q237.84 56.16 228 54 Q237.84 51.84 240 42 Z"" fill=""#f2b544""/><path d=""M78 139 Q79.62 146.38 87 148 Q79.62 149.62 78 157 Q76.38 149.62 69 148 Q76.38 146.38 78 139 Z"" fill=""#8fc1b5""/><path d=""M242 139 Q243.62 146.38 251 148 Q243.62 149.62 242 157 Q240.38 149.62 233 148 Q240.38 146.38 242 139 Z"" fill=""#8fc1b5""/>
+    <circle cx=""110"" cy=""30"" r=""4"" fill=""#e98a6b""/><circle cx=""210"" cy=""30"" r=""4"" fill=""#e98a6b""/><circle cx=""46"" cy=""100"" r=""3.5"" fill=""#1E6E76""/><circle cx=""274"" cy=""100"" r=""3.5"" fill=""#1E6E76""/><circle cx=""112"" cy=""172"" r=""3.5"" fill=""#f2b544""/><circle cx=""208"" cy=""172"" r=""3.5"" fill=""#f2b544""/></svg></div>
+      <h2>Thank You!</h2>
+      <p>Thank you for taking part. This study tested whether knowing which outcomes you will
+      learn after a decision changes which option people choose.</p>
+      <p>The gambles were hypothetical, so neither gamble was played and there is no outcome to
+      show you. If you have questions about this research, contact
+      <a href=""mailto:stanfordpsych251@gmail.com"">stanfordpsych251@gmail.com</a>.</p>
+      <p><strong>Press the button to save your responses and finish.</strong></p>",2.1.0,zeelenberg1996-pilot-a,,0,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,
