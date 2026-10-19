@@ -15,8 +15,12 @@ format:
 execute:
   warning: false
   message: true
+editor: 
+  markdown: 
+    wrap: 72
 ---
 
+```{=html}
 <!--
 PSYCH 251 replication report template.
 
@@ -40,6 +44,7 @@ The code is wired to the template's demo experiment (the framing problem). Repla
 specifics with your study's as you go: the experiment ids, the original study's numbers, the
 exclusion rule, and the key comparison.
 -->
+```
 
 ```{r}
 #| label: setup
@@ -49,8 +54,8 @@ library(jsonlite)
 
 # Must match EXPERIMENT.id in experiment.js, and the --experiment you passed to the export.
 # Phase 2 runs under its own id, so its data never mix with Phase 1's.
-experiment_id        <- "framing-demo"
-experiment_id_phase2 <- "framing-demo-phase2"
+experiment_id        <- "zeelenberg1996-pilot-a"
+experiment_id_phase2 <- "zeelenberg1996-phase2"
 ```
 
 ```{r}
@@ -60,55 +65,102 @@ experiment_id_phase2 <- "framing-demo-phase2"
 # statistics table, and the side-by-side figures. Replace these with your original study's
 # values, and say in a comment exactly where in the paper each one comes from.
 #
-# Tversky & Kahneman (1981), Problem 1 (gain frame, N = 152): 72% chose the certain program,
-# 28% the risky one. Problem 2 (loss frame, N = 155): 22% certain, 78% risky. The paper
-# reports percentages, so the counts below are reconstructed from them.
+# Zeelenberg et al. (1996), Experiment 1 (pp. 151-152 and Figure 1): 78 psychology
+# undergraduates (26 per feedback condition). Number who chose the risky gamble (R), read
+# from Figure 1 (p. 152); the text gives the test statistics but none of the counts:
+# - risky feedback 16 of 26 (10 chose S), choice only 11 of 26 (15), safe feedback 6 of 26 (20).
+# - These counts reproduce every reported test: key test chi2(1) = 7.88, p < .005; all three
+#   conditions chi2(2) = 7.88, p < .02; each feedback condition vs choice only 1.93 and 2.18.
 original <- tibble(
-  condition = c("gain", "loss"),
-  n         = c(152, 155),
-  risky     = round(c(0.28 * 152, 0.78 * 155))
+  condition = c("risky_feedback", "choice_only", "safe_feedback"),
+  n         = c(26, 26, 26),
+  risky     = c(16, 11, 6)
 )
-original_p_gain <- original$risky[original$condition == "gain"] / original$n[original$condition == "gain"]
-original_p_loss <- original$risky[original$condition == "loss"] / original$n[original$condition == "loss"]
+original_p_risky <- with(original, risky[condition == "risky_feedback"] / n[condition == "risky_feedback"])
+original_p_safe  <- with(original, risky[condition == "safe_feedback"] / n[condition == "safe_feedback"])
+
+# Other statistics the original reports, for the secondary analyses (p. 152).
+original_secondary <- list(
+  # Mean matched X, in Dutch guilders; this replication uses the same numbers in dollars
+  # (f130 -> $130). No difference between conditions, F(2, 75) < 0.3.
+  matched_x_mean = 69.05,
+  # Attractiveness ratings (1-12): R 6.71 vs S 7.41, t(77) = -3.27, p < .01.
+  attract_r_mean = 6.71,
+  attract_s_mean = 7.41,
+  # Risk preference, (+1 risky / -1 safe) x (strength - 0.5): F(2, 75) = 3.46, p < .05;
+  # risky vs safe feedback t(75) = -2.63, p < .01; linear trend F = 6.90, p < .01; each feedback
+  # condition vs choice only t(75) = 1.19 and 1.44, ns, listed in the opposite order to what the
+  # means imply (risky vs choice only 1.44, safe vs choice only 1.19).
+  risk_pref_means = c(risky_feedback = 0.88, choice_only = -1.73, safe_feedback = -3.88)
+)
+
+# Order and labels for the three feedback conditions in tables and figures.
+condition_labels <- c(risky_feedback = "Risky feedback",
+                      choice_only    = "Choice only",
+                      safe_feedback  = "Safe feedback")
 ```
 
-::: {.callout-note appearance="simple" icon=false}
+::: {.callout-note appearance="simple" icon="false"}
 ## Project links
 
-- **Original paper:** Zeelenberg, M., Beattie, J., van der Pligt, J., & de Vries, N. K. (1996).
-  Consequences of regret aversion: Effects of expected feedback on risky decision making.
-  *Organizational Behavior and Human Decision Processes, 65*(2), 148–158. <https://doi.org/10.1006/obhd.1996.0013>
-- **Preregistration:** [OSF registration](https://osf.io/XXXXX) *(registered YYYY-MM-DD, before final data collection)*
-- **Live experiment:** <https://psych251.github.io/zeelenberg1996/> (take the study exactly as participants did)
-- **Repository:** <https://github.com/psych251/zeelenberg1996> (experiment code, data, and this report)
+-   **Original paper:** Zeelenberg, M., Beattie, J., van der Pligt, J.,
+    & de Vries, N. K. (1996). Consequences of regret aversion: Effects
+    of expected feedback on risky decision making. *Organizational
+    Behavior and Human Decision Processes, 65*(2), 148–158.
+    <https://doi.org/10.1006/obhd.1996.0013>
+-   **Preregistration:** [OSF registration](https://osf.io/XXXXX)
+    *(registered YYYY-MM-DD, before final data collection)*
+-   **Live experiment:** <https://psych251.github.io/zeelenberg1996/>
+    (take the study exactly as participants did)
+-   **Repository:** <https://github.com/psych251/zeelenberg1996>
+    (experiment code, data, and this report)
 :::
 
 # AI use statement
 
 | Tool and model | What it was used for | How you checked the output |
-|---|---|---|
+|------------------------|------------------------|------------------------|
 | *Claude Opus 5.5* | *Setup help (Git, Quarto, Java)* | *Confirmed the versions installed* |
+| *Claude Code Opus 5.5* | *Building the paradigm* | *Confirmed the flow with the original paper* |
+| *Claude Code Opus 5.5* | *Visual redesign* | *Confirmed the design looks the way I wanted* |
+| *Claude Code Opus 5.5* | *Timing fields, paste block, character minimum* | *Confirmed on the raw data* |
+| *Claude Code Opus 5.5* | *Updating report’s analysis code* | *Confirmed the code and logic* |
 
-I wrote all of the text in this report myself. AI tools were not used to write, rewrite or
-paraphrase it, and were not used to generate, alter, or impute any participant data. I take full
-responsibility for the content of this report, including any errors introduced by AI tools.
+
+I wrote all of the text in this report myself. AI tools were not used to
+write, rewrite or paraphrase it, and were not used to generate, alter,
+or impute any participant data. I take full responsibility for the
+content of this report, including any errors introduced by AI tools.
 
 # Key statistics
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-One row per study for the key comparison: the original, your Phase 1 replication, and your
-Phase 2 extension. The table fills itself in from the data as each phase is exported, using the
-analysis code below (open "Show the analysis code"), which is shared by both phases so they are
-analysed identically. Edit that code once, here, to match your design and preregistered
-exclusion rule. On the scientific-extension track, the Phase 2 row reports the new comparison:
-adapt its code and say so in the caption.
+One row per study for the key comparison: the original, your Phase 1
+replication, and your Phase 2 extension. The table fills itself in from
+the data as each phase is exported, using the analysis code below (open
+"Show the analysis code"), which is shared by both phases so they are
+analysed identically. Edit that code once, here, to match your design
+and preregistered exclusion rule. On the scientific-extension track, the
+Phase 2 row reports the new comparison: adapt its code and say so in the
+caption.
 :::
 
 ```{r}
 #| label: analysis-functions
 #| code-summary: "Show the analysis code (shared by Phase 1 and Phase 2)"
+
+# Short notes in the rendered report, e.g. "not enough data yet". This Quarto version does not
+# show message() output, so notes are printed as ordinary output instead.
+note <- function(...) cat(paste0(...), "\n")
+
+# Exclusion settings.
+# Screens that need an answer. Finishing one of them faster than this is not humanly possible
+# (the screen alone takes 150 ms to fade in), so it marks an automated response.
+min_screen_ms <- 300
+answer_tasks  <- c("matching", "attractiveness", "comprehension", "choice",
+                   "preference_strength", "reasons", "regret_scale", "end_survey")
 
 # Load one phase's exported data and apply the exclusion rule. Returns NULL if that phase
 # has not been exported yet, which is how every section below knows to skip itself.
@@ -120,43 +172,53 @@ read_phase <- function(id) {
   errors_path  <- file.path(dir, "errors.csv")
   errors <- if (file.exists(errors_path)) read_csv(errors_path, show_col_types = FALSE) else tibble()
 
-  complete <- participants |> filter(completed)
+  # Every participant document is one page load, including visits that never consented. Someone
+  # who clicks "I do not agree" also reaches the end of the study (completed = TRUE), so a
+  # completer must have consented too.
+  consented_ids <- trials |> filter(task == "consent", consented %in% TRUE) |> pull(participant_id)
+  complete <- participants |> filter(completed %in% TRUE, participant_id %in% consented_ids)
 
-  # Exclusion rule: replace with the rule you preregistered. Here: at least 6 of 8
-  # lexical-decision trials correct, and at least one speeded response at all (a session in
-  # which every speeded trial timed out is what a device without a keyboard produces).
-  ld <- trials |>
-    filter(task == "lexical_decision") |>
-    group_by(participant_id) |>
-    summarise(ld_acc           = mean(as.logical(correct), na.rm = TRUE),
-              ld_all_timed_out = all(as.logical(timed_out)),
-              .groups = "drop")
-  checked <- complete |> left_join(ld, by = "participant_id")
-  keep <- checked |> filter(!is.na(ld_acc), !ld_all_timed_out, ld_acc >= 0.75)
+  # Exclusion 1, repeat sessions. The export links each person's sessions (by Prolific ID, or by
+  # browser when there is none) and flags them. Keep each person's first completed session, and
+  # exclude the person if an earlier session had already reached the feedback instructions:
+  # they may have read another condition's feedback rule.
+  has_repeat_flags <- all(c("earlier_completed", "earlier_saw_feedback") %in% names(participants))
+  repeat_ids <- if (has_repeat_flags) {
+    complete |> filter(earlier_completed %in% TRUE | earlier_saw_feedback %in% TRUE) |> pull(participant_id)
+  } else character(0)
+
+  # Exclusion 2, impossibly fast answers: any answer screen finished in under min_screen_ms.
+  too_fast_ids <- trials |>
+    filter(task %in% answer_tasks, participant_id %in% complete$participant_id,
+           as.numeric(rt) < min_screen_ms) |>
+    distinct(participant_id) |> pull(participant_id)
+
+  keep <- complete |> filter(!participant_id %in% c(repeat_ids, too_fast_ids))
 
   list(participants = participants, trials = trials, errors = errors,
-       complete = complete, keep = keep,
-       n_no_response = sum(checked$ld_all_timed_out %in% TRUE))
+       consented_ids = consented_ids, complete = complete, keep = keep,
+       has_repeat_flags = has_repeat_flags, repeat_ids = repeat_ids, too_fast_ids = too_fast_ids)
 }
 
-# The key comparison's raw counts: how many analysed participants chose the risky program
-# in each frame.
+# The key comparison's raw counts: how many analysed participants chose the risky gamble (R)
+# in each feedback condition.
 risky_counts <- function(d) {
   d$trials |>
-    filter(task == "framing", participant_id %in% d$keep$participant_id) |>
+    filter(task == "choice", participant_id %in% d$keep$participant_id) |>
     group_by(condition) |>
     summarise(risky = sum(choice == "risky"), n = n(), .groups = "drop")
 }
 
-# The key statistic: difference in the proportion choosing the risky program (loss minus
-# gain) with a 95% CI, and the uncorrected chi-square, which is the same test. NULL until
-# both frames have at least one analysed participant.
+# The key statistic: difference in the proportion choosing the risky gamble (risky feedback
+# minus safe feedback) with a 95% CI, and the uncorrected chi-square, which is the same test
+# (and reproduces the original's chi2(1) = 7.88). NULL until both conditions have at least one
+# analysed participant.
 diff_ci <- function(counts) {
-  loss <- counts[counts$condition == "loss", ]
-  gain <- counts[counts$condition == "gain", ]
-  if (nrow(loss) == 0 || nrow(gain) == 0) return(NULL)
-  pt <- prop.test(c(loss$risky, gain$risky), c(loss$n, gain$n), correct = FALSE)
-  tibble(N = loss$n + gain$n,
+  rf <- counts[counts$condition == "risky_feedback", ]
+  sf <- counts[counts$condition == "safe_feedback", ]
+  if (nrow(rf) == 0 || nrow(sf) == 0) return(NULL)
+  pt <- suppressWarnings(prop.test(c(rf$risky, sf$risky), c(rf$n, sf$n), correct = FALSE))
+  tibble(N = rf$n + sf$n,
          estimate = unname(pt$estimate[1] - pt$estimate[2]),
          ci_low = pt$conf.int[1], ci_high = pt$conf.int[2],
          statistic = unname(pt$statistic), p = pt$p.value)
@@ -164,7 +226,7 @@ diff_ci <- function(counts) {
 
 # Side-by-side figure: any number of studies on the same axes, in the order given.
 prop_ci <- function(x, n) {
-  ci <- prop.test(x, n, correct = FALSE)$conf.int
+  ci <- suppressWarnings(prop.test(x, n, correct = FALSE))$conf.int
   tibble(p = x / n, low = ci[1], high = ci[2])
 }
 comparison_plot <- function(...) {
@@ -172,16 +234,22 @@ comparison_plot <- function(...) {
   studies <- studies[!map_lgl(studies, ~ is.null(.x) || nrow(.x) == 0)]
   df <- imap_dfr(studies, ~ mutate(.x, Study = .y)) |>
     rowwise() |> mutate(prop_ci(risky, n)) |> ungroup() |>
-    mutate(Study = factor(Study, levels = names(studies)), label = sprintf("n = %d", n))
+    mutate(Study = factor(Study, levels = names(studies)),
+           condition = factor(unname(condition_labels[condition]), levels = condition_labels),
+           label = sprintf("n = %d", n))
   fills <- setNames(c("grey55", "#1E6E76", "#B8792A")[seq_along(studies)], names(studies))
-  dodge <- position_dodge(width = 0.8)
+  dodge <- position_dodge(width = 0.8, preserve = "single")
   ggplot(df, aes(x = condition, y = p, fill = Study)) +
     geom_col(position = dodge, width = 0.75) +
     geom_errorbar(aes(ymin = low, ymax = high), position = dodge, width = 0.2) +
-    geom_text(aes(y = 0.02, label = label), position = dodge, vjust = 0, size = 3, colour = "white") +
+    # n labels sit inside the bar in white, or in dark grey when the bar is too short to hold them.
+    geom_text(aes(y = 0.02, label = label, colour = p >= 0.07, group = Study), position = dodge,
+              vjust = 0, size = 3, show.legend = FALSE) +
+    scale_colour_manual(values = c(`TRUE` = "white", `FALSE` = "grey25")) +
+    scale_x_discrete(drop = FALSE) +   # keep all three conditions, even one with no pilot data
     scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
     scale_fill_manual(values = fills) +
-    labs(x = "Frame", y = "Chose the risky program", fill = NULL) +
+    labs(x = "Feedback condition", y = "Chose the risky gamble (R)", fill = NULL) +
     theme_minimal(base_size = 12) +
     theme(legend.position = "top")
 }
@@ -195,156 +263,355 @@ have_phase2 <- !is.null(phase2)
 ```{r}
 #| label: key-stats
 #| echo: false
-fmt_row <- function(study, r) {
+fmt_row <- function(study, r, missing = "not yet collected") {
   if (is.null(r)) {
-    return(tibble(Study = study, N = "", `Effect (loss − gain)` = "not yet collected",
+    return(tibble(Study = study, N = "", `Effect (risky − safe feedback)` = missing,
                   `95% CI` = "", `χ²(1)` = "", p = ""))
   }
+  # With very few participants (e.g. Pilot A) the test can be undefined; show a dash.
+  num <- function(x, fmt) if (is.finite(x)) sprintf(fmt, x) else "-"
   tibble(Study = study, N = as.character(r$N),
-         `Effect (loss − gain)` = sprintf("%.0f points", 100 * r$estimate),
+         `Effect (risky − safe feedback)` = sprintf("%.0f points", 100 * r$estimate),
          `95% CI` = sprintf("[%.0f, %.0f]", 100 * r$ci_low, 100 * r$ci_high),
-         `χ²(1)` = sprintf("%.2f", r$statistic),
-         p = format.pval(r$p, digits = 2, eps = 0.001))
+         `χ²(1)` = num(r$statistic, "%.2f"),
+         p = if (is.finite(r$p)) format.pval(r$p, digits = 2, eps = 0.001) else "-")
 }
 bind_rows(
   fmt_row("Original", diff_ci(original)),
-  fmt_row("Phase 1: replication", if (have_data) diff_ci(risky_counts(phase1))),
-  fmt_row("Phase 2: extension", if (have_phase2) diff_ci(risky_counts(phase2)))
+  # With data but nobody yet in one of the two key conditions, say so rather than "not yet collected".
+  fmt_row("Phase 1: replication", if (have_data) diff_ci(risky_counts(phase1)),
+          if (have_data) "needs participants in both key conditions" else "not yet collected"),
+  fmt_row("Phase 2: extension", if (have_phase2) diff_ci(risky_counts(phase2)),
+          if (have_phase2) "needs participants in both key conditions" else "not yet collected")
 ) |>
   knitr::kable(align = "lrlllr",
-               caption = "Key comparison: difference in the percentage of analysed participants choosing the risky program, loss frame minus gain frame.")
+               caption = "Key comparison: difference in the percentage of analysed participants choosing the risky gamble, risky-feedback minus safe-feedback condition.")
 ```
 
 # Phase 1: Replication
 
 ## Introduction
 
-"What if the other option would have turned out better?" Regret depends on being able to answer that question. If I never learn how the path I passed up would have gone, I have nothing to compare my outcome against, and so nothing to regret. Some decisions hide that answer, and others reveal it whether I want it or not, and people can therefore protect themselves from regret without being more cautious, simply by choosing the option that keeps the alternative out of view.
+<!--
+"What if the other option would have turned out better?" Regret depends
+on being able to answer that question. If I never learn how the path I
+passed up would have gone, I have nothing to compare my outcome against,
+and so nothing to regret. Some decisions hide that answer, and others
+reveal it whether I want it or not, and people can therefore protect
+themselves from regret without being more cautious, simply by choosing
+the option that keeps the alternative out of view.
 
-Zeelenberg et al. (1996) used this idea to challenge the view that anticipated regret makes people cautious. Experiment 1 separated avoiding risk and avoiding regret by telling participants in advance which of two gambles would have its outcome revealed regardless of their choice. Participants followed the feedback, not the risk: most chose the risky gamble when its outcome would always be shown, and few did when the safe gamble's outcome would be. I replicated this comparison. It matters for my research on regret and agency, where I study how people delegate decisions and how it impacts outcome ownership and regret.
+Zeelenberg et al. (1996) used this idea to challenge the view that
+anticipated regret makes people cautious. Experiment 1 separated
+avoiding risk and avoiding regret by telling participants in advance
+which of two gambles would have its outcome revealed regardless of their
+choice. Participants followed the feedback, not the risk: most chose the
+risky gamble when its outcome would always be shown, and few did when
+the safe gamble's outcome would be. I replicated this comparison. It
+matters for my research on regret and agency, where I study how people
+delegate decisions and how it impacts outcome ownership and regret.
 
-To run the study, I built its procedure in jsPsych and recruited on Prolific. After adjusting a safe gamble to be as attractive as a risky one, participants learned which gamble's outcome they would see regardless of their choice: the risky one, the safe one, or only the one they chose. They then chose a gamble, rated the strength of their preference, and wrote their reasons. Not having the exact feedback instructions that were presumably in Dutch originally made it harder to replicate. The key test was a chi-square test of gamble choice by feedback condition, comparing risky feedback with safe feedback (original: 16 of 26 versus 6 of 26 chose the risky gamble, χ²(1) = 7.88, p < .005). A possible extension would add a comprehension check on the feedback instruction and test in another domain that is not gambling related.
+To run the study, I built its procedure in jsPsych and recruited on
+Prolific. After adjusting a safe gamble to be as attractive as a risky
+one, participants learned which gamble's outcome they would see
+regardless of their choice: the risky one, the safe one, or only the one
+they chose. They then chose a gamble, rated the strength of their
+preference, and wrote their reasons. Not having the exact feedback
+instructions that were presumably in Dutch originally made it harder to
+replicate. The key test was a chi-square test of gamble choice by
+feedback condition, comparing risky feedback with safe feedback
+(original: 16 of 26 versus 6 of 26 chose the risky gamble, χ²(1) = 7.88,
+p \< .005). A possible extension would add a comprehension check on the
+feedback instruction and test in another domain that is not gambling
+related.
+
+--> 
+
+"What if the other option would have turned out better?" Regret as an emotion depends on being able to answer this question: when a decision maker never learns how the forgone option would have turned out, there is nothing to compare the outcome against, and therefore nothing to regret. Zeelenberg et al. (1996) used this idea to challenge the view that anticipated regret makes people risk averse. Experiment 1, which I replicated, separated avoiding risk and avoiding regret by telling participants in advance which of two gambles would have its outcome revealed regardless of their choice. Choices tracked the expected feedback rather than the riskiness of the options: most participants chose the risky gamble when its outcome would always be revealed, and few did so when the safe gamble's outcome would be. The finding is relevant to my research on regret and agency, which examines how delegating decisions affects people's sense of ownership over outcomes and the regret they feel about them.
+
+I implemented the procedure in jsPsych and recruited participants on Prolific. Participants first considered two hypothetical gambles: a risky gamble paying \$130 with a 35% chance, and a safe gamble paying \$X with a 65% chance. They entered the value of X that made the two gambles equally attractive to them and were then randomly assigned to one of three feedback conditions. In the risky feedback condition, they would always learn the outcome of the risky gamble; in the safe feedback condition, the outcome of the safe gamble; and in the choice-only condition, only the outcome of the gamble they chose. After a short comprehension quiz on the feedback instruction, participants chose a gamble, rated the strength of their preference, and explained their choice. Because the original feedback instructions were not printed in the paper and were presumably written in Dutch, I wrote new instructions from the paper's description; I also converted the original amounts from Dutch guilders to dollars.
+
+The key test was a chi-square test on the 2 × 2 table of feedback condition (risky vs. safe) by gamble choice; the choice-only condition was not part of this test. In the original study, 16 of 26 participants chose the risky gamble in the risky feedback condition, compared with 6 of 26 in the safe feedback condition, χ²(1) = 7.88, p < .005. A possible extension would make the choice consequential by paying participants a bonus based on the outcome of their chosen gamble, while revealing only the outcomes their condition specified.
 
 ## Methods
 
 ### Power analysis
 
-::: {.callout-tip icon=false}
+<!--
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Report the original effect size, the sample needed for 80%, 90% and 95% power to detect it,
-and the sample you chose and why. The table below is computed from the original study's
-numbers entered at the top of this file.
+Report the original effect size, the sample needed for 80%, 90% and 95%
+power to detect it, and the sample you chose and why. The table below is
+computed from the original study's numbers entered at the top of this
+file.
 
-Original effects are usually overestimates, so powering to the original effect tends to
-produce an underpowered replication. One widely used alternative is to collect 2.5 times the
-original sample, which gives 80% power to detect an effect the original study had only 33%
-power to detect (Simonsohn, 2015; Experimentology §10.4). Say which approach you used, and
-what the course's participant budget allowed.
+Original effects are usually overestimates, so powering to the original
+effect tends to produce an underpowered replication. One widely used
+alternative is to collect 2.5 times the original sample, which gives 80%
+power to detect an effect the original study had only 33% power to
+detect (Simonsohn, 2015; Experimentology §10.4). Say which approach you
+used, and what the course's participant budget allowed.
 :::
+-->
 
 ```{r}
 #| label: power
+# Power for the key comparison (risky vs safe feedback). The study has three conditions, so
+# the total is three times the per-condition N.
 power_rows <- map_dfr(c(0.80, 0.90, 0.95), function(pw) {
-  n <- power.prop.test(p1 = original_p_gain, p2 = original_p_loss,
+  n <- power.prop.test(p1 = original_p_safe, p2 = original_p_risky,
                        power = pw, sig.level = 0.05)$n
-  tibble(power = scales::percent(pw), n_per_group = ceiling(n), n_total = 2 * ceiling(n))
+  tibble(power = scales::percent(pw), n_per_group = ceiling(n),
+         n_key = 2 * ceiling(n), n_total = 3 * ceiling(n))
 })
 
-original_effect <- original_p_loss - original_p_gain
-two_and_half <- ceiling(2.5 * original$n)
+original_effect <- original_p_risky - original_p_safe
+two_and_half <- ceiling(2.5 * original$n)   # per condition, in the order of `original`
 
-knitr::kable(power_rows, col.names = c("Power", "N per frame", "N total"),
+# Numbers quoted in the text below: the planned N per condition (2.5 x 26 = 65) and the key
+# test's power at that N, for the original effect and for half of it.
+n_per_condition <- two_and_half[1]
+power_original  <- power.prop.test(n = n_per_condition, p1 = original_p_safe, p2 = original_p_risky)$power
+half_effect     <- original_p_safe + original_effect / 2
+power_half      <- power.prop.test(n = n_per_condition, p1 = original_p_safe, p2 = half_effect)$power
+# Smallest difference (risky minus safe feedback) detectable with 80% power at that N.
+min_detectable  <- uniroot(function(p2) power.prop.test(n = n_per_condition, p1 = original_p_safe, p2 = p2)$power - 0.8,
+                           c(original_p_safe + 0.01, 0.99))$root - original_p_safe
+
+knitr::kable(power_rows,
+             col.names = c("Power", "N per condition", "N in the key comparison (2 conditions)",
+                           "N total (3 conditions)"),
              caption = sprintf(
-               "Sample needed to detect the original effect (risky choice: %.0f%% gain vs %.0f%% loss, a difference of %.0f points), two-sided alpha = .05.",
-               100 * original_p_gain, 100 * original_p_loss, 100 * original_effect))
+               paste("Sample needed to detect the original effect (risky choice: %.0f%% with risky feedback",
+                     "vs %.0f%% with safe feedback, a difference of %.0f points), two-sided alpha = .05.",
+                     "For comparison, 2.5 times the original sample is %d per condition, %d in total."),
+               100 * original_p_risky, 100 * original_p_safe, 100 * original_effect,
+               two_and_half[1], sum(two_and_half)))
 ```
 
-For comparison, 2.5 times the original sample would be `r two_and_half[1]` in the gain frame
-and `r two_and_half[2]` in the loss frame (`r sum(two_and_half)` in total).
+The original study found a difference of `r round(100 * original_effect)` percentage points in risky choice between the risky and safe feedback conditions. I will follow the 2.5-times rule (Simonsohn, 2015) rather than power the study to the original effect, which gives 80% power to detect an effect the original study had only 33% power to detect. With `r two_and_half[1]` participants per condition, the key test will have `r scales::percent(power_original, accuracy = 0.1)` power to detect the original effect and `r scales::percent(power_half, accuracy = 1)` power to detect half of it (and the smallest difference it can detect with 80% power is `r round(100 * min_detectable)` percentage points).
 
 ### Planned sample
 
-::: {.callout-tip icon=false}
+<!--
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Planned sample size and stopping rule, sampling frame (for example, "US residents on Prolific,
-fluent in English, 18 or older"), known demographics, and any preselection or screening. The
-stopping rule should be data-independent: "collect until N participants pass the exclusion
-criteria below" rather than "until the result is clear".
+Planned sample size and stopping rule, sampling frame (for example, "US
+residents on Prolific, fluent in English, 18 or older"), known
+demographics, and any preselection or screening. The stopping rule
+should be data-independent: "collect until N participants pass the
+exclusion criteria below" rather than "until the result is clear".
 :::
+-->
+
+```{r}
+#| label: budget
+# Planned sample and cost. Update minutes after Pilot B (median total_ms in participants.csv)
+# and the hourly rate from the Class Prolific Guidelines.
+n_total <- sum(two_and_half)        # 195 = 2.5 x the original 78, 65 per condition
+minutes <- 7                        # expected study length in minutes
+hourly  <- 12                       # US$ per hour
+fee     <- 1/3                      # Prolific's service fee on top of pay
+cost_paid  <- n_total * minutes / 60 * hourly
+cost_total <- cost_paid * (1 + fee)
+budget <- tibble(Minutes = minutes,
+                 `Pay per person` = minutes / 60 * hourly,
+                 `Paid to participants` = cost_paid,
+                 `Total with fee` = cost_total)
+knitr::kable(budget, digits = 2,
+             caption = sprintf("Estimated cost of %d participants for a %d-minute study at $%d per hour, including Prolific's service fee.",
+                               n_total, minutes, hourly))
+```
+
+I will collect `r sum(two_and_half)` analyzable participants (2.5 times the original sample of `r sum(original$n)` (or about `r two_and_half[1]` per condition (because assignment is random, the per-condition numbers will be approximate))). Participants will be US residents on Prolific, fluent in English, aged 18 or older, and using a desktop or laptop computer. At about `r minutes` minutes per participant and `r scales::dollar(hourly)` per hour, including Prolific's service fee, the planned sample will cost about `r scales::dollar(cost_total, accuracy = 1)`.
+
+I will first recruit `r sum(two_and_half)` participants. After applying the exclusion criteria, I will recruit replacements in additional batches equal to the number excluded (assigned at random like the original batch) and repeat until `r sum(two_and_half)` participants have passed the exclusion criteria. The number recruited will depend only on the number of exclusions.
 
 ### Materials
 
-::: {.callout-tip icon=false}
+<!--
+::: {.callout-tip icon="false"}
 ## Guidance
 
-All materials. You can quote the original article directly: put the text in quotation marks
-and note that it was followed precisely, or quote it and point out the exceptions. Link to the
-live experiment above rather than pasting screenshots of every screen.
+All materials. You can quote the original article directly: put the text
+in quotation marks and note that it was followed precisely, or quote it
+and point out the exceptions. Link to the live experiment above rather
+than pasting screenshots of every screen.
 :::
+-->
+
+The original questionnaire was never published, so the on-screen text was reconstructed from the paper's description of it (Zeelenberg et al., 1996, pp. 151–152). The full study can be taken at the live experiment link above.
+
+| Material | Original | This replication | Exceptions |
+|---|---|---|---|
+| Gambles | "Two hypothetical gambles, gamble R (risky) and gamble S (safe), each of which could result in a positive outcome" (p. 151): f130 with 35%, f0 with 65% (R); fX with 65%, f0 with 35% (S) | Gamble R: "\$130 with 35%", "\$0 with 65%". Gamble S: "\$X with 65%", "\$0 with 35%" | Dollars instead of guilders |
+| Matching | "Make gamble S exactly as attractive as gamble R ... write down the value of X for which he or she found the gambles equally attractive" (p. 151) | "Make Gamble S exactly as attractive as Gamble R: write down the value of X for which you find the gambles equally attractive." | Added explanation of X below the question; the S card updates as X is typed; X must be between \$0 and \$130 (with a message shown only if it is not) |
+| Attractiveness | "Rate the attractiveness of each option on a scale ranging from not attractive (1) to very attractive (12)" (p. 151) | Same wording | Buttons instead of paper |
+| Choice set-up | Participants "learned that, although they had made the gambles equally attractive, they were required to choose between them" (p. 151) | "Although you have made the gambles equally attractive, you are required to choose between them." then "Before you choose, please note:" and the condition's feedback text | Second person |
+| Feedback instructions | Described on pp. 151–152; see the next table | See the next table | Reconstructed from the description; shown again on the choice screen |
+| Choice | Participants "made the choice (risky or safe gamble)" (p. 152) | Gamble cards and feedback text above "Which gamble do you choose?", with buttons Gamble R and Gamble S | Buttons instead of paper |
+| Strength of preference | "On a 12-point scale ranging from weak preference (1) to strong preference (12)" (p. 152) | "You chose Gamble R" (or S), then "Indicate the strength of your preference for the chosen option on a 12-point scale ranging from weak preference (1) to strong preference (12)." | Second person; buttons instead of paper |
+| Reasons | "Asked to write down reasons for their choice" (p. 152) | "Write down the reasons for your choice." | Minimum of 30 characters; pasting blocked |
+
+| Condition | The paper's description (pp. 151–152) | On-screen text |
+|---|---|---|
+| Choice only | "They would only know the outcome of the gamble that they chose, and that they would not be able to compare their outcome with the outcome of the non-chosen gamble" | "You would only know the outcome of the gamble that you choose. You would not be able to compare your outcome with the outcome of the non-chosen gamble." |
+| Risky feedback | "They would always know the outcome of the risky gamble and the outcome of the gamble they chose. They also read that they would be able to compare their outcome with the outcome of the non-chosen gamble if they selected gamble S, but not if they selected gamble R" | "You would always know the outcome of Gamble R and the outcome of the gamble you choose. You would be able to compare your outcome with the outcome of the non-chosen gamble if you select Gamble S, but not if you select Gamble R." |
+| Safe feedback | Mirrors risky feedback with R and S swapped, but adds "only" ("would only be able to compare") | The risky feedback text with R and S swapped, without the added "only", so the two conditions differ only in the gamble named |
+
+The comprehension quiz is new and checks both the gambles and the feedback rule. If any answer is wrong, participants see "Some of your answers were incorrect. Please read the instructions again."
+
+| Quiz item | Correct answer |
+|---|---|
+| Chance of winning $130 with Gamble R | 35% |
+| Chance of winning $X (the participant's own value) with Gamble S | 65% |
+| Would you know the outcome of the gamble you choose? | Yes |
+| If you choose Gamble R, would you know the outcome of Gamble S? | Yes only in the safe feedback condition |
+| If you choose Gamble S, would you know the outcome of Gamble R? | Yes only in the risky feedback condition |
+
+| Added material | Content |
+|---|---|
+| Consent | The course's approved consent text |
+| Welcome | Explains that the gambles are hypothetical: "no real money is involved, but please answer as if it were" |
+| Regret Scale (exploratory) | Five items (Schwartz et al., 2002), rated from 1 (completely disagree) to 7 (completely agree), item 5 reverse-scored |
+| End form | How often they gambled in the past 12 months; how much the information about which outcomes they would learn influenced their choice; age, gender, race and ethnicity, each with "Prefer not to say"; an optional feedback box |
+| Debrief | What the study tested, and that none of the gambles was played |
+
+All added materials are identical across conditions.
 
 ### Procedure
 
-::: {.callout-tip icon=false}
+<!--
+::: {.callout-tip icon="false"}
 ## Guidance
 
-As for Materials: quote the original where you can and point out the exceptions. Describe the
-sequence a participant experiences, from consent to debrief, and how long it takes.
+As for Materials: quote the original where you can and point out the
+exceptions. Describe the sequence a participant experiences, from
+consent to debrief, and how long it takes.
 :::
+--->
+
+In the original, "participants were seated in separate cubicles and given a questionnaire," and "the experiment used a two-phase procedure" (Zeelenberg et al., 1996, p. 151). Participants were "randomly assigned to one of the three conditions," with 26 in each (p. 151). In this replication, participants will arrive from Prolific, and only desktop and laptop computers will be allowed. Each participant will be randomly assigned, with equal probability, to the choice-only, risky feedback or safe feedback condition when the page loads.
+
+| Step | What happens | Original | Exceptions |
+|---|---|---|---|
+| 1. Consent | Course consent text; "I do not agree" ends the study, "I agree to participate" continues | Not described | Course requirement |
+| 2. Welcome | Explains that the gambles are hypothetical, that there are no right or wrong answers, and that the study takes about seven minutes in one sitting on a computer | Not described | New |
+| 3. Matching | Participants see both gambles and type the value of X that makes them equally attractive; X must be between \$0 and \$130 to continue | Phase 1: "make gamble S exactly as attractive as gamble R" (p. 151) | Live preview of X on the S card; range check |
+| 4. Attractiveness | Participants rate each gamble from 1 to 12, with their own X shown in gamble S | "Next, he or she was asked to rate the attractiveness of each option" (p. 151) | Buttons instead of paper |
+| 5. Feedback instructions | Participants are told they must choose between the gambles and read their condition's feedback text | Phase 2: "Before they made the choice, however, participants learned about possible feedback on foregone outcomes" (p. 151) | Second person |
+| 6. Comprehension quiz | Five questions; if any answer is wrong, participants return to step 5 with a notice and retake the quiz until all five are correct, without being told which was wrong; the number of attempts is recorded | Not in the original | New |
+| 7. Choice | Participants see the gambles and feedback text again and click Gamble R or Gamble S | "Participants then made the choice (risky or safe gamble)" (p. 152) | Feedback text repeated; buttons instead of paper |
+| 8. Strength of preference | Participants rate the strength of their preference from 1 to 12 | "indicated the strength of their preference for the chosen option" (p. 152) | Buttons instead of paper |
+| 9. Reasons | Participants type their reasons, at least 30 characters, with pasting blocked | "Finally, participants were asked to write down reasons for their choice" (p. 152) | Length minimum; paste block |
+| 10. Regret Scale | Five statements rated from 1 to 7 (exploratory) | Not in the original | New; after every original measure |
+| 11. End form | Gambling frequency, influence of the feedback information on their choice, and demographics, each with "Prefer not to say"; optional feedback box | Not in the original | New |
+| 12. Debrief | Explains what the study tested and that none of the gambles was played; clicking Finish saves the data and returns participants to Prolific with the completion code | Not described | New |
+
+Several rules apply throughout:
+
+| Rule | Detail | Difference from the original |
+|---|---|---|
+| No going back | Participants cannot return to earlier screens; for example, they cannot revise X after reading the feedback rule | On paper, participants could look back |
+| No outcomes or bonuses | The gambles are never played, and every participant receives the same flat Prolific payment | Consistent with the original's hypothetical gambles; the original participants took part "as part of a course requirement" (p. 151) |
+| Identical across conditions | Steps 1–4 and 8–12 are the same in every condition; only the feedback text (steps 5 and 7) and the correct answers to quiz items 4 and 5 differ | None |
+| Data saving | Responses are saved after every screen, with the time spent on each screen and how often and how long the participant left the browser tab; if saving fails at the end, participants see their completion code and are asked to download and email their data | Not applicable |
+
+The study is expected to take 6 to 8 minutes. The median duration from Pilot B will be reported here before final data collection.
 
 ### Analysis plan
 
-::: {.callout-tip icon=false}
+<!--
+::: {.callout-tip icon="false"}
 ## Guidance
 
-The analysis strategy, as close to the original as possible: data cleaning rules, exclusion
-rules, covariates, and the model or test. Original papers often do not spell this out; say
-where you had to make a choice and what you chose.
+The analysis strategy, as close to the original as possible: data
+cleaning rules, exclusion rules, covariates, and the model or test.
+Original papers often do not spell this out; say where you had to make a
+choice and what you chose.
 
-**State the key analysis of interest explicitly.** That is the single test your replication
-stands or falls on, and it must match your preregistration. You can pre-specify additional
-analyses here too.
+**State the key analysis of interest explicitly.** That is the single
+test your replication stands or falls on, and it must match your
+preregistration. You can pre-specify additional analyses here too.
 :::
+-->
 
-**Key analysis of interest.** The proportion of participants choosing the risky program is
-higher in the loss frame than in the gain frame, tested with a chi-square test of independence
-on the 2 × 2 table of frame by choice. The effect size is the difference in the proportion
-choosing the risky program (loss minus gain), with a 95% confidence interval.
+**Key analysis of interest.** I predict that more participants will choose the risky gamble (R) in the risky feedback condition than in the safe feedback condition. I will test this with a Pearson chi-square test of independence without continuity correction on the 2 × 2 table of feedback condition (risky vs. safe) by choice (R vs. S), with α = .05, two-sided. The effect size will be the difference in the proportion choosing R (risky feedback minus safe feedback) in percentage points, with a 95% confidence interval. In the original study this difference was 38 points [14, 63], χ²(1) = 7.88. The uncorrected test is the one that reproduces the original statistic from the original counts, so I will use it rather than a corrected test.
 
-**Exclusions.** Participants are excluded if they did not complete the study, if they answered
-no speeded trial at all (every lexical-decision trial timed out, the signature of a device
-without a keyboard), or if they answered fewer than 6 of the 8 lexical-decision trials
-correctly.
+**Judging the replication.** Whether the 95% confidence interval excludes zero in the predicted direction, and whether it includes the original estimate of 38 points.
+
+**Exclusions.** Participants removed by these exclusions will be replaced until 195 participants remain.
+
+| Order | Rule | Reason |
+|---|---|---|
+| 1 | Did not consent or did not complete the study | No complete data |
+| 2 | Repeat sessions: sessions will be linked by Prolific ID. Each person's first completed session will be kept, and the person excluded if an earlier session had already reached the feedback instructions | A participant who has already seen a feedback rule is no longer naive to the manipulation |
+| 3 | Any answer screen completed in under 300 ms (matching, attractiveness, quiz, choice, strength of preference, reasons, Regret Scale, end form) | Not humanly possible |
+
+**Secondary analyses.** These follow the remaining analyses of Experiment 1 (Zeelenberg et al., 1996, p. 152). Like the original, they will not be corrected for multiple comparisons, and they will be interpreted as secondary to the key test.
+
+| Analysis | Test | Original result |
+|---|---|---|
+| Choice across all three conditions | χ²(2) on condition by choice | χ²(2) = 7.88, p < .02 |
+| Risky feedback versus choice only | χ²(1) | χ²(1) = 1.93, ns (recomputed; listed as 2.18 in the paper) |
+| Safe feedback versus choice only | χ²(1) | χ²(1) = 2.18, ns (recomputed; listed as 1.93 in the paper) |
+| Risk preference across conditions | One-way ANOVA on risk preference, computed as choice (+1 for R, −1 for S) × (strength of preference − 0.5) | F(2, 75) = 3.46, p < .05 |
+| Risk preference, risky versus safe feedback | Planned contrast using the error term from all three conditions, as in the original | t(75) = −2.63, p < .01 |
+| Risk preference, risky feedback versus choice only | Planned contrast using the error term from all three conditions | t(75) = 1.44, ns (recomputed; listed as 1.19 in the paper) |
+| Risk preference, safe feedback versus choice only | Planned contrast using the error term from all three conditions | t(75) = 1.19, ns (recomputed; listed as 1.44 in the paper) |
+| Linear trend in risk preference | Linear contrast (risky feedback > choice only > safe feedback). With three conditions this is the same test as the risky-versus-safe contrast above (2.63² = 6.92), so it is not a separate result | F = 6.90, p < .01 |
+| Matched X by condition | One-way ANOVA on X | F(2, 75) < 0.3 |
+| Attractiveness of R versus S | Paired t-test on the two ratings | 6.71 versus 7.41, t(77) = −3.27, p < .01 |
+
+**Exploratory analyses.** Because the original found that participants rated the gambles as not quite equally attractive after matching (p. 152), I will examine how well the matching worked: the number of participants who rated the two gambles exactly equally, and the mean difference between their ratings (R minus S), by condition; a logistic regression of choice on feedback condition (risky vs. safe) and the rating difference; and the key test repeated among participants who rated the gambles exactly equally. Any further analyses will be labelled as exploratory.
+
 
 ### Differences from the original study
 
-::: {.callout-tip icon=false}
+<!--
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Every known difference in sample, setting, procedure, materials, and analysis, one per row.
-Minimizing differences is the goal, but some always remain. For each one, say whether it is
-expected to matter, based on claims in the original article or later research on when the
-effect does and does not appear. The rows below are the demo's real differences and show the
-level of detail expected; replace them with yours.
+Every known difference in sample, setting, procedure, materials, and
+analysis, one per row. Minimizing differences is the goal, but some
+always remain. For each one, say whether it is expected to matter, based
+on claims in the original article or later research on when the effect
+does and does not appear. The rows below are the demo's real differences
+and show the level of detail expected; replace them with yours.
 :::
+-->
 
 | Aspect | Original study | This replication | Expected to matter? |
 |---|---|---|---|
-| Sample | University students in Stanford and British Columbia classrooms | Adults recruited on Prolific | Possibly. Framing effects have been found in both student and general samples, but their size varies across populations. |
-| Setting | Paper questionnaire in class | Online, unsupervised, on the participant's own computer | Unlikely for a single vignette, though attention may be lower online. |
-| Wording | "an unusual Asian disease" | "an unusual disease" | Unlikely. The ethnonym is incidental to the manipulation and dated. |
-| Design | Between subjects: each participant saw one frame | Between subjects, randomly assigned | No. |
-| Response | Circle a program on paper | Click a button | Unlikely. |
-| Other tasks | Problems presented alongside other questionnaire items | Followed by a short lexical-decision task used as an attention check | Unlikely: the check comes after the choice. |
+| Sample | 78 psychology undergraduates at the University of Amsterdam, taking part as a course requirement (p. 151) | 195 paid US adults on Prolific, aged 18 or older and fluent in English | Possibly; online adult samples may differ from students in a lab in attention and in familiarity with gambles. |
+| Era | Mid-1990s | 2026 | Possibly; gambling is more familiar today. Gambling frequency is collected, so this can be examined. |
+| Language | Probably Dutch (not stated) | English | Unknown |
+| Setting | Separate cubicles, paper questionnaire (p. 151) | Online, unsupervised, on the participant's own desktop or laptop | Possibly; attention may be lower online. The comprehension quiz, the speed rule and the repeat-session rule are intended to offset this. |
+| Stakes | f130, about \$75 at the time; hypothetical (p. 151) | $130; hypothetical | Unlikely. The numbers are the same and the real value is roughly comparable today. |
+| Wording | Questionnaire never published; only described in the paper (pp. 151–152) | Reconstructed from that description, in the second person | Possibly. The exact phrasing of the manipulation cannot be matched. |
+| Feedback texts | The paper's description of the safe feedback condition contains an extra "only" | The risky and safe feedback texts are exact mirror images | Unlikely; this keeps the two conditions differing only in which gamble is named. |
+| Gamble display | A table (p. 151) | Two cards, R on the left and S on the right, with the labels R and S kept | Unlikely; the content and order are the same. |
+| Matching | X written on the questionnaire | X typed, with an added explanation, a live preview on the S card, and X required to be between \$0 and \$130 | Possibly. Matching may be more accurate, and it is unclear whether that strengthens or weakens the feedback effect; the exploratory attractiveness analyses address this. |
+| Response format | Writing and circling on paper | Buttons for the ratings, choice and strength of preference; typed reasons | Unlikely; the scales (1–12) and wording are the same. |
+| Comprehension quiz | None | Five questions before the choice, repeated until all are correct | Possibly; likely the most consequential addition. Participants should understand the feedback rule better. |
+| Feedback rule on the choice screen | Presumably read once before choosing | Shown again on the choice screen | Possibly. |
+| Reasons | Free writing | At least 30 characters, typed, with pasting blocked | Unlikely for the key test, which does not use the reasons. |
+| Added measures | None | Regret Scale, gambling frequency, influence of the feedback information, and demographics, all after the choice | No; they come after the choice. |
+| Assignment | Random, 26 per condition (p. 151) | Simple random assignment, so groups are approximately equal | No. |
+| Navigation | Not described; a paper questionnaire would presumably allow looking back | No returning to earlier screens, so X cannot be revised after reading the feedback rule | Unlikely. |
+| Exclusions | None reported | Did not consent or complete; repeat sessions; any answer screen under 300 ms | Unlikely; this removes invalid data, and every exclusion is reported with counts. |
+| Analysis | χ² tests and risk-preference ANOVA and contrasts, judged on significance (p. 152) | The same tests, plus the difference in proportions with a 95% CI, judged on effect size | No for the key test. |
 
 ### Methods addendum (post data collection)
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Leave this section out of the version you preregister. After data collection, report the
-actual sample and any deviation from the plan above.
+Leave this section out of the version you preregister. After data
+collection, report the actual sample and any deviation from the plan
+above.
 :::
 
 #### Actual sample
@@ -376,24 +643,30 @@ trials        <- phase1$trials
 errors        <- phase1$errors
 complete      <- phase1$complete
 keep          <- phase1$keep
-n_no_response <- phase1$n_no_response
+consented_ids <- phase1$consented_ids   # page loads where "I agree to participate" was clicked
 ```
 
 ```{r}
 #| label: funnel
 #| eval: !expr have_data
-funnel_levels <- c("Started", "Completed", "Passed exclusion criteria")
+# Every page load is a row in participants.csv, so the first step counts visits, including
+# people who left at the consent screen and phones turned away (these have no condition).
+funnel_levels <- c("Opened the study", "Consented", "Completed", "Passed exclusion criteria")
 bind_rows(
-  participants |> mutate(step = "Started"),
+  participants |> mutate(step = "Opened the study"),
+  participants |> filter(participant_id %in% consented_ids) |> mutate(step = "Consented"),
   complete     |> mutate(step = "Completed"),
   keep         |> mutate(step = "Passed exclusion criteria")
 ) |>
-  mutate(step = factor(step, levels = funnel_levels)) |>
+  mutate(step = factor(step, levels = funnel_levels),
+         condition = factor(coalesce(unname(condition_labels[condition]), "No condition (turned away)"),
+                            levels = c(condition_labels, "No condition (turned away)"))) |>
   count(step, condition, .drop = FALSE) |>
   pivot_wider(names_from = condition, values_from = n, values_fill = 0) |>
+  select(where(~ !is.numeric(.x) || sum(.x) > 0)) |>
   mutate(Total = rowSums(across(-step))) |>
   rename(Step = step) |>
-  knitr::kable(caption = "Participants at each step, by frame. Differences between frames in attrition or exclusion are a threat to validity and should be discussed.")
+  knitr::kable(caption = "Participants at each step, by feedback condition. Differences between conditions in attrition or exclusion are a threat to validity and should be discussed.")
 ```
 
 ```{r}
@@ -401,12 +674,11 @@ bind_rows(
 #| eval: !expr have_data
 #| echo: false
 #| results: asis
-cat(sprintf("Of %d participants who started, %d completed the study and %d met the exclusion criteria.",
-            nrow(participants), nrow(complete), nrow(keep)))
-if (n_no_response > 0) {
-  cat(sprintf(" %d completed session(s) contained no response to any speeded trial and were excluded on that basis.",
-              n_no_response))
-}
+cat(sprintf("Of %d visits to the study, %d consented, %d completed the study and %d met the exclusion criteria.",
+            nrow(participants), length(unique(consented_ids)), nrow(complete), nrow(keep)))
+cat(sprintf(" Of the completers, %d were excluded as repeat sessions and %d for answering a screen in under %d ms (a participant can meet both).",
+            length(phase1$repeat_ids), length(phase1$too_fast_ids), min_screen_ms))
+if (!phase1$has_repeat_flags) cat(" These data were exported before repeat sessions were flagged, so that rule could not be applied; export again to apply it.")
 if (nrow(keep) == 0) cat(" No participants remain for analysis yet, so the results below are empty.")
 cat("\n")
 ```
@@ -414,43 +686,50 @@ cat("\n")
 ```{r}
 #| label: demographics
 #| eval: !expr have_data
+# Demographics come from the end form (task "end_survey"), stored as JSON in `response`.
+# "Prefer not to say" counts as not given.
 demo <- trials |>
-  filter(task == "demographics", participant_id %in% keep$participant_id) |>
+  filter(task == "end_survey", participant_id %in% keep$participant_id) |>
   mutate(resp = map(response, ~ fromJSON(.x))) |>
   transmute(
     participant_id,
-    age    = map_dbl(resp, ~ as.numeric(.x$age %||% NA)),
+    age    = map_dbl(resp, ~ suppressWarnings(as.numeric(.x$age %||% NA))),
     gender = map_chr(resp, ~ as.character(.x$gender %||% NA))
   )
 
-if (nrow(demo) > 0) {
+# Two separate statements, so both tables are shown.
+if (nrow(demo) > 0)
   demo |>
     summarise(N = n(), `Mean age` = round(mean(age, na.rm = TRUE), 1),
               `SD age` = round(sd(age, na.rm = TRUE), 1),
               `Age not given` = sum(is.na(age))) |>
     knitr::kable(caption = "Age of the analysed sample.")
-}
+if (nrow(demo) > 0)
+  demo |>
+    count(Gender = coalesce(gender, "Not given")) |>
+    knitr::kable(caption = "Gender of the analysed sample.")
 ```
 
 #### Deviations from the preregistered plan
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Any deviation from the preregistered plan above, or "None". Changes made after seeing data
-belong here even if they seem minor, together with the reason.
+Any deviation from the preregistered plan above, or "None". Changes made
+after seeing data belong here even if they seem minor, together with the
+reason.
 :::
 
 ## Results
 
 ### Data preparation
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Data preparation follows the analysis plan. Loading and exclusions are done by the shared
-analysis code under Key statistics (open "Show the analysis code"). Describe anything you did to
-the data beyond that.
+Data preparation follows the analysis plan. Loading and exclusions are
+done by the shared analysis code under Key statistics (open "Show the
+analysis code"). Describe anything you did to the data beyond that.
 :::
 
 ### Confirmatory analysis
@@ -458,34 +737,62 @@ the data beyond that.
 ```{r}
 #| label: confirmatory
 #| eval: !expr have_data
-framing <- trials |>
-  filter(task == "framing", participant_id %in% keep$participant_id) |>
-  select(participant_id, condition, choice)
+choices <- trials |>
+  filter(task == "choice", participant_id %in% keep$participant_id) |>
+  transmute(participant_id,
+            condition = factor(condition, levels = names(condition_labels), labels = condition_labels),
+            choice    = factor(choice, levels = c("risky", "safe"), labels = c("Gamble R (risky)", "Gamble S (safe)")))
 risky <- risky_counts(phase1)
-tab <- table(Frame = framing$condition, Choice = framing$choice)
 
-if (all(dim(tab) == c(2, 2))) {
-  # No continuity correction, so this test and the effect-size interval below agree: the
-  # uncorrected 2 x 2 chi-square is the same test as the two-proportion comparison.
-  print(tab)
-  print(chisq.test(tab, correct = FALSE))
-} else {
-  message("Chi-square not run: the frame-by-choice table is ", paste(dim(tab), collapse = " x "),
-          ". It needs both frames and both choices; with ", nrow(framing),
-          " participant(s) in the analysis set this is expected.")
+# A chi-square needs at least one participant in each row and each column; with a small
+# pilot sample it often cannot be computed yet.
+chisq_row <- function(tab, test, original_chi2) {
+  ok <- nrow(tab) >= 2 && all(rowSums(tab) > 0) && all(colSums(tab) > 0)
+  ct <- if (ok) suppressWarnings(chisq.test(tab, correct = FALSE))
+  tibble(Test = test, `Original χ²` = original_chi2,
+         `χ²` = if (ok) sprintf("%.2f", ct$statistic) else "not computable yet",
+         df = if (ok) as.character(ct$parameter) else "",
+         p  = if (ok) format.pval(ct$p.value, digits = 2, eps = 0.001) else "",
+         N  = sum(tab))
 }
+sub_tab <- function(conds) {
+  tab <- table(Feedback = droplevels(choices$condition[choices$condition %in% conds]),
+               Choice   = choices$choice[choices$condition %in% conds])
+  tab
+}
+
+# Key test: risky feedback vs safe feedback, without continuity correction, so it matches the
+# effect-size interval below (the uncorrected 2 x 2 chi-square is the same test as the
+# two-proportion comparison) and the original's reported chi2(1) = 7.88.
+key_tab <- sub_tab(condition_labels[c("risky_feedback", "safe_feedback")])
+print(table(Feedback = choices$condition, Choice = choices$choice))
+
+bind_rows(
+  chisq_row(key_tab, "Key test: risky vs safe feedback", "7.88"),
+  # Secondary tests the original also reports (p. 152). The overall test needs all three
+  # conditions, so the empty ones are kept in the table (not dropped).
+  chisq_row(table(Feedback = choices$condition, Choice = choices$choice),
+            "All three conditions", "7.88 (df = 2)"),
+  chisq_row(sub_tab(condition_labels[c("risky_feedback", "choice_only")]),
+            "Risky feedback vs choice only", "1.93"),
+  chisq_row(sub_tab(condition_labels[c("safe_feedback", "choice_only")]),
+            "Safe feedback vs choice only", "2.18")
+) |>
+  knitr::kable(caption = "Chi-square tests of gamble choice by feedback condition (no continuity correction). The first row is the key test; the others are the original's secondary tests. The paper lists the two comparisons with choice only as 2.18 and 1.93, in the opposite order; its counts and risk-preference means imply the assignment shown here.")
 ```
 
 ### Replication assessment
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Judge the replication on effect sizes, not only on whether the key test is significant. Compare
-the replication estimate and its interval with the original: does the interval exclude zero, and
-does it include the original estimate? A significant result much smaller than the original, or
-a non-significant result whose interval still includes the original effect, are both
-informative and should be reported as such (Experimentology §3.2).
+Judge the replication on effect sizes, not only on whether the key test
+is significant. Compare the replication estimate and its interval with
+the original: does the interval exclude zero, and does it include the
+original estimate? A significant result much smaller than the original,
+or a non-significant result whose interval still includes the original
+effect, are both informative and should be reported as such
+(Experimentology §3.2).
 :::
 
 ```{r}
@@ -497,12 +804,12 @@ rep  <- diff_ci(risky)
 if (!is.null(rep)) {
   bind_rows(orig |> mutate(Study = "Original"), rep |> mutate(Study = "Phase 1: replication")) |>
     transmute(Study, N,
-              `Difference (loss − gain)` = sprintf("%.0f points", 100 * estimate),
+              `Difference (risky − safe feedback)` = sprintf("%.0f points", 100 * estimate),
               `95% CI` = sprintf("[%.0f, %.0f]", 100 * ci_low, 100 * ci_high),
-              p = format.pval(p, digits = 2, eps = 0.001)) |>
-    knitr::kable(caption = "Effect size: difference in the percentage choosing the risky program.")
+              p = ifelse(is.finite(p), format.pval(p, digits = 2, eps = 0.001), "-")) |>
+    knitr::kable(caption = "Effect size: difference in the percentage choosing the risky gamble, risky-feedback minus safe-feedback condition.")
 } else {
-  message("Replication effect size not computed yet: need at least one analysed participant in each frame.")
+  note("Replication effect size not computed yet: need at least one analysed participant in both the risky-feedback and safe-feedback conditions.")
 }
 ```
 
@@ -523,42 +830,49 @@ if (!is.null(rep)) {
 }
 ```
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance: show the original next to your replication
 
-**Every report should have a figure that puts the original finding and your replication side by
-side.** It is the single most informative thing in a replication report: a reader can see at a
-glance whether the effect came back, and how its size compares. Make it however you can, in
+**Every report should have a figure that puts the original finding and
+your replication side by side.** It is the single most informative thing
+in a replication report: a reader can see at a glance whether the effect
+came back, and how its size compares. Make it however you can, in
 roughly this order of preference:
 
-1. **Replot both from numbers.** Enter the original's summary statistics (means or proportions,
-   with SDs, SEs or CIs, and Ns) in the original-study chunk at the top of this file, and plot
-   them on the same axes as yours. That is what the demo figure below does.
-2. **Replot the original from its data**, if the authors shared it or it is in an open
-   repository, using exactly the same plotting code as for your own data.
-3. **Show the original figure as an image** next to yours if neither is possible. Save a
-   screenshot of it, for example as `writeup/images/original-figure.png`, and lay the two out
-   in columns:
+1.  **Replot both from numbers.** Enter the original's summary
+    statistics (means or proportions, with SDs, SEs or CIs, and Ns) in
+    the original-study chunk at the top of this file, and plot them on
+    the same axes as yours. That is what the demo figure below does.
 
-   ````markdown
-   ::: {layout-ncol=2}
-   ![Original: Tversky & Kahneman (1981), Figure 1](images/original-figure.png)
+2.  **Replot the original from its data**, if the authors shared it or
+    it is in an open repository, using exactly the same plotting code as
+    for your own data.
 
-   ```{{r}}
-   # your replication plot here
-   ```
-   :::
-   ````
+3.  **Show the original figure as an image** next to yours if neither is
+    possible. Save a screenshot of it, for example as
+    `writeup/images/original-figure.png`, and lay the two out in
+    columns:
 
-Whichever you choose, use the same measure, scale, condition order and error-bar meaning for
-both panels, label which is which, and cite the source of the original values or figure in the
-caption. If the original reported no variability, say so rather than leaving it out silently.
+    ```` markdown
+    ::: {layout-ncol=2}
+    ![Original: Tversky & Kahneman (1981), Figure 1](images/original-figure.png)
+
+    ```{{r}}
+    # your replication plot here
+    ```
+    :::
+    ````
+
+Whichever you choose, use the same measure, scale, condition order and
+error-bar meaning for both panels, label which is which, and cite the
+source of the original values or figure in the caption. If the original
+reported no variability, say so rather than leaving it out silently.
 :::
 
 ```{r}
 #| label: fig-comparison
 #| eval: !expr have_data
-#| fig-cap: "Percentage choosing the risky program in each frame, original study and Phase 1 replication. Error bars are 95% confidence intervals."
+#| fig-cap: "Percentage choosing the risky gamble (R) in each feedback condition: original study (Zeelenberg et al., 1996, Experiment 1, counts from Figure 1, p. 152) and Phase 1 replication. Error bars are 95% confidence intervals."
 #| fig-width: 7
 #| fig-height: 4
 comparison_plot(Original = original, `Phase 1: replication` = risky)
@@ -566,29 +880,179 @@ comparison_plot(Original = original, `Phase 1: replication` = risky)
 
 ### Exploratory analyses
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Any follow-up analyses (optional). Label them clearly as exploratory: they were not planned, so
-they generate hypotheses rather than test them.
+Any follow-up analyses (optional). Label them clearly as exploratory:
+they were not planned, so they generate hypotheses rather than test
+them.
 :::
 
 ```{r}
-#| label: exploratory-rt
+#| label: secondary-original
 #| eval: !expr have_data
-ld <- trials |>
-  filter(task == "lexical_decision", participant_id %in% keep$participant_id) |>
-  mutate(correct = as.logical(correct), is_word = as.logical(is_word), rt = as.numeric(rt)) |>
-  filter(correct, !is.na(rt))
-
-if (nrow(ld) > 0) {
-  ld |>
-    group_by(`Real word` = is_word) |>
-    summarise(`Mean RT (ms)` = round(mean(rt)), `SD (ms)` = round(sd(rt)), Trials = n(), .groups = "drop") |>
-    knitr::kable(caption = "Exploratory: lexical-decision response times, correct trials only.")
-} else {
-  message("No correct lexical-decision trials with a response time yet.")
+# The original's secondary analyses (p. 152), run the same way here: the matched value X,
+# the attractiveness ratings, and risk preference = (+1 risky / -1 safe) x (strength - 0.5).
+# Each one says so instead of failing when there are too few participants (e.g. Pilot A).
+in_keep <- function(t) trials |> filter(task == t, participant_id %in% keep$participant_id)
+by_condition <- function(df, var) {
+  df |>
+    mutate(Condition = factor(unname(condition_labels[condition]), levels = condition_labels)) |>
+    group_by(Condition, .drop = FALSE) |>
+    summarise(N = n(), Mean = round(mean({{ var }}), 2), SD = round(sd({{ var }}), 2), .groups = "drop")
 }
+try_or_say <- function(expr, what) {
+  tryCatch(expr, error = function(e) note(what, ": not enough data yet (", conditionMessage(e), ")."))
+}
+
+# (Each table and test below is its own top-level statement, so Quarto formats the tables.)
+matching <- in_keep("matching")
+attract  <- in_keep("attractiveness")
+strength <- in_keep("preference_strength")
+
+# 1. Matched value of X.
+if (nrow(matching) > 0)
+  by_condition(matching, matched_x) |>
+    knitr::kable(caption = sprintf("Matched value of X (dollars) by condition. Original mean: %.2f (guilders), with no difference between conditions.",
+                                   original_secondary$matched_x_mean))
+if (nrow(matching) > 0) try_or_say(anova(lm(matched_x ~ condition, data = matching)), "ANOVA on X")
+
+# 2. Attractiveness of the two gambles after matching (1-12).
+if (nrow(attract) > 0)
+  tibble(Gamble = c("R (risky)", "S (safe)"),
+         Mean = round(c(mean(attract$attract_r), mean(attract$attract_s)), 2),
+         Original = c(original_secondary$attract_r_mean, original_secondary$attract_s_mean)) |>
+    knitr::kable(caption = sprintf("Attractiveness ratings after matching (N = %d). Original: t(77) = -3.27, p < .01.",
+                                   nrow(attract)))
+if (nrow(attract) > 0)
+  try_or_say(t.test(attract$attract_r, attract$attract_s, paired = TRUE), "Paired t-test")
+
+# 3. Risk preference by condition, with the original's planned comparison (risky vs safe
+# feedback) and linear trend (risky feedback > choice only > safe feedback).
+if (nrow(strength) > 0)
+  by_condition(strength, risk_preference) |>
+    mutate(Original = unname(original_secondary$risk_pref_means[names(condition_labels)])) |>
+    knitr::kable(caption = "Risk preference by condition (-11.5 = strongly safe, 11.5 = strongly risky), with the original's means.")
+if (nrow(strength) > 0)
+  try_or_say(anova(lm(risk_preference ~ condition, data = strength)), "ANOVA on risk preference")
+# Planned contrasts, as in the original's t(75)s: each pair of conditions, all using the error
+# term from all three conditions. Each difference is taken in the predicted direction (toward
+# more risk-seeking with risky feedback), so a positive t supports the prediction. Risky vs safe
+# feedback is also the linear trend (weights 1, 0, -1): the original's trend F = 6.90 is that t
+# squared (2.63^2 = 6.92), so it is one test.
+risk_contrasts <- function(d) {
+  lv  <- names(condition_labels)
+  n_c <- table(factor(d$condition, levels = lv))
+  if (sum(n_c > 0) < 2) stop("needs participants in at least two conditions")
+  fit <- lm(risk_preference ~ condition, data = d)
+  if (df.residual(fit) < 1) stop("too few participants")
+  mse <- sum(resid(fit)^2) / df.residual(fit)
+  m   <- tapply(d$risk_preference, factor(d$condition, levels = lv), mean)
+  pairs <- tribble(
+    ~a,               ~b,              ~Contrast,                                 ~Original,
+    "risky_feedback", "safe_feedback", "Risky - safe feedback (= linear trend)", "t(75) = 2.63 (reported as -2.63); trend F = 6.90",
+    "risky_feedback", "choice_only",   "Risky feedback - choice only",           "t(75) = 1.44 (paper lists 1.19)",
+    "choice_only",    "safe_feedback", "Choice only - safe feedback",            "t(75) = 1.19 (paper lists 1.44)"
+  ) |> filter(n_c[a] > 0, n_c[b] > 0)   # a pair needs participants in both of its conditions
+  pairs |>
+    mutate(diff = as.numeric(m[a] - m[b]),
+           t    = diff / sqrt(mse * (1 / as.numeric(n_c[a]) + 1 / as.numeric(n_c[b]))),
+           df   = df.residual(fit),
+           p    = format.pval(2 * pt(-abs(t), df), digits = 2, eps = 0.001)) |>
+    transmute(Contrast, Difference = round(diff, 2), t = round(t, 2), df, p, Original)
+}
+if (nrow(strength) > 0)
+  try_or_say(risk_contrasts(strength) |>
+               knitr::kable(caption = paste(
+                 "Planned contrasts on risk preference, each with the error term from all three conditions",
+                 "(as in the original). Differences are in the predicted direction, so positive values support",
+                 "the prediction. The original reports the first t with a minus sign and lists the two comparisons",
+                 "with choice only in the opposite order; its means imply the values shown.")),
+             "Risk-preference contrasts")
+```
+
+```{r}
+#| label: exploratory-attractiveness
+#| eval: !expr have_data
+# Exploratory: how well the matching worked, and whether that matters for the key effect.
+# The ratings come before the feedback manipulation. Nobody is excluded on them; "matched" means
+# Gamble R and Gamble S were rated exactly equally (difference 0, as Experiment 2 required).
+att <- trials |>
+  filter(task == "attractiveness", participant_id %in% keep$participant_id) |>
+  transmute(participant_id, att_diff = attract_r - attract_s) |>
+  inner_join(trials |>
+               filter(task == "choice", participant_id %in% keep$participant_id) |>
+               transmute(participant_id, condition, risky = as.integer(choice == "risky")),
+             by = "participant_id")
+key_att <- att |>
+  filter(condition %in% c("risky_feedback", "safe_feedback")) |>
+  mutate(risky_feedback = as.integer(condition == "risky_feedback"))
+matched_counts <- key_att |>
+  filter(att_diff == 0) |>
+  group_by(condition) |>
+  summarise(risky = sum(risky), n = n(), .groups = "drop")
+
+# 1. How often the two ratings were equal, and the mean difference, by condition.
+if (nrow(att) > 0)
+  att |>
+    mutate(Condition = factor(unname(condition_labels[condition]), levels = condition_labels)) |>
+    group_by(Condition, .drop = FALSE) |>
+    summarise(N = n(), `Rated equally` = sum(att_diff == 0),
+              `% rated equally` = round(100 * mean(att_diff == 0)),
+              `Mean R minus S` = round(mean(att_diff), 2), .groups = "drop") |>
+    knitr::kable(caption = "Exploratory: attractiveness of Gamble R minus Gamble S after matching, by condition (0 = rated equally). Original means: R 6.71, S 7.41.")
+
+# 2. Covariate model (risky vs safe feedback): is the feedback effect still there once any
+# leftover preference for R over S is taken into account?
+if (nrow(key_att) > 0)
+  try_or_say(summary(glm(risky ~ risky_feedback + att_diff, family = binomial, data = key_att))$coefficients,
+             "Logistic regression of choice on condition and rating difference")
+
+# 3. The key test repeated among participants who rated the two gambles exactly equally.
+matched_r <- diff_ci(matched_counts)
+if (nrow(key_att) > 0 && is.null(matched_r))
+  note("Key test among equal raters: needs at least one equal rater in both the risky- and safe-feedback conditions.")
+if (!is.null(matched_r))
+  fmt_row("Equal raters only", matched_r) |>
+    knitr::kable(caption = "Exploratory: the key comparison among participants who rated Gamble R and Gamble S exactly equally.")
+```
+
+```{r}
+#| label: reported-measures
+#| eval: !expr have_data
+# Measures the Analysis plan reports but does not use to exclude anyone, by condition. Columns
+# missing from older exports show as NA.
+col_or_na <- function(df, col) if (col %in% names(df)) df[[col]] else rep(NA_real_, nrow(df))
+per_task <- function(t, cols) {
+  rows <- trials |> filter(task == t, participant_id %in% keep$participant_id)
+  as_tibble(c(list(participant_id = rows$participant_id), setNames(lapply(cols, col_or_na, df = rows), cols)))
+}
+measures <- keep |>
+  transmute(participant_id, condition, total_ms = col_or_na(keep, "total_ms")) |>
+  left_join(trials |> filter(task == "comprehension", participant_id %in% keep$participant_id) |>
+              group_by(participant_id) |> summarise(quiz_attempts = n(), .groups = "drop"),
+            by = "participant_id") |>
+  left_join(trials |> filter(participant_id %in% keep$participant_id) |>
+              mutate(blur = col_or_na(pick(everything()), "blur_count")) |>
+              group_by(participant_id) |> summarise(tab_aways = sum(blur, na.rm = TRUE), .groups = "drop"),
+            by = "participant_id") |>
+  left_join(per_task("reasons", c("paste_attempts", "too_short_attempts")), by = "participant_id") |>
+  left_join(per_task("matching", "matched_x"), by = "participant_id")
+
+if (nrow(measures) > 0)
+  measures |>
+    mutate(Condition = factor(unname(condition_labels[condition]), levels = condition_labels)) |>
+    group_by(Condition, .drop = FALSE) |>
+    summarise(N = n(),
+              `Median minutes` = round(median(as.numeric(total_ms), na.rm = TRUE) / 60000, 1),
+              `% more than one quiz attempt` = round(100 * mean(quiz_attempts > 1)),
+              `Mean tab-aways` = round(mean(tab_aways), 1),
+              `% tried to paste` = round(100 * mean(paste_attempts > 0)),
+              `% submitted too-short reasons` = round(100 * mean(too_short_attempts > 0)),
+              `Median X` = median(matched_x),
+              `X range` = if (n() > 0) paste(min(matched_x), "to", max(matched_x)) else "",
+              .groups = "drop") |>
+    knitr::kable(caption = "Reported, not used to exclude anyone: completion time, quiz attempts, tab-aways, paste and too-short attempts on the reasons question, and the matched value of X, by condition.")
 ```
 
 ```{r}
@@ -598,7 +1062,7 @@ if (nrow(errors) > 0) {
   errors |> select(any_of(c("at", "trial_index", "message"))) |> head(20) |>
     knitr::kable(caption = "JavaScript errors reported from participants' browsers.")
 } else {
-  message("No errors were reported from participants' browsers.")
+  note("No errors were reported from participants' browsers.")
 }
 ```
 
@@ -606,76 +1070,86 @@ if (nrow(errors) > 0) {
 
 ### Summary of replication attempt
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Open with one paragraph summarizing the result of the key analysis and your assessment of
-whether the original finding replicated, partially replicated, or failed to replicate. Base
-that judgment on the replication assessment above: the size of the effect relative to the
+Open with one paragraph summarizing the result of the key analysis and
+your assessment of whether the original finding replicated, partially
+replicated, or failed to replicate. Base that judgment on the
+replication assessment above: the size of the effect relative to the
 original, not just the p value.
 :::
 
 ### Commentary
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Open-ended commentary, none of it long: (a) what the exploratory analyses suggest; (b) what the
-replication means, for example whether the differences between your study and the original are
-definitely, plausibly, or unlikely to be moderators of the result; and (c) any objections or
-challenges raised by you or the original authors.
+Open-ended commentary, none of it long: (a) what the exploratory
+analyses suggest; (b) what the replication means, for example whether
+the differences between your study and the original are definitely,
+plausibly, or unlikely to be moderators of the result; and (c) any
+objections or challenges raised by you or the original authors.
 :::
 
 # Phase 2: Extension
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance: choosing your extension
 
 Follow the Extension guidelines page on Canvas. In brief:
 
-- **By default the extension is a best-practices modification of your Phase 1 experiment.** If
-  your replication did not succeed, it is a **rescue**: address the plausible reasons for the
-  failure. If it did succeed, it is an **upgrade**: make the estimate more precise. Typical
-  changes are better or more reliable measurement, more trials, a within-participant design
-  where that is legitimate, comprehension and manipulation checks, clearer instructions, or a
-  larger or better-targeted sample.
-- **If your scientific extension pitch was approved at Milestone 3 and your replication
-  succeeded, propose that instead:** the original conditions rerun unchanged, plus the one
-  added condition or manipulation, with a power analysis for the new comparison.
-- On either track you may add exploratory measures **at the end** of the study.
-- Every change is listed and tagged by category below; everything else stays identical.
+-   **By default the extension is a best-practices modification of your
+    Phase 1 experiment.** If your replication did not succeed, it is a
+    **rescue**: address the plausible reasons for the failure. If it did
+    succeed, it is an **upgrade**: make the estimate more precise.
+    Typical changes are better or more reliable measurement, more
+    trials, a within-participant design where that is legitimate,
+    comprehension and manipulation checks, clearer instructions, or a
+    larger or better-targeted sample.
+-   **If your scientific extension pitch was approved at Milestone 3 and
+    your replication succeeded, propose that instead:** the original
+    conditions rerun unchanged, plus the one added condition or
+    manipulation, with a power analysis for the new comparison.
+-   On either track you may add exploratory measures **at the end** of
+    the study.
+-   Every change is listed and tagged by category below; everything else
+    stays identical.
 
 State your track on the line below, and delete the others.
 :::
 
-**Track:** Best-practices upgrade / Best-practices rescue / Scientific extension (approved at Milestone 3)
+**Track:** Best-practices upgrade / Best-practices rescue / Scientific
+extension (approved at Milestone 3)
 
 ## Rationale
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-One or two paragraphs. For a rescue: what are the plausible reasons Phase 1 did not reproduce the
-original result, and how does each change address one of them? For an upgrade: where is the
-Phase 1 estimate least precise or least trustworthy, and how will the changes improve it? For a
-scientific extension: what question does the added condition answer, and why does it follow from
-the original finding?
+One or two paragraphs. For a rescue: what are the plausible reasons
+Phase 1 did not reproduce the original result, and how does each change
+address one of them? For an upgrade: where is the Phase 1 estimate least
+precise or least trustworthy, and how will the changes improve it? For a
+scientific extension: what question does the added condition answer, and
+why does it follow from the original finding?
 :::
 
 ## Changes from Phase 1
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Every change from the Phase 1 experiment, one per row, each tagged with a category: Measurement,
-Trials, Design, Checks, Instructions, Sample, Added condition (scientific track only), or
-Exploratory measure (end of study only). If it is not in this table, it does not change: same
-materials, wording, procedure, exclusion rule and analysis. The rows below are examples for the
-demo; replace them with yours.
+Every change from the Phase 1 experiment, one per row, each tagged with
+a category: Measurement, Trials, Design, Checks, Instructions, Sample,
+Added condition (scientific track only), or Exploratory measure (end of
+study only). If it is not in this table, it does not change: same
+materials, wording, procedure, exclusion rule and analysis. The rows
+below are examples for the demo; replace them with yours.
 :::
 
-| # | Category | Phase 1 | Phase 2 | Why |
-|---|---|---|---|---|
+| \# | Category | Phase 1 | Phase 2 | Why |
+|---------------|---------------|---------------|---------------|---------------|
 | 1 | Sample | 27 analysed participants | 300 analysed participants (150 per frame) | Phase 1's interval was too wide to distinguish the original effect from a much smaller one. |
 | 2 | Checks | No comprehension check | After the choice, participants say how many people are at risk (600) | Confirms participants read the scenario; failures are reported, and excluded only if preregistered. |
 | 3 | Exploratory measure | None | At the end: "How confident are you in your choice?" (1–7) | Exploratory only; collected after every confirmatory measure. |
@@ -684,15 +1158,17 @@ Everything not listed above is identical to Phase 1.
 
 ## Power and sample
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Justify the Phase 2 sample, and **state how you expect the estimate and its precision to compare
-with Phase 1**. For an upgrade, plan the sample around the confidence interval you want; for a
-rescue, around the power to detect the original effect, or the smallest effect you would still
-consider a successful replication; for a scientific extension, around the power to detect the new
-comparison. Set `phase2_n_per_group` in the code below; the table uses Phase 1's estimate if you
-have it and the original's otherwise.
+Justify the Phase 2 sample, and **state how you expect the estimate and
+its precision to compare with Phase 1**. For an upgrade, plan the sample
+around the confidence interval you want; for a rescue, around the power
+to detect the original effect, or the smallest effect you would still
+consider a successful replication; for a scientific extension, around
+the power to detect the new comparison. Set `phase2_n_per_group` in the
+code below; the table uses Phase 1's estimate if you have it and the
+original's otherwise.
 :::
 
 ```{r}
@@ -701,16 +1177,15 @@ phase2_n_per_group <- 150   # planned analysed participants per condition in Pha
 
 p1_counts <- if (have_data) risky_counts(phase1)
 p1_stats  <- if (have_data) diff_ci(p1_counts)
+p1_rate <- function(cond) with(p1_counts, risky[condition == cond] / n[condition == cond])
 basis <- if (!is.null(p1_stats)) {
-  list(gain = p1_counts$risky[p1_counts$condition == "gain"] / p1_counts$n[p1_counts$condition == "gain"],
-       loss = p1_counts$risky[p1_counts$condition == "loss"] / p1_counts$n[p1_counts$condition == "loss"],
-       source = "Phase 1")
+  list(safe = p1_rate("safe_feedback"), risky = p1_rate("risky_feedback"), source = "Phase 1")
 } else {
-  list(gain = original_p_gain, loss = original_p_loss, source = "the original study")
+  list(safe = original_p_safe, risky = original_p_risky, source = "the original study")
 }
 
 # Expected 95% CI half-width on the difference at n per condition.
-half_width <- function(n) 1.96 * sqrt(basis$gain * (1 - basis$gain) / n + basis$loss * (1 - basis$loss) / n)
+half_width <- function(n) 1.96 * sqrt(basis$safe * (1 - basis$safe) / n + basis$risky * (1 - basis$risky) / n)
 power_at <- function(n, p1, p2) {
   tryCatch(power.prop.test(n = n, p1 = p1, p2 = p2, sig.level = 0.05)$power, error = function(e) NA)
 }
@@ -718,19 +1193,19 @@ power_at <- function(n, p1, p2) {
 rows <- tibble(
   Study = c(if (!is.null(p1_stats)) "Phase 1 (actual)", "Phase 2 (planned)"),
   `N analysed` = c(if (!is.null(p1_stats)) p1_stats$N, 2 * phase2_n_per_group),
-  `95% CI half-width` = c(if (!is.null(p1_stats)) sprintf("±%.0f points", 100 * (p1_stats$ci_high - p1_stats$ci_low) / 2),
-                          sprintf("±%.0f points (expected)", 100 * half_width(phase2_n_per_group)))
+  `95% CI half-width` = c(if (!is.null(p1_stats)) sprintf("+/- %.0f points", 100 * (p1_stats$ci_high - p1_stats$ci_low) / 2),
+                          sprintf("+/- %.0f points (expected)", 100 * half_width(phase2_n_per_group)))
 )
 knitr::kable(rows, caption = sprintf("Precision of the key estimate, Phase 2 expected values based on %s.", basis$source))
 
 tibble(
-  `Effect to detect` = c(sprintf("Original: %.0f points", 100 * (original_p_loss - original_p_gain)),
+  `Effect to detect` = c(sprintf("Original: %.0f points", 100 * (original_p_risky - original_p_safe)),
                          if (!is.null(p1_stats)) sprintf("Phase 1: %.0f points", 100 * p1_stats$estimate),
-                         sprintf("Half the original: %.0f points", 50 * (original_p_loss - original_p_gain))),
+                         sprintf("Half the original: %.0f points", 50 * (original_p_risky - original_p_safe))),
   `Power at planned N` = scales::percent(c(
-    power_at(phase2_n_per_group, original_p_gain, original_p_loss),
-    if (!is.null(p1_stats)) power_at(phase2_n_per_group, basis$gain, basis$loss),
-    power_at(phase2_n_per_group, original_p_gain, original_p_gain + (original_p_loss - original_p_gain) / 2)
+    power_at(phase2_n_per_group, original_p_safe, original_p_risky),
+    if (!is.null(p1_stats)) power_at(phase2_n_per_group, basis$safe, basis$risky),
+    power_at(phase2_n_per_group, original_p_safe, original_p_safe + (original_p_risky - original_p_safe) / 2)
   ), accuracy = 1)
 ) |>
   knitr::kable(caption = sprintf("Power of the Phase 2 key test at %d per condition, two-sided alpha = .05.", phase2_n_per_group))
@@ -738,17 +1213,20 @@ tibble(
 
 ## Analysis plan
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-The confirmatory analysis for Phase 2, written before Phase 2 data collection. On the
-best-practices tracks this is normally the same key test as Phase 1, run on the Phase 2 data
-alone; say whether you will also report a pooled estimate across phases, and label it
-exploratory if so. On the scientific track, specify the test for the new comparison. Name the
-exclusion rule (unchanged unless it is in the Changes table) and list any exploratory measures.
+The confirmatory analysis for Phase 2, written before Phase 2 data
+collection. On the best-practices tracks this is normally the same key
+test as Phase 1, run on the Phase 2 data alone; say whether you will
+also report a pooled estimate across phases, and label it exploratory if
+so. On the scientific track, specify the test for the new comparison.
+Name the exclusion rule (unchanged unless it is in the Changes table)
+and list any exploratory measures.
 
-Run Phase 2 under a new `EXPERIMENT.id` in `experiment.js` (for example `smith2016-phase2`) and
-set `experiment_id_phase2` at the top of this file to match, so the two phases' data never mix.
+Run Phase 2 under a new `EXPERIMENT.id` in `experiment.js` (for example
+`smith2016-phase2`) and set `experiment_id_phase2` at the top of this
+file to match, so the two phases' data never mix.
 :::
 
 ## Results
@@ -786,7 +1264,7 @@ if (!is.null(p2_stats)) {
 ```{r}
 #| label: fig-phase2
 #| eval: !expr have_phase2
-#| fig-cap: "Percentage choosing the risky program in each frame: original study, Phase 1 replication, and Phase 2 extension. Error bars are 95% confidence intervals."
+#| fig-cap: "Percentage choosing the risky gamble (R) in each feedback condition: original study, Phase 1 replication, and Phase 2 extension. Error bars are 95% confidence intervals."
 #| fig-width: 8
 #| fig-height: 4
 comparison_plot(Original = original,
@@ -796,26 +1274,30 @@ comparison_plot(Original = original,
 
 ## Discussion
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Compare Phase 2 with Phase 1 and with the original, using the Key statistics table and the figure
-above. Did the precision improve as you expected? For a rescue, did addressing the plausible
-reasons recover the effect? For a scientific extension, what does the new condition show? End
-with what the two phases together say about the original finding.
+Compare Phase 2 with Phase 1 and with the original, using the Key
+statistics table and the figure above. Did the precision improve as you
+expected? For a rescue, did addressing the plausible reasons recover the
+effect? For a scientific extension, what does the new condition show?
+End with what the two phases together say about the original finding.
 :::
 
 # Data and code availability
 
-::: {.callout-tip icon=false}
+::: {.callout-tip icon="false"}
 ## Guidance
 
-Edit the statement below to match what you are actually sharing. Anonymized data and all code
-should be public; if something cannot be shared, say what and why.
+Edit the statement below to match what you are actually sharing.
+Anonymized data and all code should be public; if something cannot be
+shared, say what and why.
 :::
 
-The experiment code, the anonymized data, and the code that produces every number in this
-report are available at <https://github.com/psych251/your-repo>. The experiment itself can be
-taken at <https://psych251.github.io/your-repo/>. The data contain no names, email addresses,
-IP addresses, or Prolific IDs; the file linking participants to their Prolific IDs is kept
-privately for payment and is not shared.
+The experiment code, the anonymized data, and the code that produces
+every number in this report are available at
+<https://github.com/psych251/your-repo>. The experiment itself can be
+taken at <https://psych251.github.io/your-repo/>. The data contain no
+names, email addresses, IP addresses, or Prolific IDs; the file linking
+participants to their Prolific IDs is kept privately for payment and is
+not shared.
