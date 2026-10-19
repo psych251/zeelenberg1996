@@ -12,7 +12,9 @@
  * The key bypasses security rules and can read/delete everything. Never commit it.
  *
  * Output (in --out, default data/raw/<experiment>/):
- *   participants.csv   one row per participant (start/end, completed, condition, browser, ...)
+ *   participants.csv   one row per participant (start/end, completed, condition, browser, ...),
+ *                      plus repeat-session flags (earlier_sessions, earlier_completed,
+ *                      earlier_saw_feedback) that link a person's sessions without exposing ids
  *   trials.csv         one row per jsPsych trial, long format; nested values are JSON strings
  *   errors.csv         client-side error reports
  *   export.json        the above, verbatim, for safekeeping
@@ -118,6 +120,39 @@ function writeCsv(file, rows, firstColumns) {
     participants.push({ participant_id: uid, ...rest, n_trials_exported: pubTrials.length, trials_source: source });
     for (const t of pubTrials) trials.push({ participant_id: uid, ...t });
     dump.participants.push({ participant_id: uid, participant: rest, trials: pubTrials, n_chunks: chunks.length });
+  }
+
+  // Repeat sessions. Every page load is its own participant document, so someone who reloads or
+  // comes back has several. Link a person's sessions by Prolific ID, or by the anonymous browser
+  // id (uid) when there is none, and add flags to participants.csv WITHOUT exposing either id:
+  //   earlier_sessions      sessions this person started before this one
+  //   earlier_completed     an earlier session consented and completed the study
+  //   earlier_saw_feedback  an earlier session reached the feedback instructions
+  // A screen is saved only once it is finished, so "reached the feedback instructions" means
+  // finished the attractiveness screen: the feedback instructions are shown right after it.
+  const consentedIds = new Set(trials.filter((t) => t.task === "consent" && t.consented === true).map((t) => t.participant_id));
+  const sawFeedbackIds = new Set(trials.filter((t) => t.task === "attractiveness").map((t) => t.participant_id));
+  const pidOf = new Map(identifiers.map((r) => [r.participant_id, r.prolific_pid]));
+  const personOf = (p) => (pidOf.get(p.participant_id) ? "pid:" + pidOf.get(p.participant_id) : p.uid ? "uid:" + p.uid : null);
+  const startOf = (p) => String(p.started_at || p.client_started_at || "");
+  const byPerson = new Map();
+  for (const p of participants) {
+    p.earlier_sessions = 0;
+    p.earlier_completed = false;
+    p.earlier_saw_feedback = false;
+    const key = personOf(p);
+    if (!key) continue;
+    if (!byPerson.has(key)) byPerson.set(key, []);
+    byPerson.get(key).push(p);
+  }
+  for (const sessions of byPerson.values()) {
+    sessions.sort((a, b) => startOf(a).localeCompare(startOf(b)));
+    sessions.forEach((p, i) => {
+      const earlier = sessions.slice(0, i);
+      p.earlier_sessions = earlier.length;
+      p.earlier_completed = earlier.some((e) => e.completed === true && consentedIds.has(e.participant_id));
+      p.earlier_saw_feedback = earlier.some((e) => sawFeedbackIds.has(e.participant_id));
+    });
   }
 
   const errorsSnap = await expRef.collection("errors").orderBy("at").get().catch(() => expRef.collection("errors").get());
