@@ -125,7 +125,7 @@ condition_labels <- c(risky_feedback = "Risky feedback",
 | *Claude Code Opus 5.5* | *Visual redesign* | *Confirmed the design looks the way I wanted* |
 | *Claude Code Opus 5.5* | *Timing fields, paste block, character minimum* | *Confirmed on the raw data* |
 | *Claude Code Opus 5.5* | *Updating report’s analysis code* | *Confirmed the code and logic* |
-
+| *Claude Code Opus 5.5* | *Installing Proof of Human tracker* | *Confirmed the tracker* |
 
 I wrote all of the text in this report myself. AI tools were not used to
 write, rewrite or paraphrase it, and were not used to generate, alter,
@@ -493,6 +493,7 @@ The comprehension quiz is new and checks both the gambles and the feedback rule.
 | Regret Scale (exploratory) | Five items (Schwartz et al., 2002), rated from 1 (completely disagree) to 7 (completely agree), item 5 reverse-scored |
 | End form | How often they gambled in the past 12 months; how much the information about which outcomes they would learn influenced their choice; age, gender, race and ethnicity, each with "Prefer not to say"; an optional feedback box |
 | Debrief | What the study tested, and that none of the gambles was played |
+| Bot detection | Proof of Human (poh.org) records typing rhythm, mouse movement and scrolling, and checks for virtual machines, VPNs and headless browsers. It produces a risk score from 0 to 100 per session (higher means more likely a bot) and individual checks, such as programmatic typing |
 
 All added materials are identical across conditions.
 
@@ -512,7 +513,7 @@ In the original, "participants were seated in separate cubicles and given a ques
 
 | Step | What happens | Original | Exceptions |
 |---|---|---|---|
-| 1. Consent | Course consent text; "I do not agree" ends the study, "I agree to participate" continues | Not described | Course requirement |
+| 1. Consent | Course consent text; "I do not agree" ends the study, and "I agree to participate" continues and starts the bot-detection tracker | Not described | Course requirement |
 | 2. Welcome | Explains that the gambles are hypothetical, that there are no right or wrong answers, and that the study takes about seven minutes in one sitting on a computer | Not described | New |
 | 3. Matching | Participants see both gambles and type the value of X that makes them equally attractive; X must be between \$0 and \$130 to continue | Phase 1: "make gamble S exactly as attractive as gamble R" (p. 151) | Live preview of X on the S card; range check |
 | 4. Attractiveness | Participants rate each gamble from 1 to 12, with their own X shown in gamble S | "Next, he or she was asked to rate the attractiveness of each option" (p. 151) | Buttons instead of paper |
@@ -533,6 +534,7 @@ Several rules apply throughout:
 | No outcomes or bonuses | The gambles are never played, and every participant receives the same flat Prolific payment | Consistent with the original's hypothetical gambles; the original participants took part "as part of a course requirement" (p. 151) |
 | Identical across conditions | Steps 1–4 and 8–12 are the same in every condition; only the feedback text (steps 5 and 7) and the correct answers to quiz items 4 and 5 differ | None |
 | Data saving | Responses are saved after every screen, with the time spent on each screen and how often and how long the participant left the browser tab; if saving fails at the end, participants see their completion code and are asked to download and email their data | Not applicable |
+| Bot detection | The Proof of Human tracker runs from consent to the end of the study. Its session ID is stored privately, and risk scores are retrieved from the vendor after data collection | None existed; the original was a supervised lab study |
 
 The study is expected to take 6 to 8 minutes. The median duration from Pilot B will be reported here before final data collection.
 
@@ -564,6 +566,7 @@ preregistration. You can pre-specify additional analyses here too.
 | 1 | Did not consent or did not complete the study | No complete data |
 | 2 | Repeat sessions: sessions will be linked by Prolific ID. Each person's first completed session will be kept, and the person excluded if an earlier session had already reached the feedback instructions | A participant who has already seen a feedback rule is no longer naive to the manipulation |
 | 3 | Any answer screen completed in under 300 ms (matching, attractiveness, quiz, choice, strength of preference, reasons, Regret Scale, end form) | Not humanly possible |
+| 4 | A Proof of Human bot-risk score (0–100) at or above a threshold that will be set from the Pilot B scores before preregistration. Participants without a score (tracker blocked or failed) will be kept, and their number reported | Likely a bot or AI agent |
 
 **Secondary analyses.** These follow the remaining analyses of Experiment 1 (Zeelenberg et al., 1996, p. 152). Like the original, they will not be corrected for multiple comparisons, and they will be interpreted as secondary to the key test.
 
@@ -616,7 +619,7 @@ and show the level of detail expected; replace them with yours.
 | Added measures | None | Regret Scale, gambling frequency, influence of the feedback information, and demographics, all after the choice | No; they come after the choice. |
 | Assignment | Random, 26 per condition (p. 151) | Simple random assignment, so groups are approximately equal | No. |
 | Navigation | Not described; a paper questionnaire would presumably allow looking back | No returning to earlier screens, so X cannot be revised after reading the feedback rule | Unlikely. |
-| Exclusions | None reported | Did not consent or complete; repeat sessions; any answer screen under 300 ms | Unlikely; this removes invalid data, and every exclusion is reported with counts. |
+| Exclusions | None reported | Did not consent or complete; repeat sessions; any answer screen under 300 ms; bot-risk score at or above the threshold | Unlikely; this removes invalid data, and every exclusion is reported with counts. |
 | Analysis | χ² tests and risk-preference ANOVA and contrasts, judged on significance (p. 152) | The same tests, plus the difference in proportions with a 95% CI, judged on effect size | No for the key test. |
 
 ### Methods addendum (post data collection)
