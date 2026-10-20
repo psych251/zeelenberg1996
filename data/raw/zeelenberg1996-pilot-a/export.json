@@ -1,7 +1,377 @@
 {
   "experiment_id": "zeelenberg1996-pilot-a",
-  "exported_at": "2026-10-20T05:51:13.048Z",
+  "exported_at": "2026-10-20T06:01:13.785Z",
   "participants": [
+    {
+      "participant_id": "4QelEnJNHNa8RdrJrUB9xnojr9U2-27decde4",
+      "participant": {
+        "page_url": "https://psych251.github.io/zeelenberg1996/",
+        "run_id": "27decde4",
+        "template_version": "0.1.0",
+        "experiment_id": "zeelenberg1996-pilot-a",
+        "participant_id": "4QelEnJNHNa8RdrJrUB9xnojr9U2-27decde4",
+        "client_started_at": "2026-10-20T05:59:10.358Z",
+        "screen": {
+          "width": 1470,
+          "height": 956
+        },
+        "language": "en-US",
+        "uid": "4QelEnJNHNa8RdrJrUB9xnojr9U2",
+        "viewport": {
+          "width": 1470,
+          "height": 835
+        },
+        "started_at": "2026-10-20T05:59:10.684Z",
+        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "device_supported": true,
+        "requires_keyboard": true,
+        "condition": "choice_only",
+        "poh_status": "ready",
+        "section_ms": {
+          "decision": 17147,
+          "about_you": 16267,
+          "intro": 3670,
+          "debrief": 947,
+          "feedback_rules": 11617,
+          "regret_scale": 6014,
+          "matching": 5455
+        },
+        "total_ms": 61117,
+        "ms_away_total": 0,
+        "blur_count_total": 0,
+        "n_trials": 14,
+        "n_chunks": 14,
+        "client_ended_at": "2026-10-20T06:00:11.899Z",
+        "completed": true,
+        "ended_at": "2026-10-20T06:00:12.025Z"
+      },
+      "trials": [
+        {
+          "task": "consent",
+          "section": "intro",
+          "rt": 2856,
+          "stimulus": "\n      <div class=\"consent\">\n        <h2>Consent</h2>\n        <p>By answering the following questions, you are participating in a study being performed by\n        cognitive scientists in the Stanford Department of Psychology. If you have questions about\n        this research, please contact us at <a href=\"mailto:stanfordpsych251@gmail.com\">stanfordpsych251@gmail.com</a>.\n        You must be at least 18 years old to participate. Your participation in this research is\n        voluntary. You may decline to answer any or all of the following questions. You may decline\n        further participation, at any time, without adverse consequences. Your anonymity is assured;\n        the researchers who have requested your participation will not receive any personal\n        information about you.</p>\n      </div>",
+          "response": 1,
+          "trial_type": "html-button-response",
+          "trial_index": 0,
+          "plugin_version": "2.1.0",
+          "time_elapsed": 2871,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "consented": true,
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "instructions",
+          "section": "intro",
+          "view_history": [
+            {
+              "page_index": 0,
+              "viewing_time": 796
+            }
+          ],
+          "rt": 796,
+          "trial_type": "instructions",
+          "trial_index": 1,
+          "plugin_version": "2.1.0",
+          "time_elapsed": 3670,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "matching",
+          "section": "matching",
+          "rt": 3524,
+          "response": {
+            "x": 50,
+            "gambles": null
+          },
+          "trial_type": "survey",
+          "trial_index": 2,
+          "plugin_version": "4.0.0",
+          "time_elapsed": 7231,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "matched_x": 50,
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "attractiveness",
+          "section": "matching",
+          "rt": 1873,
+          "response": {
+            "attract_r": 5,
+            "attract_s": 7,
+            "gambles": null
+          },
+          "trial_type": "survey",
+          "trial_index": 3,
+          "plugin_version": "4.0.0",
+          "time_elapsed": 9125,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "attract_r": 5,
+          "attract_s": 7,
+          "matched_x": 50,
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "feedback_instructions",
+          "section": "feedback_rules",
+          "rt": 758,
+          "stimulus": "\n      <div class=\"gamble-page\" data-condition=\"choice_only\">\n        \n        <p>Although you have made the gambles equally attractive, you are required to choose\n        between them.</p>\n        \n    <div class=\"gambles\">\n      <div class=\"gamble-card\">\n        <div class=\"gamble-name\">Gamble R</div>\n        <div class=\"gamble-line\">$130 with 35%</div>\n        <div class=\"gamble-line\">$0 with 65%</div>\n      </div>\n      <div class=\"gamble-vs\">vs</div>\n      <div class=\"gamble-card\">\n        <div class=\"gamble-name\">Gamble S</div>\n        <div class=\"gamble-line\"><span class=\"x-value\">$50</span> with 65%</div>\n        <div class=\"gamble-line\">$0 with 35%</div>\n      </div>\n    </div>\n        <p>Before you choose, please note:</p>\n        <p class=\"feedback-rule\">You would only know the outcome of the gamble that you choose. You would not be able to compare your outcome with the outcome of the non-chosen gamble.</p>\n      </div>",
+          "response": 0,
+          "trial_type": "html-button-response",
+          "trial_index": 4,
+          "plugin_version": "2.1.0",
+          "time_elapsed": 9885,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "instructions_view": 1,
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "comprehension",
+          "section": "feedback_rules",
+          "rt": 5097,
+          "response": {
+            "q1": "35",
+            "q2": "65",
+            "q3": "no",
+            "q4": "no",
+            "q5": "no",
+            "intro": null
+          },
+          "trial_type": "survey",
+          "trial_index": 5,
+          "plugin_version": "4.0.0",
+          "time_elapsed": 15011,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "quiz_attempt": 1,
+          "q1_correct": true,
+          "q2_correct": true,
+          "q3_correct": false,
+          "q4_correct": true,
+          "q5_correct": true,
+          "quiz_n_correct": 4,
+          "quiz_passed": false,
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "feedback_instructions",
+          "section": "feedback_rules",
+          "rt": 1372,
+          "stimulus": "\n      <div class=\"gamble-page\" data-condition=\"choice_only\">\n        <p class=\"quiz-retry\">Some of your answers were incorrect. Please read the instructions again.</p>\n        <p>Although you have made the gambles equally attractive, you are required to choose\n        between them.</p>\n        \n    <div class=\"gambles\">\n      <div class=\"gamble-card\">\n        <div class=\"gamble-name\">Gamble R</div>\n        <div class=\"gamble-line\">$130 with 35%</div>\n        <div class=\"gamble-line\">$0 with 65%</div>\n      </div>\n      <div class=\"gamble-vs\">vs</div>\n      <div class=\"gamble-card\">\n        <div class=\"gamble-name\">Gamble S</div>\n        <div class=\"gamble-line\"><span class=\"x-value\">$50</span> with 65%</div>\n        <div class=\"gamble-line\">$0 with 35%</div>\n      </div>\n    </div>\n        <p>Before you choose, please note:</p>\n        <p class=\"feedback-rule\">You would only know the outcome of the gamble that you choose. You would not be able to compare your outcome with the outcome of the non-chosen gamble.</p>\n      </div>",
+          "response": 0,
+          "trial_type": "html-button-response",
+          "trial_index": 6,
+          "plugin_version": "2.1.0",
+          "time_elapsed": 16386,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "instructions_view": 2,
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "comprehension",
+          "section": "feedback_rules",
+          "rt": 4333,
+          "response": {
+            "q1": "35",
+            "q2": "65",
+            "q3": "yes",
+            "q4": "no",
+            "q5": "no",
+            "intro": null
+          },
+          "trial_type": "survey",
+          "trial_index": 7,
+          "plugin_version": "4.0.0",
+          "time_elapsed": 20742,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "quiz_attempt": 2,
+          "q1_correct": true,
+          "q2_correct": true,
+          "q3_correct": true,
+          "q4_correct": true,
+          "q5_correct": true,
+          "quiz_n_correct": 5,
+          "quiz_passed": true,
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "choice",
+          "section": "decision",
+          "rt": 1824,
+          "stimulus": "\n      <div class=\"gamble-page\" data-condition=\"choice_only\">\n        \n    <div class=\"gambles\">\n      <div class=\"gamble-card\">\n        <div class=\"gamble-name\">Gamble R</div>\n        <div class=\"gamble-line\">$130 with 35%</div>\n        <div class=\"gamble-line\">$0 with 65%</div>\n      </div>\n      <div class=\"gamble-vs\">vs</div>\n      <div class=\"gamble-card\">\n        <div class=\"gamble-name\">Gamble S</div>\n        <div class=\"gamble-line\"><span class=\"x-value\">$50</span> with 65%</div>\n        <div class=\"gamble-line\">$0 with 35%</div>\n      </div>\n    </div>\n        <p class=\"feedback-rule\">You would only know the outcome of the gamble that you choose. You would not be able to compare your outcome with the outcome of the non-chosen gamble.</p>\n        <p><strong>Which gamble do you choose?</strong></p>\n      </div>",
+          "response": 1,
+          "trial_type": "html-button-response",
+          "trial_index": 8,
+          "plugin_version": "2.1.0",
+          "time_elapsed": 22570,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "choice": "safe",
+          "matched_x": 50,
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "preference_strength",
+          "section": "decision",
+          "rt": 1037,
+          "response": {
+            "strength": 6,
+            "chosen": null
+          },
+          "trial_type": "survey",
+          "trial_index": 9,
+          "plugin_version": "4.0.0",
+          "time_elapsed": 23623,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "strength": 6,
+          "choice": "safe",
+          "risk_preference": -5.5,
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "reasons",
+          "section": "decision",
+          "rt": 14252,
+          "response": {
+            "reasons": "test test test test test test test test"
+          },
+          "trial_type": "survey",
+          "trial_index": 10,
+          "plugin_version": "4.0.0",
+          "time_elapsed": 37889,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "reasons": "test test test test test test test test",
+          "reasons_chars": 39,
+          "too_short_attempts": 0,
+          "paste_attempts": 0,
+          "keystrokes": 99,
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "regret_scale",
+          "section": "regret_scale",
+          "rt": 6010,
+          "response": {
+            "regret_1": 0,
+            "regret_2": 0,
+            "regret_3": 0,
+            "regret_4": 0,
+            "regret_5": 0
+          },
+          "question_order": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "trial_type": "survey-likert",
+          "trial_index": 11,
+          "plugin_version": "2.2.0",
+          "time_elapsed": 43903,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "regret_1": 1,
+          "regret_2": 1,
+          "regret_3": 1,
+          "regret_4": 1,
+          "regret_5": 1,
+          "regret_score": 2.2,
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "end_survey",
+          "section": "about_you",
+          "rt": 16264,
+          "response": {
+            "feedback": null,
+            "gamble_freq_12mo": "Prefer not to say",
+            "feedback_reliance": "Prefer not to say",
+            "age": 18,
+            "gender": "Female",
+            "gender_other": null,
+            "race": "Prefer not to say",
+            "race_other": null,
+            "ethnicity": "Prefer not to say"
+          },
+          "trial_type": "survey-html-form",
+          "trial_index": 12,
+          "plugin_version": "2.1.0",
+          "time_elapsed": 60170,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "blur_count": 0,
+          "ms_away": 0
+        },
+        {
+          "task": "debrief",
+          "section": "debrief",
+          "rt": 945,
+          "stimulus": "\n      <div class=\"illustration\"><svg viewBox=\"0 0 320 200\" xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\" focusable=\"false\">\n    <ellipse cx=\"160\" cy=\"100\" rx=\"128\" ry=\"80\" fill=\"#e7f2f2\"/>\n    <circle cx=\"160\" cy=\"100\" r=\"58\" fill=\"#1E6E76\"/>\n    <circle cx=\"160\" cy=\"100\" r=\"46\" fill=\"none\" stroke=\"#ffffff\" stroke-opacity=\"0.35\" stroke-width=\"3\" stroke-dasharray=\"4 8\" stroke-linecap=\"round\"/>\n    <path d=\"M136 102 l16 16 l32 -34\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"11\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n    <path d=\"M80 42 Q82.16 51.84 92 54 Q82.16 56.16 80 66 Q77.84 56.16 68 54 Q77.84 51.84 80 42 Z\" fill=\"#f2b544\"/><path d=\"M240 42 Q242.16 51.84 252 54 Q242.16 56.16 240 66 Q237.84 56.16 228 54 Q237.84 51.84 240 42 Z\" fill=\"#f2b544\"/><path d=\"M78 139 Q79.62 146.38 87 148 Q79.62 149.62 78 157 Q76.38 149.62 69 148 Q76.38 146.38 78 139 Z\" fill=\"#8fc1b5\"/><path d=\"M242 139 Q243.62 146.38 251 148 Q243.62 149.62 242 157 Q240.38 149.62 233 148 Q240.38 146.38 242 139 Z\" fill=\"#8fc1b5\"/>\n    <circle cx=\"110\" cy=\"30\" r=\"4\" fill=\"#e98a6b\"/><circle cx=\"210\" cy=\"30\" r=\"4\" fill=\"#e98a6b\"/><circle cx=\"46\" cy=\"100\" r=\"3.5\" fill=\"#1E6E76\"/><circle cx=\"274\" cy=\"100\" r=\"3.5\" fill=\"#1E6E76\"/><circle cx=\"112\" cy=\"172\" r=\"3.5\" fill=\"#f2b544\"/><circle cx=\"208\" cy=\"172\" r=\"3.5\" fill=\"#f2b544\"/></svg></div>\n      <h2>Thank You!</h2>\n      <p>Thank you for taking part. This study tested whether knowing which outcomes you will\n      learn after a decision changes which option people choose.</p>\n      <p>The gambles were hypothetical, so neither gamble was played and there is no outcome to\n      show you. If you have questions about this research, contact\n      <a href=\"mailto:stanfordpsych251@gmail.com\">stanfordpsych251@gmail.com</a>.</p>\n      <p><strong>Press the button to save your responses and finish.</strong></p>",
+          "response": 0,
+          "trial_type": "html-button-response",
+          "trial_index": 13,
+          "plugin_version": "2.1.0",
+          "time_elapsed": 61117,
+          "experiment_id": "zeelenberg1996-pilot-a",
+          "condition": "choice_only",
+          "blur_count": 0,
+          "ms_away": 0
+        }
+      ],
+      "n_chunks": 14
+    },
+    {
+      "participant_id": "4QelEnJNHNa8RdrJrUB9xnojr9U2-98bc5a28",
+      "participant": {
+        "page_url": "https://psych251.github.io/zeelenberg1996/",
+        "run_id": "98bc5a28",
+        "template_version": "0.1.0",
+        "experiment_id": "zeelenberg1996-pilot-a",
+        "participant_id": "4QelEnJNHNa8RdrJrUB9xnojr9U2-98bc5a28",
+        "client_started_at": "2026-10-20T06:00:13.762Z",
+        "screen": {
+          "width": 1470,
+          "height": 956
+        },
+        "language": "en-US",
+        "completed": false,
+        "uid": "4QelEnJNHNa8RdrJrUB9xnojr9U2",
+        "viewport": {
+          "width": 1470,
+          "height": 835
+        },
+        "started_at": "2026-10-20T06:00:13.899Z",
+        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "device_supported": true,
+        "requires_keyboard": true,
+        "condition": "risky_feedback"
+      },
+      "trials": [],
+      "n_chunks": 0
+    },
     {
       "participant_id": "9xn0WiWgT5fZYXne8wFXGqlxpWq1-3ebb344b",
       "participant": {
