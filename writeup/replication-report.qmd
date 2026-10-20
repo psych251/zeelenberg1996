@@ -161,6 +161,10 @@ note <- function(...) cat(paste0(...), "\n")
 min_screen_ms <- 300
 answer_tasks  <- c("matching", "attractiveness", "comprehension", "choice",
                    "preference_strength", "reasons", "regret_scale", "end_survey")
+# Proof of Human bot-risk score (0-100) at or above which a participant is excluded as a likely
+# bot. Set it after Pilot B, before preregistering. NA: scores are reported, nobody is excluded.
+# Participants with no score (the tracker was blocked or failed to load) are kept and counted.
+poh_exclude_at <- NA_real_
 
 # Load one phase's exported data and apply the exclusion rule. Returns NULL if that phase
 # has not been exported yet, which is how every section below knows to skip itself.
@@ -171,6 +175,9 @@ read_phase <- function(id) {
   trials       <- read_csv(file.path(dir, "trials.csv"), show_col_types = FALSE)
   errors_path  <- file.path(dir, "errors.csv")
   errors <- if (file.exists(errors_path)) read_csv(errors_path, show_col_types = FALSE) else tibble()
+  # Bot-risk scores, written by scripts/poh-scores.js after the export (NULL until then).
+  poh_path <- file.path(dir, "poh.csv")
+  poh <- if (file.exists(poh_path)) read_csv(poh_path, show_col_types = FALSE) else NULL
 
   # Every participant document is one page load, including visits that never consented. Someone
   # who clicks "I do not agree" also reaches the end of the study (completed = TRUE), so a
@@ -193,11 +200,19 @@ read_phase <- function(id) {
            as.numeric(rt) < min_screen_ms) |>
     distinct(participant_id) |> pull(participant_id)
 
-  keep <- complete |> filter(!participant_id %in% c(repeat_ids, too_fast_ids))
+  # Exclusion 3, likely bots: a bot-risk score at or above poh_exclude_at. No score is no
+  # evidence either way, so those participants are kept.
+  bot_ids <- if (!is.null(poh) && !is.na(poh_exclude_at)) {
+    poh |> filter(participant_id %in% complete$participant_id, risk_score >= poh_exclude_at) |>
+      pull(participant_id)
+  } else character(0)
 
-  list(participants = participants, trials = trials, errors = errors,
+  keep <- complete |> filter(!participant_id %in% c(repeat_ids, too_fast_ids, bot_ids))
+
+  list(participants = participants, trials = trials, errors = errors, poh = poh,
        consented_ids = consented_ids, complete = complete, keep = keep,
-       has_repeat_flags = has_repeat_flags, repeat_ids = repeat_ids, too_fast_ids = too_fast_ids)
+       has_repeat_flags = has_repeat_flags, repeat_ids = repeat_ids, too_fast_ids = too_fast_ids,
+       bot_ids = bot_ids)
 }
 
 # The key comparison's raw counts: how many analysed participants chose the risky gamble (R)
@@ -676,11 +691,65 @@ bind_rows(
 #| results: asis
 cat(sprintf("Of %d visits to the study, %d consented, %d completed the study and %d met the exclusion criteria.",
             nrow(participants), length(unique(consented_ids)), nrow(complete), nrow(keep)))
-cat(sprintf(" Of the completers, %d were excluded as repeat sessions and %d for answering a screen in under %d ms (a participant can meet both).",
-            length(phase1$repeat_ids), length(phase1$too_fast_ids), min_screen_ms))
+if (is.na(poh_exclude_at)) {
+  cat(sprintf(" Of the completers, %d were excluded as repeat sessions and %d for answering a screen in under %d ms (a participant can meet both).",
+              length(phase1$repeat_ids), length(phase1$too_fast_ids), min_screen_ms))
+} else {
+  cat(sprintf(" Of the completers, %d were excluded as repeat sessions, %d for answering a screen in under %d ms and %d for a bot-risk score of %g or more (a participant can meet more than one).",
+              length(phase1$repeat_ids), length(phase1$too_fast_ids), min_screen_ms,
+              length(phase1$bot_ids), poh_exclude_at))
+}
+if (is.null(phase1$poh)) {
+  cat(" Bot-risk scores have not been fetched for these data yet, so that rule could not be applied.")
+} else if (is.na(poh_exclude_at)) {
+  cat(" No bot-risk threshold has been set yet, so nobody was excluded on bot-risk scores.")
+}
 if (!phase1$has_repeat_flags) cat(" These data were exported before repeat sessions were flagged, so that rule could not be applied; export again to apply it.")
 if (nrow(keep) == 0) cat(" No participants remain for analysis yet, so the results below are empty.")
 cat("\n")
+```
+
+```{r}
+#| label: bot-risk
+#| eval: !expr have_data
+# Proof of Human bot-risk scores (0-100) among completers. poh_status comes from the participant
+# document (what the tracker did); scores come from poh.csv, written by scripts/poh-scores.js.
+bot <- complete |>
+  transmute(participant_id, condition,
+            poh_status = if ("poh_status" %in% names(complete)) as.character(poh_status) else NA_character_)
+bot <- if (!is.null(phase1$poh)) {
+  left_join(bot, phase1$poh |> transmute(participant_id, risk_score = as.numeric(risk_score),
+                                         poh_error = as.character(poh_error)), by = "participant_id")
+} else mutate(bot, risk_score = NA_real_, poh_error = NA_character_)
+
+if (nrow(bot) > 0)
+  bot |>
+    mutate(Condition = factor(unname(condition_labels[condition]), levels = condition_labels)) |>
+    group_by(Condition, .drop = FALSE) |>
+    summarise(Completed = n(), Scored = sum(!is.na(risk_score)),
+              `Median score` = if (any(!is.na(risk_score))) median(risk_score, na.rm = TRUE) else NA_real_,
+              `50 to 69` = sum(risk_score >= 50 & risk_score < 70, na.rm = TRUE),
+              `70 or more` = sum(risk_score >= 70, na.rm = TRUE),
+              Excluded = sum(participant_id %in% phase1$bot_ids), .groups = "drop") |>
+    knitr::kable(caption = paste(
+      "Proof of Human bot-risk scores among completers (0-100; higher means more likely a bot).",
+      "The vendor suggests reviewing 50 to 69 and rejecting 70 or more.",
+      if (is.na(poh_exclude_at)) "No exclusion threshold is set yet, so nobody is excluded on these scores."
+      else sprintf("Completers scoring %g or more are excluded.", poh_exclude_at)))
+
+# Completers without a score are kept; say why each one has none.
+no_score <- bot |>
+  filter(is.na(risk_score)) |>
+  mutate(Reason = case_when(
+    poh_status == "ready" & !is.na(poh_error) ~ paste("Report not available:", poh_error),
+    poh_status == "ready"                     ~ "Scores not fetched yet (scripts/poh-scores.js)",
+    poh_status == "off"                       ~ "Tracker off (no site key, or a test run)",
+    poh_status == "failed_to_load"            ~ "Tracker blocked or failed to load",
+    poh_status %in% c("loading", "no_session_id") ~ "Tracker never reported a session",
+    TRUE                                      ~ "Not recorded (data predate the tracker)"))
+if (nrow(no_score) > 0)
+  no_score |> count(Reason, name = "Completers") |>
+    knitr::kable(caption = "Completers without a bot-risk score, and why. They are kept in the analysis.")
 ```
 
 ```{r}

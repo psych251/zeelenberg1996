@@ -1,0 +1,83 @@
+[31m
+
+processing file: replication-report.qmd
+[39m1/49                             
+2/49 [setup]                     
+3/49                             
+4/49 [original-study]            
+5/49                             
+6/49 [analysis-functions]        
+7/49                             
+8/49 [key-stats]                 
+9/49                             
+10/49 [power]                     
+11/49                             
+12/49 [budget]                    
+13/49                             
+14/49 [no-data-notice]            
+15/49                             
+16/49 [phase1-data]               
+17/49                             
+18/49 [funnel]                    
+19/49                             
+20/49 [sample-text]               
+21/49                             
+22/49 [bot-risk]                  
+23/49                             
+24/49 [demographics]              
+25/49                             
+26/49 [confirmatory]              
+27/49                             
+28/49 [comparison]                
+29/49                             
+30/49 [comparison-verdict]        
+31/49                             
+32/49 [fig-comparison]            
+33/49                             
+34/49 [secondary-original]        
+35/49                             
+36/49 [exploratory-attractiveness]
+37/49                             
+38/49 [reported-measures]         
+39/49                             
+40/49 [data-quality]              
+41/49                             
+42/49 [phase2-power]              
+43/49                             
+44/49 [phase2-notice]             
+45/49                             
+46/49 [phase2-results]            
+47/49                             
+48/49 [fig-phase2]                
+49/49                             
+[31moutput file: replication-report.knit.md
+
+[39m[1mpandoc [22m
+  to: html
+  output-file: replication-report.html
+  standalone: true
+  embed-resources: true
+  section-divs: true
+  html-math-method: mathjax
+  wrap: none
+  default-image-extension: png
+  toc: true
+  toc-depth: 3
+  number-sections: false
+  
+[1mmetadata[22m
+  document-css: false
+  link-citations: true
+  lang: en
+  title: Replication of Experiment 1 of Zeelenberg et al. (1996, *Organizational Behavior and Human Decision Processes*)
+  author: Nick Madibekov (alikhanm@stanford.edu)
+  date: today
+  date-format: long
+  editor:
+    markdown:
+      wrap: 72
+  code-summary: Show code
+  theme: cosmo
+  
+Output created: replication-report.html
+

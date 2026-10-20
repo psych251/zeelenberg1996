@@ -18,9 +18,10 @@
  *   trials.csv         one row per jsPsych trial, long format; nested values are JSON strings
  *   errors.csv         client-side error reports
  *   export.json        the above, verbatim, for safekeeping
- *   identifiers.csv    participant_id -> Prolific ids and raw URL parameters. GITIGNORED.
- *                      Prolific ids are persistent identifiers; keep this file private and
- *                      use it only to approve/pay participants or reconcile duplicates.
+ *   identifiers.csv    participant_id -> Prolific ids, raw URL parameters and the Proof of Human
+ *                      session id. GITIGNORED. Prolific ids are persistent identifiers; keep this
+ *                      file private and use it only to approve/pay participants, reconcile
+ *                      duplicates, or fetch bot-risk scores (scripts/poh-scores.js).
  */
 const fs = require("fs");
 const path = require("path");
@@ -110,9 +111,10 @@ function writeCsv(file, rows, firstColumns) {
     pTrials.sort((a, b) => (a.trial_index ?? 0) - (b.trial_index ?? 0));
 
     // Identifiers go to a separate, gitignored file; everything committed stays anonymous.
-    const { full_data, prolific_pid, prolific_study_id, prolific_session_id, url_params, ...rest } = p;
+    // The Proof of Human session id goes there too: it links to the vendor's record of the session.
+    const { full_data, prolific_pid, prolific_study_id, prolific_session_id, url_params, poh_session_id, ...rest } = p;
     identifiers.push({ participant_id: uid, prolific_pid, prolific_study_id, prolific_session_id,
-      url_params, started_at: rest.started_at, completed: rest.completed });
+      url_params, poh_session_id, started_at: rest.started_at, completed: rest.completed });
     // participant_id comes from the document path, never from the trial row: if an
     // experiment sets its own participant_id the two must not disagree, or trials.csv
     // and participants.csv will not join.

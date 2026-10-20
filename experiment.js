@@ -50,6 +50,12 @@ const EXPERIMENT = {
   // type their reasons and the study is meant to be taken on a computer (also set Prolific to
   // desktop only).
   requires_keyboard: true,
+
+  // Proof of Human bot detection (docs.poh.org): the public site key from its dashboard, which
+  // is meant to be embedded in the page. Empty turns it off. The tracker starts after consent,
+  // never loads in test runs (?emulator=1), and sends no participant id. Risk scores are fetched
+  // after data collection with scripts/poh-scores.js.
+  poh_site_key: "pub-Z2xYPhR0yqVM24DUFI7V",
 };
 
 // The three between-subjects feedback conditions.
@@ -133,6 +139,32 @@ function scale12(name, title, minText, maxText) {
     // End labels go under the scale, so all 12 points fit on one line.
     minRateDescription: minText, maxRateDescription: maxText, rateDescriptionLocation: "bottom",
   };
+}
+
+// Proof of Human: load its tracker, tag the session with the experiment id, and save the
+// tracker's session id on the participant document so that scripts/poh-scores.js can fetch
+// the session's risk score later. This is the one script loaded from a CDN rather than lib/:
+// the tracker is a hosted service and cannot be vendored. `poh_status` records what happened:
+// "off" (no site key, or a test run), "loading", "ready", "failed_to_load" (for example blocked
+// by an ad blocker) or "no_session_id".
+function startProofOfHuman(saver) {
+  const record = () => {
+    const id = typeof window.getPOHSessionId === "function" ? window.getPOHSessionId() : null;
+    saver.updateParticipant(id ? { poh_status: "ready", poh_session_id: id } : { poh_status: "no_session_id" });
+  };
+  // A stand-in tracker that is already on the page (the test suite defines one) is used as is.
+  if (typeof window.getPOHSessionId === "function") return record();
+  if (USE_EMULATOR || !EXPERIMENT.poh_site_key) return saver.updateParticipant({ poh_status: "off" });
+  if (document.getElementById("poh-script")) return;
+  saver.updateParticipant({ poh_status: "loading" });
+  window.addEventListener("poh:ready", record, { once: true });
+  const s = document.createElement("script");
+  s.id = "poh-script";
+  s.src = "https://cdn.poh.org/v1/poh.js";
+  s.setAttribute("data-site-key", EXPERIMENT.poh_site_key);
+  s.setAttribute("data-tags", EXPERIMENT.id);
+  s.onerror = () => saver.updateParticipant({ poh_status: "failed_to_load" });
+  document.head.appendChild(s);
 }
 
 // ---------------------------------------------------------------------------
@@ -299,6 +331,9 @@ function scale12(name, title, minText, maxText) {
       if (!data.consented) {
         // No end message here: jsPsych would paint it over the screen that on_finish renders.
         jsPsych.abortExperiment();
+      } else {
+        // Bot detection starts only once the participant has agreed to take part.
+        startProofOfHuman(saver);
       }
     },
   };

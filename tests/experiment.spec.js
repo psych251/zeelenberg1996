@@ -183,6 +183,13 @@ function decodeFields(fields) {
   return out;
 }
 
+// The current run's participant document, decoded ({} until it exists).
+async function participantDoc(page) {
+  const id = await page.evaluate(() => window.__saver.docId);
+  const p = await fsGet(`experiments/${EXPERIMENT_ID}/participants/${id}`);
+  return p.status === 200 ? decodeFields(p.body.fields) : {};
+}
+
 test.describe("experiment", () => {
   test("runs to the end and saves data", async ({ page }) => {
     const consoleErrors = [];
@@ -405,6 +412,39 @@ test.describe("experiment", () => {
     await page.goto(EMULATOR ? "/?emulator=1" : "/");
     await expect(page.getByRole("button", { name: "I agree to participate" })).toBeVisible();
     await expect(page.locator("#device-unsupported")).toHaveCount(0);
+  });
+
+  test("bot detection never loads in test runs and starts only after consent", async ({ page }) => {
+    test.skip(!EMULATOR, "needs the Firestore emulator");
+    const pohRequests = [];
+    page.on("request", (r) => { if (/poh\.org/.test(r.url())) pohRequests.push(r.url()); });
+
+    // Declining consent: the tracker is never started, so nothing about it is recorded.
+    await page.goto("/?emulator=1");
+    await page.waitForFunction(() => window.__saver && window.__saver.docId);
+    await page.getByRole("button", { name: "I do not agree" }).click();
+    await expect(page.getByText("You chose not to participate")).toBeVisible({ timeout: 15000 });
+    expect((await participantDoc(page)).poh_status).toBeUndefined();
+
+    // Agreeing in a test run: the tracker stays off, and the participant document says so.
+    await page.goto("/?emulator=1");
+    await page.waitForFunction(() => window.__saver && window.__saver.docId);
+    await page.getByRole("button", { name: "I agree to participate" }).click();
+    await expect.poll(async () => (await participantDoc(page)).poh_status, { timeout: 15000 }).toBe("off");
+    expect(pohRequests, "requests to Proof of Human").toEqual([]);
+  });
+
+  test("bot detection saves the tracker's session id once the participant consents", async ({ page }) => {
+    test.skip(!EMULATOR, "needs the Firestore emulator");
+    // A stand-in for the Proof of Human tracker, already loaded on the page.
+    await page.addInitScript(() => { window.getPOHSessionId = () => "test-poh-session"; });
+    await page.goto("/?emulator=1");
+    await page.waitForFunction(() => window.__saver && window.__saver.docId);
+    expect((await participantDoc(page)).poh_session_id).toBeUndefined();
+    await page.getByRole("button", { name: "I agree to participate" }).click();
+    await expect.poll(async () => (await participantDoc(page)).poh_session_id, { timeout: 15000 })
+      .toBe("test-poh-session");
+    expect((await participantDoc(page)).poh_status).toBe("ready");
   });
 
   test("a write the database refuses is announced on the page, not only in the console", async ({ page }) => {
