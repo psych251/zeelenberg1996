@@ -4,17 +4,21 @@
  *
  * Design
  *   IV (between subjects, random 1 of 3): condition = choice_only | risky_feedback | safe_feedback,
- *     i.e. whose outcome participants expect to learn whatever they choose (none / Gamble R / Gamble S).
+ *     i.e. whose outcome participants expect to learn whatever they choose (none / Gamble A / Gamble B).
+ *   Labels: participants see "Gamble A" (the paper's gamble R, risky) and "Gamble B" (its gamble S,
+ *     safe), as in the original questionnaire (M. Zeelenberg, personal communication, Oct 20, 2026).
+ *     The data keep the paper's names: choice "risky" / "safe", attract_r / attract_s.
  *   DVs: choice ("risky" / "safe") on the task "choice" row (key DV); strength (1-12) and
  *     risk_preference = (+1 risky / -1 safe) x (strength - 0.5) on "preference_strength";
- *     matched_x on "matching"; attract_r, attract_s (1-12) on "attractiveness"; reasons on "reasons".
+ *     matched_x and attract_r, attract_s (1-12) on "matching" (one screen; earlier data had the
+ *     ratings on a separate "attractiveness" row); reasons on "reasons".
  *     Exploratory, after all original measures: regret_1..regret_5 (1-7) and regret_score (mean,
  *     item 5 reversed) on "regret_scale" (Schwartz et al., 2002 Regret Scale).
  *   Trials: one of each. The feedback instructions and a 5-item comprehension quiz repeat until all
  *     five answers are correct (quiz_attempt counts the tries; no cap).
  *   Randomization: condition drawn at random per participant. Gamble order and button order are
- *     fixed (R first, then S), as in the original.
- *   Exclusions (for now): incomplete sessions. A bot / AI-agent risk-score filter is added later.
+ *     fixed (A, the risky gamble, first), as in the original.
+ *   Exclusions are applied in the report (writeup/replication-report.qmd), not here.
  *
  * The original questionnaire was not published. Participant-facing wording follows the paper's own
  * description of the materials (pp. 151-152), turned into the second person; f130 becomes $130.
@@ -90,7 +94,8 @@ function money(v) {
   return "$" + (Number.isInteger(v) ? String(v) : v.toFixed(2));
 }
 
-// The two gambles as laid out in the paper (p. 151): R on the left, S on the right, the win line
+// The two gambles as laid out in the paper (p. 151): the risky gamble (A, the paper's R) on the
+// left, the safe gamble (B, the paper's S) on the right, the win line
 // above the zero line. Shown as two identical cards. Before matching, X is shown as "$X";
 // afterwards it is the participant's own matched value.
 function gambleCards(x) {
@@ -98,13 +103,13 @@ function gambleCards(x) {
   return `
     <div class="gambles">
       <div class="gamble-card">
-        <div class="gamble-name">Gamble R</div>
+        <div class="gamble-name">Gamble A</div>
         <div class="gamble-line">$130 with 35%</div>
         <div class="gamble-line">$0 with 65%</div>
       </div>
       <div class="gamble-vs">vs</div>
       <div class="gamble-card">
-        <div class="gamble-name">Gamble S</div>
+        <div class="gamble-name">Gamble B</div>
         <div class="gamble-line"><span class="x-value">${sx}</span> with 65%</div>
         <div class="gamble-line">$0 with 35%</div>
       </div>
@@ -122,13 +127,13 @@ const FEEDBACK_TEXT = {
     "You would only know the outcome of the gamble that you choose. You would not be able to " +
     "compare your outcome with the outcome of the non-chosen gamble.",
   risky_feedback:
-    "You would always know the outcome of Gamble R and the outcome of the gamble you choose. " +
+    "You would always know the outcome of Gamble A and the outcome of the gamble you choose. " +
     "You would be able to compare your outcome with the outcome of the non-chosen gamble if you " +
-    "select Gamble S, but not if you select Gamble R.",
+    "select Gamble B, but not if you select Gamble A.",
   safe_feedback:
-    "You would always know the outcome of Gamble S and the outcome of the gamble you choose. " +
+    "You would always know the outcome of Gamble B and the outcome of the gamble you choose. " +
     "You would be able to compare your outcome with the outcome of the non-chosen gamble if you " +
-    "select Gamble R, but not if you select Gamble S.",
+    "select Gamble A, but not if you select Gamble B.",
 };
 
 // A 12-point scale with labelled ends, as used for attractiveness and strength of preference.
@@ -356,13 +361,24 @@ function startProofOfHuman(saver) {
   };
 
   // -------------------------------------------------------------------------
-  // 3. Matching (original phase 1): make Gamble S as attractive as Gamble R
+  // 3. Matching (original phase 1) and attractiveness ratings, on one screen
   // -------------------------------------------------------------------------
+  // The participant types X and clicks "Update X" (or presses Enter): the Gamble B card then shows
+  // that amount, and the two attractiveness ratings appear below. Updating X to a new value after
+  // rating clears the ratings, so the saved ratings always refer to the saved X. Continue needs
+  // both ratings and the X on the card to match the box. Recorded on the "matching" row:
+  // matched_x (final X), attract_r / attract_s (Gamble A / Gamble B, 1-12), x_updates (clicks
+  // that showed a valid X), x_history (each X shown, in order) and ratings_reset (times the
+  // ratings were cleared because X changed).
+  let xUpdates = 0;
+  let xHistory = [];
+  let ratingsReset = 0;
   const matching = {
     type: jsPsychSurvey,
     survey_json: {
       showQuestionNumbers: "off",
       completeText: "Continue",
+      textUpdateMode: "onTyping",
       pages: [{
         elements: [
           // Plain-language explanation around the paper's question (added for online participants;
@@ -370,81 +386,101 @@ function startProofOfHuman(saver) {
           { type: "html", name: "gambles", html: `<div class="gamble-page"><p>Consider the following two gambles. In each one, you either win the amount shown or win nothing, with the chances shown.</p>${gambleCards(null)}</div>` },
           {
             type: "text", name: "x", inputType: "number", isRequired: true,
-            title: "Make Gamble S exactly as attractive as Gamble R: write down the value of X for which you find the gambles equally attractive.",
+            title: "Make Gamble B exactly as attractive as Gamble A: write down the value of X for which you find the gambles equally attractive.",
             description: "X is an amount of money that you choose. Pick the amount that would make you " +
               "equally happy to play either gamble, so you would not mind which one you got. There is " +
-              "no right or wrong answer. Enter an amount in dollars.",
-            // X must lie strictly between $0 and $130, so that neither gamble simply dominates
-            // the other. (The paper set no range.)
-            validators: [{
-              type: "expression", expression: "{x} > 0 and {x} < 130",
-              text: "Please enter an amount more than $0 and less than $130.",
-            }],
+              "no right or wrong answer. Enter an amount in dollars and click Update X.",
+            validators: [
+              // X must lie strictly between $0 and $130, so that neither gamble simply dominates
+              // the other. (The paper set no range.)
+              { type: "expression", expression: "{x} > 0 and {x} < 130",
+                text: "Please enter an amount more than $0 and less than $130." },
+              // The amount in the box must be the one shown on the card (and rated).
+              { type: "expression", expression: "{x} = {x_shown}",
+                text: "Click Update X to show this amount on Gamble B before continuing." },
+            ],
           },
+          { type: "html", name: "update_x",
+            html: '<div class="update-x-row"><button type="button" class="jspsych-btn update-x">Update X</button>' +
+              '<p class="x-note" aria-live="polite"></p></div>' },
+          { type: "html", name: "rate_intro", visibleIf: "{x_shown} notempty",
+            html: "<p>Rate the attractiveness of each option on a scale ranging from not attractive (1) to very attractive (12).</p>" },
+          { ...scale12("attract_r", "Gamble A", "not attractive", "very attractive"), visibleIf: "{x_shown} notempty" },
+          { ...scale12("attract_s", "Gamble B", "not attractive", "very attractive"), visibleIf: "{x_shown} notempty" },
         ],
       }],
     },
-    // Live preview: while the participant types X, the Gamble S card shows that amount
-    // ("$70 with 65%"); an empty box shows "$X" again. Display only; the saved X is what they typed.
     survey_function: (survey) => {
-      const syncPreview = () => {
-        const box = document.querySelector('.jspsych-content [data-name="x"] input');
-        const shown = document.querySelector(".jspsych-content .x-value");
-        if (!box || !shown) return;
-        const raw = box.value.trim();
-        const x = Number(raw);
-        shown.textContent = raw === "" || !Number.isFinite(x) ? "$X" : money(x);
+      let note = "";
+      // SurveyJS redraws questions (to show errors, or when the ratings appear), so the card and
+      // the note are re-applied from state after every render.
+      const sync = () => {
+        const shown = survey.getVariable("x_shown");
+        const card = document.querySelector(".jspsych-content .x-value");
+        if (card) card.textContent = shown === undefined || shown === null ? "$X" : money(Number(shown));
+        const noteEl = document.querySelector(".jspsych-content .x-note");
+        if (noteEl) noteEl.textContent = note;
       };
-      // Also re-sync after SurveyJS redraws a question (e.g. to show an error message).
+      const updateX = () => {
+        const xq = survey.getQuestionByName("x");
+        const prev = survey.getVariable("x_shown");
+        const value = survey.getValue("x");
+        // Show the new value first, so only the range check can fail; put the old one back if it does.
+        survey.setVariable("x_shown", value);
+        if (!xq.validate(true)) {
+          survey.setVariable("x_shown", prev);
+          sync();
+          return;
+        }
+        const x = Number(value);
+        note = "";
+        const rated = survey.getValue("attract_r") !== undefined || survey.getValue("attract_s") !== undefined;
+        if (prev !== undefined && prev !== null && Number(prev) !== x && rated) {
+          survey.clearValue("attract_r");
+          survey.clearValue("attract_s");
+          ratingsReset += 1;
+          note = "Your ratings were cleared because X changed. Please rate the gambles again.";
+        }
+        xUpdates += 1;
+        xHistory.push(x);
+        sync();
+      };
       survey.onAfterRenderQuestion.add((_, options) => {
-        if (options.question.name === "x") {
-          const box = options.htmlElement.querySelector("input");
-          if (box && !box.dataset.preview) {
-            box.dataset.preview = "on";
-            box.addEventListener("input", syncPreview);
+        const name = options.question.name;
+        if (name === "update_x") {
+          const btn = options.htmlElement.querySelector(".update-x");
+          if (btn && !btn.dataset.bound) {
+            btn.dataset.bound = "on";
+            btn.addEventListener("click", updateX);
           }
         }
-        syncPreview();
+        if (name === "x") {
+          const box = options.htmlElement.querySelector("input");
+          if (box && !box.dataset.bound) {
+            box.dataset.bound = "on";
+            // Enter updates X instead of doing anything else.
+            box.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); updateX(); }
+            });
+          }
+        }
+        sync();
       });
     },
     data: { task: "matching", section: "matching" },
     on_finish: (data) => {
       matchedX = Number(data.response.x);
       data.matched_x = matchedX;
-    },
-  };
-
-  // -------------------------------------------------------------------------
-  // 4. Attractiveness ratings of both gambles, with the participant's X filled in
-  // -------------------------------------------------------------------------
-  const attractiveness = {
-    type: jsPsychSurvey,
-    survey_json: () => ({
-      showQuestionNumbers: "off",
-      completeText: "Continue",
-      pages: [{
-        elements: [
-          {
-            type: "html", name: "gambles",
-            html: `<div class="gamble-page">${gambleCards(matchedX)}
-              <p>Rate the attractiveness of each option on a scale ranging from not attractive (1)
-              to very attractive (12).</p></div>`,
-          },
-          scale12("attract_r", "Gamble R", "not attractive", "very attractive"),
-          scale12("attract_s", "Gamble S", "not attractive", "very attractive"),
-        ],
-      }],
-    }),
-    data: { task: "attractiveness", section: "matching" },
-    on_finish: (data) => {
       data.attract_r = data.response.attract_r;
       data.attract_s = data.response.attract_s;
-      data.matched_x = matchedX;
+      data.x_updates = xUpdates;
+      data.x_history = xHistory;
+      data.ratings_reset = ratingsReset;
     },
   };
 
   // -------------------------------------------------------------------------
-  // 5. Feedback instructions + comprehension quiz, repeated until all 5 answers are correct
+  // 4. Feedback instructions + comprehension quiz, repeated until all 5 answers are correct
   // -------------------------------------------------------------------------
   // After a failed quiz the same page is shown again with a notice on top. (A separate notice
   // trial would leave a gap in trial_index whenever it is skipped.)
@@ -488,20 +524,20 @@ function startProofOfHuman(saver) {
           { type: "html", name: "intro", html: "<p>Before you choose, please answer these questions.</p>" },
           {
             type: "radiogroup", name: "q1", isRequired: true,
-            title: "What is the chance of winning $130 with Gamble R?",
+            title: "What is the chance of winning $130 with Gamble A?",
             choices: [{ value: "35", text: "35%" }, { value: "65", text: "65%" }],
           },
           {
             type: "radiogroup", name: "q2", isRequired: true,
-            title: `What is the chance of winning ${money(matchedX)} with Gamble S?`,
+            title: `What is the chance of winning ${money(matchedX)} with Gamble B?`,
             choices: [{ value: "65", text: "65%" }, { value: "35", text: "35%" }],
           },
           { type: "radiogroup", name: "q3", isRequired: true, choices: yesNo,
             title: "Would you know the outcome of the gamble you choose?" },
           { type: "radiogroup", name: "q4", isRequired: true, choices: yesNo,
-            title: "If you choose Gamble R, would you know the outcome of Gamble S?" },
+            title: "If you choose Gamble A, would you know the outcome of Gamble B?" },
           { type: "radiogroup", name: "q5", isRequired: true, choices: yesNo,
-            title: "If you choose Gamble S, would you know the outcome of Gamble R?" },
+            title: "If you choose Gamble B, would you know the outcome of Gamble A?" },
         ],
       }],
     }),
@@ -528,7 +564,7 @@ function startProofOfHuman(saver) {
   };
 
   // -------------------------------------------------------------------------
-  // 6. Choice (key DV), with the feedback rule still in view
+  // 5. Choice (key DV), with the feedback rule still in view
   // -------------------------------------------------------------------------
   const choice = {
     type: jsPsychHtmlButtonResponse,
@@ -538,10 +574,10 @@ function startProofOfHuman(saver) {
         <p class="feedback-rule">${FEEDBACK_TEXT[condition]}</p>
         <p><strong>Which gamble do you choose?</strong></p>
       </div>`,
-    choices: ["Gamble R", "Gamble S"],
+    choices: ["Gamble A", "Gamble B"],
     data: { task: "choice", section: "decision" },
     on_finish: (data) => {
-      // Button order is fixed: 0 = Gamble R (risky), 1 = Gamble S (safe).
+      // Button order is fixed: 0 = Gamble A (risky), 1 = Gamble B (safe).
       chosen = data.response === 0 ? "risky" : "safe";
       data.choice = chosen;
       data.matched_x = matchedX;
@@ -549,7 +585,7 @@ function startProofOfHuman(saver) {
   };
 
   // -------------------------------------------------------------------------
-  // 7. Strength of preference
+  // 6. Strength of preference
   // -------------------------------------------------------------------------
   const strength = {
     type: jsPsychSurvey,
@@ -558,7 +594,7 @@ function startProofOfHuman(saver) {
       completeText: "Continue",
       pages: [{
         elements: [
-          { type: "html", name: "chosen", html: `<p>You chose <strong>Gamble ${chosen === "risky" ? "R" : "S"}</strong>.</p>` },
+          { type: "html", name: "chosen", html: `<p>You chose <strong>Gamble ${chosen === "risky" ? "A" : "B"}</strong>.</p>` },
           scale12("strength",
             "Indicate the strength of your preference for the chosen option on a 12-point scale ranging from weak preference (1) to strong preference (12).",
             "weak preference", "strong preference"),
@@ -575,7 +611,7 @@ function startProofOfHuman(saver) {
   };
 
   // -------------------------------------------------------------------------
-  // 8. Reasons. Pasting, dropping, copying and cutting text are blocked in the answer box, so an
+  // 7. Reasons. Pasting, dropping, copying and cutting text are blocked in the answer box, so an
   //    answer written elsewhere (e.g. by a chatbot) cannot simply be pasted in. Blocked attempts
   //    and keystrokes are counted.
   // -------------------------------------------------------------------------
@@ -644,7 +680,7 @@ function startProofOfHuman(saver) {
   };
 
   // -------------------------------------------------------------------------
-  // 9. Choice Regret Scale (Schwartz et al., 2002). Exploratory; not part of the original study,
+  // 8. Choice Regret Scale (Schwartz et al., 2002). Exploratory; not part of the original study,
   //    so it comes after every original measure. Item 5 is reverse-scored.
   // -------------------------------------------------------------------------
   const REGRET_ITEMS = [
@@ -674,7 +710,7 @@ function startProofOfHuman(saver) {
   };
 
   // -------------------------------------------------------------------------
-  // 10. End form: feedback (optional), gambling history, demographics. Each of the other questions
+  // 9. End form: feedback (optional), gambling history, demographics. Each of the other questions
   //     must be answered, but always offers "Prefer not to say", as the consent text promises.
   // -------------------------------------------------------------------------
   const PREFER_NOT = "Prefer not to say";
@@ -754,7 +790,7 @@ function startProofOfHuman(saver) {
   };
 
   // -------------------------------------------------------------------------
-  // 11. Debrief
+  // 10. Debrief
   // -------------------------------------------------------------------------
   const debrief = {
     type: jsPsychHtmlButtonResponse,
@@ -778,7 +814,6 @@ function startProofOfHuman(saver) {
     consent,
     welcome,
     matching,
-    attractiveness,
     comprehensionLoop,
     choice,
     strength,

@@ -18,9 +18,9 @@ const EXPERIMENT_ID = "zeelenberg1996-pilot-a";
 const FS = `http://localhost:8080/v1/projects/${PROJECT}/databases/(default)/documents`;
 const CONDITIONS = ["choice_only", "risky_feedback", "safe_feedback"];
 
-// Rows per participant: consent, welcome, matching, attractiveness, (feedback instructions +
-// quiz) per quiz attempt, choice, strength, reasons, regret scale, end form, debrief.
-const nTrials = (quizAttempts) => 10 + 2 * quizAttempts;
+// Rows per participant: consent, welcome, matching (with the attractiveness ratings), (feedback
+// instructions + quiz) per quiz attempt, choice, strength, reasons, regret scale, end form, debrief.
+const nTrials = (quizAttempts) => 9 + 2 * quizAttempts;
 
 // The robot's regret-scale answers (1-7). Item 5 is reverse-scored, so the score is
 // (5 + 4 + 6 + 3 + (8 - 2)) / 5 = 4.8.
@@ -50,7 +50,7 @@ async function answerQuiz(page, answers) {
 // first try so the instructions and quiz repeat.
 // The part of the study each screen belongs to, mirroring `section` in experiment.js.
 const SECTION_OF = {
-  consent: "intro", instructions: "intro", matching: "matching", attractiveness: "matching",
+  consent: "intro", instructions: "intro", matching: "matching",
   feedback_instructions: "feedback_rules", comprehension: "feedback_rules",
   choice: "decision", preference_strength: "decision", reasons: "decision",
   regret_scale: "regret_scale", end_survey: "about_you", debrief: "debrief",
@@ -58,16 +58,25 @@ const SECTION_OF = {
 // The reasons answer needs at least 30 characters. The robot first tries a 26-character answer,
 // which is refused, then adds more.
 const REASONS_SHORT = "Robot participant says hi.";
-const REASONS_TEXT = REASONS_SHORT + " I chose Gamble R.";
+const REASONS_TEXT = REASONS_SHORT + " I chose Gamble A.";
 
 async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, tabAway = false } = {}) {
   // 1. consent
   await page.getByRole("button", { name: "I agree to participate" }).click();
   // 2. welcome (one page)
   await page.locator("#jspsych-instructions-next").click();
-  // 3. matching: an X outside ($0, $130) is refused, then X = 70. SurveyJS commits a typed
-  // value on blur, which the real click on Continue provides.
+  // 3. matching and attractiveness, on one screen. Gamble B's card shows "$X" until Update X is
+  // clicked (or Enter pressed), and the ratings appear only then. An X outside ($0, $130) is
+  // refused; a typed X that was not updated blocks Continue; updating X after rating clears the
+  // ratings. The robot ends with X = 70, rated 7 (A) and 6 (B).
   const x = page.locator('[data-name="x"] input');
+  const update = page.getByRole("button", { name: "Update X" });
+  const card = page.locator(".x-value");
+  const ratings = page.locator('[data-name="attract_r"]');
+  const rate = async (a, b) => {
+    await page.locator('[data-name="attract_r"]').getByText(String(a), { exact: true }).click();
+    await page.locator('[data-name="attract_s"]').getByText(String(b), { exact: true }).click();
+  };
   if (tabAway) {
     // Simulate switching to another tab for ~300 ms (jsPsych listens to window blur/focus).
     await x.waitFor();
@@ -75,23 +84,29 @@ async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, 
     await page.waitForTimeout(300);
     await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   }
-  // The Gamble S card previews X as it is typed, and goes back to "$X" when the box is empty.
-  const preview = page.locator(".x-value");
-  await expect(preview).toHaveText("$X");
+  await expect(card).toHaveText("$X");
+  await expect(ratings).toHaveCount(0);
   await x.fill("150");
-  await expect(preview).toHaveText("$150");
-  await page.locator('input[value="Continue"]').click();
+  await update.click();
   await expect(page.getByText("more than $0 and less than $130")).toBeVisible();
-  await x.fill("");
-  await expect(preview).toHaveText("$X");
+  await expect(card).toHaveText("$X");
+  await expect(ratings).toHaveCount(0);
+  await x.fill("60");
+  await x.press("Enter");
+  await expect(card).toHaveText("$60");
+  await rate(5, 5);
   await x.fill("70");
-  await expect(preview).toHaveText("$70");
   await page.locator('input[value="Continue"]').click();
-  // 4. attractiveness of each gamble (1-12)
-  await page.locator('[data-name="attract_r"]').getByText("7", { exact: true }).click();
-  await page.locator('[data-name="attract_s"]').getByText("6", { exact: true }).click();
+  await expect(page.getByText("Click Update X to show this amount on Gamble B")).toBeVisible();
+  await expect(card).toHaveText("$60");
+  await update.click();
+  await expect(card).toHaveText("$70");
+  await expect(page.getByText("Your ratings were cleared because X changed")).toBeVisible();
   await page.locator('input[value="Continue"]').click();
-  // 5. feedback instructions + comprehension quiz, repeated until all five answers are correct
+  await expect(page.getByText("Response required.").first()).toBeVisible();
+  await rate(7, 6);
+  await page.locator('input[value="Continue"]').click();
+  // 4. feedback instructions + comprehension quiz, repeated until all five answers are correct
   const shown = await page.locator(".gamble-page[data-condition]").getAttribute("data-condition");
   if (condition) expect(shown).toBe(condition);
   const key = quizKey(shown);
@@ -102,12 +117,12 @@ async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, 
   }
   await page.getByRole("button", { name: "Continue" }).click();
   await answerQuiz(page, key);
-  // 6. choice (key DV): Gamble R
-  await page.getByRole("button", { name: "Gamble R" }).click();
-  // 7. strength of preference
+  // 5. choice (key DV): Gamble A, the risky gamble
+  await page.getByRole("button", { name: "Gamble A" }).click();
+  // 6. strength of preference
   await page.locator('[data-name="strength"]').getByText("9", { exact: true }).click();
   await page.locator('input[value="Continue"]').click();
-  // 8. reasons: typed key by key (each key is counted). A 26-character answer is refused (the
+  // 7. reasons: typed key by key (each key is counted). A 26-character answer is refused (the
   // minimum is 30), more is typed, then a paste attempt is blocked and announced under the box.
   const box = page.locator('[data-name="reasons"] textarea');
   await box.pressSequentially(REASONS_SHORT);
@@ -122,7 +137,7 @@ async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, 
   await expect(page.getByText("Pasting is turned off for this question")).toBeVisible();
   await expect(box).toHaveValue(REASONS_TEXT);
   await page.locator('input[value="Continue"]').click();
-  // 9. regret scale: required, so an empty submit stays on the page. The plugin's radio
+  // 8. regret scale: required, so an empty submit stays on the page. The plugin's radio
   // values are label indices (0-6).
   await page.locator("#jspsych-survey-likert-next").click();
   await expect(page.locator(".jspsych-survey-likert-opts").first()).toBeVisible();
@@ -130,7 +145,7 @@ async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, 
     await page.locator(`input[name="Q${i}"][value="${v - 1}"]`).check();
   }
   await page.locator("#jspsych-survey-likert-next").click();
-  // 10. end form: every question but the feedback box is required (each offers "Prefer not to
+  // 9. end form: every question but the feedback box is required (each offers "Prefer not to
   // say"), so an empty submit stays on the page.
   await page.locator("#jspsych-survey-html-form-next").click();
   await expect(page.locator("#age")).toBeVisible();
@@ -142,7 +157,7 @@ async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, 
   await page.locator('input[name="race_other"]').fill("Robot");
   await page.locator('input[name="ethnicity"][value="Non-Hispanic"]').check();
   await page.locator("#jspsych-survey-html-form-next").click();
-  // 11. debrief is on screen
+  // 10. debrief is on screen
   await expect(page.getByRole("button", { name: "Finish" })).toBeVisible();
   return shown;
 }
@@ -245,10 +260,15 @@ test.describe("experiment", () => {
     expect(trials.map((t) => t.trial_index)).toEqual([...Array(pdoc.n_trials).keys()]);
     expect(trials.every((t) => t.condition === pdoc.condition)).toBe(true);
 
+    // Matching and ratings are one row. X was shown twice (60, then 70; the refused 150 does not
+    // count), and moving X from 60 to 70 after rating cleared the ratings once.
     const matching = trials.find((t) => t.task === "matching");
     expect(matching.matched_x).toBe(70);
-    const attract = trials.find((t) => t.task === "attractiveness");
-    expect([attract.attract_r, attract.attract_s]).toEqual([7, 6]);
+    expect([matching.attract_r, matching.attract_s]).toEqual([7, 6]);
+    expect(matching.x_updates).toBe(2);
+    expect(matching.x_history).toEqual([60, 70]);
+    expect(matching.ratings_reset).toBe(1);
+    expect(trials.some((t) => t.task === "attractiveness")).toBe(false);
 
     // The first quiz fails on item 1, so instructions and quiz run twice.
     const views = trials.filter((t) => t.task === "feedback_instructions");

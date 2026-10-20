@@ -969,6 +969,13 @@ them.
 # the attractiveness ratings, and risk preference = (+1 risky / -1 safe) x (strength - 0.5).
 # Each one says so instead of failing when there are too few participants (e.g. Pilot A).
 in_keep <- function(t) trials |> filter(task == t, participant_id %in% keep$participant_id)
+# The attractiveness ratings are on the "matching" row since the two screens were combined; earlier
+# data (Pilot A) have them on a separate "attractiveness" row. This reads either.
+ratings_in_keep <- function() {
+  trials |>
+    filter(task %in% c("matching", "attractiveness"), participant_id %in% keep$participant_id,
+           !is.na(attract_r), !is.na(attract_s))
+}
 by_condition <- function(df, var) {
   df |>
     mutate(Condition = factor(unname(condition_labels[condition]), levels = condition_labels)) |>
@@ -981,7 +988,7 @@ try_or_say <- function(expr, what) {
 
 # (Each table and test below is its own top-level statement, so Quarto formats the tables.)
 matching <- in_keep("matching")
-attract  <- in_keep("attractiveness")
+attract  <- ratings_in_keep()
 strength <- in_keep("preference_strength")
 
 # 1. Matched value of X.
@@ -1052,7 +1059,8 @@ if (nrow(strength) > 0)
 # The ratings come before the feedback manipulation. Nobody is excluded on them; "matched" means
 # Gamble R and Gamble S were rated exactly equally (difference 0, as Experiment 2 required).
 att <- trials |>
-  filter(task == "attractiveness", participant_id %in% keep$participant_id) |>
+  filter(task %in% c("matching", "attractiveness"), participant_id %in% keep$participant_id,
+         !is.na(attract_r), !is.na(attract_s)) |>
   transmute(participant_id, att_diff = attract_r - attract_s) |>
   inner_join(trials |>
                filter(task == "choice", participant_id %in% keep$participant_id) |>
