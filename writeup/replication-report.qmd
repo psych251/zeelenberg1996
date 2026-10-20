@@ -694,13 +694,15 @@ bind_rows(
 #| results: asis
 cat(sprintf("Of %d visits to the study, %d consented, %d completed the study and %d met the exclusion criteria.",
             nrow(participants), length(unique(consented_ids)), nrow(complete), nrow(keep)))
+n_repeat <- length(phase1$repeat_ids)
+repeats  <- sprintf("%d %s excluded as %s", n_repeat, if (n_repeat == 1) "was" else "were",
+                    if (n_repeat == 1) "a repeat session" else "repeat sessions")
 if (is.na(poh_exclude_at)) {
-  cat(sprintf(" Of the completers, %d were excluded as repeat sessions and %d for answering a screen in under %d ms (a participant can meet both).",
-              length(phase1$repeat_ids), length(phase1$too_fast_ids), min_screen_ms))
+  cat(sprintf(" Of the completers, %s and %d for answering a screen in under %d ms (a participant can meet both).",
+              repeats, length(phase1$too_fast_ids), min_screen_ms))
 } else {
-  cat(sprintf(" Of the completers, %d were excluded as repeat sessions, %d for answering a screen in under %d ms and %d for a bot-risk score of %g or more (a participant can meet more than one).",
-              length(phase1$repeat_ids), length(phase1$too_fast_ids), min_screen_ms,
-              length(phase1$bot_ids), poh_exclude_at))
+  cat(sprintf(" Of the completers, %s, %d for answering a screen in under %d ms and %d for a bot-risk score of %g or more (a participant can meet more than one).",
+              repeats, length(phase1$too_fast_ids), min_screen_ms, length(phase1$bot_ids), poh_exclude_at))
 }
 if (is.null(phase1$poh)) {
   cat(" Bot-risk scores have not been fetched for these data yet, so that rule could not be applied.")
