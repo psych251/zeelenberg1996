@@ -457,34 +457,34 @@ than pasting screenshots of every screen.
 :::
 -->
 
-The original questionnaire was never published, so the on-screen text was reconstructed from the paper's description of it (Zeelenberg et al., 1996, pp. 151–152). The full study can be taken at the live experiment link above.
+The original questionnaire was never published, so the on-screen text was reconstructed from the paper's description of it (Zeelenberg et al., 1996, pp. 151–152). The paper calls the gambles R and S, and this report keeps those labels; participants, however, see them as Gamble A (risky) and Gamble B (safe), the labels used in the original questionnaire (M. Zeelenberg, personal communication, October 20, 2026). The full study can be taken at the live experiment link above.
 
 | Material | Original | This replication | Exceptions |
 |---|---|---|---|
-| Gambles | "Two hypothetical gambles, gamble R (risky) and gamble S (safe), each of which could result in a positive outcome" (p. 151): f130 with 35%, f0 with 65% (R); fX with 65%, f0 with 35% (S) | Gamble R: "\$130 with 35%", "\$0 with 65%". Gamble S: "\$X with 65%", "\$0 with 35%" | Dollars instead of guilders |
-| Matching | "Make gamble S exactly as attractive as gamble R ... write down the value of X for which he or she found the gambles equally attractive" (p. 151) | "Make Gamble S exactly as attractive as Gamble R: write down the value of X for which you find the gambles equally attractive." | Added explanation of X below the question; the S card updates as X is typed; X must be between \$0 and \$130 (with a message shown only if it is not) |
-| Attractiveness | "Rate the attractiveness of each option on a scale ranging from not attractive (1) to very attractive (12)" (p. 151) | Same wording | Buttons instead of paper |
+| Gambles | "Two hypothetical gambles, gamble R (risky) and gamble S (safe), each of which could result in a positive outcome" (p. 151): f130 with 35%, f0 with 65% (R); fX with 65%, f0 with 35% (S) | Gamble A: "\$130 with 35%", "\$0 with 65%". Gamble B: "\$X with 65%", "\$0 with 35%" | Dollars instead of guilders; labelled A and B instead of R and S, as in the original questionnaire (M. Zeelenberg, personal communication, October 20, 2026) |
+| Matching | "Make gamble S exactly as attractive as gamble R ... write down the value of X for which he or she found the gambles equally attractive" (p. 151) | "Make Gamble B exactly as attractive as Gamble A: write down the value of X for which you find the gambles equally attractive." | Added explanation of X below the question, ending with an instruction to click Update X; Gamble B's card shows X after the participant clicks Update X or presses Enter; X must be more than \$0 and less than \$130 (with a message shown only if it is not) |
+| Attractiveness | "Rate the attractiveness of each option on a scale ranging from not attractive (1) to very attractive (12)" (p. 151) | Same wording | Buttons instead of paper; the ratings appear only after X is first updated, and changing X afterwards clears them |
 | Choice set-up | Participants "learned that, although they had made the gambles equally attractive, they were required to choose between them" (p. 151) | "Although you have made the gambles equally attractive, you are required to choose between them." then "Before you choose, please note:" and the condition's feedback text | Second person |
 | Feedback instructions | Described on pp. 151–152; see the next table | See the next table | Reconstructed from the description; shown again on the choice screen |
-| Choice | Participants "made the choice (risky or safe gamble)" (p. 152) | Gamble cards and feedback text above "Which gamble do you choose?", with buttons Gamble R and Gamble S | Buttons instead of paper |
-| Strength of preference | "On a 12-point scale ranging from weak preference (1) to strong preference (12)" (p. 152) | "You chose Gamble R" (or S), then "Indicate the strength of your preference for the chosen option on a 12-point scale ranging from weak preference (1) to strong preference (12)." | Second person; buttons instead of paper |
+| Choice | Participants "made the choice (risky or safe gamble)" (p. 152) | Gamble cards and feedback text above "Which gamble do you choose?", with buttons Gamble A and Gamble B | Buttons instead of paper |
+| Strength of preference | "On a 12-point scale ranging from weak preference (1) to strong preference (12)" (p. 152) | "You chose Gamble A" (or B), then "Indicate the strength of your preference for the chosen option on a 12-point scale ranging from weak preference (1) to strong preference (12)." | Second person; buttons instead of paper |
 | Reasons | "Asked to write down reasons for their choice" (p. 152) | "Write down the reasons for your choice." | Minimum of 30 characters; pasting blocked |
 
 | Condition | The paper's description (pp. 151–152) | On-screen text |
 |---|---|---|
 | Choice only | "They would only know the outcome of the gamble that they chose, and that they would not be able to compare their outcome with the outcome of the non-chosen gamble" | "You would only know the outcome of the gamble that you choose. You would not be able to compare your outcome with the outcome of the non-chosen gamble." |
-| Risky feedback | "They would always know the outcome of the risky gamble and the outcome of the gamble they chose. They also read that they would be able to compare their outcome with the outcome of the non-chosen gamble if they selected gamble S, but not if they selected gamble R" | "You would always know the outcome of Gamble R and the outcome of the gamble you choose. You would be able to compare your outcome with the outcome of the non-chosen gamble if you select Gamble S, but not if you select Gamble R." |
-| Safe feedback | Mirrors risky feedback with R and S swapped, but adds "only" ("would only be able to compare") | The risky feedback text with R and S swapped, without the added "only", so the two conditions differ only in the gamble named |
+| Risky feedback | "They would always know the outcome of the risky gamble and the outcome of the gamble they chose. They also read that they would be able to compare their outcome with the outcome of the non-chosen gamble if they selected gamble S, but not if they selected gamble R" | "You would always know the outcome of Gamble A and the outcome of the gamble you choose. You would be able to compare your outcome with the outcome of the non-chosen gamble if you select Gamble B, but not if you select Gamble A." |
+| Safe feedback | Mirrors risky feedback with R and S swapped, but adds "only" ("would only be able to compare") | The risky feedback text with A and B swapped, without the added "only", so the two conditions differ only in the gamble named |
 
 The comprehension quiz is new and checks both the gambles and the feedback rule. If any answer is wrong, participants see "Some of your answers were incorrect. Please read the instructions again."
 
 | Quiz item | Correct answer |
 |---|---|
-| Chance of winning $130 with Gamble R | 35% |
-| Chance of winning $X (the participant's own value) with Gamble S | 65% |
+| Chance of winning \$130 with Gamble A | 35% |
+| Chance of winning \$X (the participant's own value) with Gamble B | 65% |
 | Would you know the outcome of the gamble you choose? | Yes |
-| If you choose Gamble R, would you know the outcome of Gamble S? | Yes only in the safe feedback condition |
-| If you choose Gamble S, would you know the outcome of Gamble R? | Yes only in the risky feedback condition |
+| If you choose Gamble A, would you know the outcome of Gamble B? | Yes only in the safe feedback condition |
+| If you choose Gamble B, would you know the outcome of Gamble A? | Yes only in the risky feedback condition |
 
 | Added material | Content |
 |---|---|
@@ -515,16 +515,15 @@ In the original, "participants were seated in separate cubicles and given a ques
 |---|---|---|---|
 | 1. Consent | Course consent text; "I do not agree" ends the study, and "I agree to participate" continues and starts the bot-detection tracker | Not described | Course requirement |
 | 2. Welcome | Explains that the gambles are hypothetical, that there are no right or wrong answers, and that the study takes about seven minutes in one sitting on a computer | Not described | New |
-| 3. Matching | Participants see both gambles and type the value of X that makes them equally attractive; X must be between \$0 and \$130 to continue | Phase 1: "make gamble S exactly as attractive as gamble R" (p. 151) | Live preview of X on the S card; range check |
-| 4. Attractiveness | Participants rate each gamble from 1 to 12, with their own X shown in gamble S | "Next, he or she was asked to rate the attractiveness of each option" (p. 151) | Buttons instead of paper |
-| 5. Feedback instructions | Participants are told they must choose between the gambles and read their condition's feedback text | Phase 2: "Before they made the choice, however, participants learned about possible feedback on foregone outcomes" (p. 151) | Second person |
-| 6. Comprehension quiz | Five questions; if any answer is wrong, participants return to step 5 with a notice and retake the quiz until all five are correct, without being told which was wrong; the number of attempts is recorded | Not in the original | New |
-| 7. Choice | Participants see the gambles and feedback text again and click Gamble R or Gamble S | "Participants then made the choice (risky or safe gamble)" (p. 152) | Feedback text repeated; buttons instead of paper |
-| 8. Strength of preference | Participants rate the strength of their preference from 1 to 12 | "indicated the strength of their preference for the chosen option" (p. 152) | Buttons instead of paper |
-| 9. Reasons | Participants type their reasons, at least 30 characters, with pasting blocked | "Finally, participants were asked to write down reasons for their choice" (p. 152) | Length minimum; paste block |
-| 10. Regret Scale | Five statements rated from 1 to 7 (exploratory) | Not in the original | New; after every original measure |
-| 11. End form | Gambling frequency, influence of the feedback information on their choice, and demographics, each with "Prefer not to say"; optional feedback box | Not in the original | New |
-| 12. Debrief | Explains what the study tested and that none of the gambles was played; clicking Finish saves the data and returns participants to Prolific with the completion code | Not described | New |
+| 3. Matching and attractiveness | Participants type the value of X that makes the gambles equally attractive and click Update X, which shows it on Gamble B's card; they then rate both gambles from 1 to 12. Changing X clears the ratings, and Continue requires both ratings and an updated X between \$0 and \$130 | Phase 1: "make gamble S exactly as attractive as gamble R" (p. 151); "Next, he or she was asked to rate the attractiveness of each option" (p. 151) | One screen instead of two steps; Update X button; range check; buttons instead of paper |
+| 4. Feedback instructions | Participants are told they must choose between the gambles and read their condition's feedback text | Phase 2: "Before they made the choice, however, participants learned about possible feedback on foregone outcomes" (p. 151) | Second person |
+| 5. Comprehension quiz | Five questions; if any answer is wrong, participants return to step 4 with a notice and retake the quiz until all five are correct, without being told which was wrong; the number of attempts is recorded | Not in the original | New |
+| 6. Choice | Participants see the gambles and feedback text again and click Gamble A or Gamble B | "Participants then made the choice (risky or safe gamble)" (p. 152) | Feedback text repeated; buttons instead of paper |
+| 7. Strength of preference | Participants rate the strength of their preference from 1 to 12 | "indicated the strength of their preference for the chosen option" (p. 152) | Buttons instead of paper |
+| 8. Reasons | Participants type their reasons, at least 30 characters, with pasting blocked | "Finally, participants were asked to write down reasons for their choice" (p. 152) | Length minimum; paste block |
+| 9. Regret Scale | Five statements rated from 1 to 7 (exploratory) | Not in the original | New; after every original measure |
+| 10. End form | Gambling frequency, influence of the feedback information on their choice, and demographics, each with "Prefer not to say"; optional feedback box | Not in the original | New |
+| 11. Debrief | Explains what the study tested and that none of the gambles was played; clicking Finish saves the data and returns participants to Prolific with the completion code | Not described | New |
 
 Several rules apply throughout:
 
@@ -532,7 +531,7 @@ Several rules apply throughout:
 |---|---|---|
 | No going back | Participants cannot return to earlier screens; for example, they cannot revise X after reading the feedback rule | On paper, participants could look back |
 | No outcomes or bonuses | The gambles are never played, and every participant receives the same flat Prolific payment | Consistent with the original's hypothetical gambles; the original participants took part "as part of a course requirement" (p. 151) |
-| Identical across conditions | Steps 1–4 and 8–12 are the same in every condition; only the feedback text (steps 5 and 7) and the correct answers to quiz items 4 and 5 differ | None |
+| Identical across conditions | Steps 1–3 and 7–11 are the same in every condition; only the feedback text (steps 4 and 6) and the correct answers to quiz items 4 and 5 differ | None |
 | Data saving | Responses are saved after every screen, with the time spent on each screen and how often and how long the participant left the browser tab; if saving fails at the end, participants see their completion code and are asked to download and email their data | Not applicable |
 | Bot detection | The Proof of Human tracker runs from consent to the end of the study. Its session ID is stored privately, and risk scores are retrieved from the vendor after data collection | None existed; the original was a supervised lab study |
 
@@ -565,7 +564,7 @@ preregistration. You can pre-specify additional analyses here too.
 |---|---|---|
 | 1 | Did not consent or did not complete the study | No complete data |
 | 2 | Repeat sessions: sessions will be linked by Prolific ID. Each person's first completed session will be kept, and the person excluded if an earlier session had already reached the feedback instructions | A participant who has already seen a feedback rule is no longer naive to the manipulation |
-| 3 | Any answer screen completed in under 300 ms (matching, attractiveness, quiz, choice, strength of preference, reasons, Regret Scale, end form) | Not humanly possible |
+| 3 | Any answer screen completed in under 300 ms: the matching and attractiveness screen, quiz, choice, strength of preference, reasons, Regret Scale and end form | Not humanly possible |
 | 4 | A Proof of Human bot-risk score (0–100) at or above a threshold that will be set from the Pilot B scores before preregistration. Participants without a score (tracker blocked or failed) will be kept, and their number reported | Likely a bot or AI agent |
 
 **Secondary analyses.** These follow the remaining analyses of Experiment 1 (Zeelenberg et al., 1996, p. 152). Like the original, they will not be corrected for multiple comparisons, and they will be interpreted as secondary to the key test.
@@ -609,9 +608,8 @@ and show the level of detail expected; replace them with yours.
 | Setting | Separate cubicles, paper questionnaire (p. 151) | Online, unsupervised, on the participant's own desktop or laptop | Possibly; attention may be lower online. The comprehension quiz, the speed rule and the repeat-session rule are intended to offset this. |
 | Stakes | f130, about \$75 at the time; hypothetical (p. 151) | $130; hypothetical | Unlikely. The numbers are the same and the real value is roughly comparable today. |
 | Wording | Questionnaire never published; only described in the paper (pp. 151–152) | Reconstructed from that description, in the second person | Possibly. The exact phrasing of the manipulation cannot be matched. |
-| Feedback texts | The paper's description of the safe feedback condition contains an extra "only" | The risky and safe feedback texts are exact mirror images | Unlikely; this keeps the two conditions differing only in which gamble is named. |
-| Gamble display | A table (p. 151) | Two cards, R on the left and S on the right, with the labels R and S kept | Unlikely; the content and order are the same. |
-| Matching | X written on the questionnaire | X typed, with an added explanation, a live preview on the S card, and X required to be between \$0 and \$130 | Possibly. Matching may be more accurate, and it is unclear whether that strengthens or weakens the feedback effect; the exploratory attractiveness analyses address this. |
+| Feedback texts | The paper's description of the safe feedback condition contains an extra "only" | The risky and safe feedback texts are exact mirror images | Unlikely; this keeps the two conditions differing only in which gamble is named, and the original conditions were worded to be as similar as possible (M. Zeelenberg, personal communication, October 20, 2026). |
+| Gamble display | A table (p. 151) | Two cards, Gamble A (risky) on the left and Gamble B (safe) on the right | Unlikely. The original questionnaire also labelled the gambles A and B (M. Zeelenberg, personal communication, October 20, 2026), so this matches it more closely than the paper's R and S. |
 | Response format | Writing and circling on paper | Buttons for the ratings, choice and strength of preference; typed reasons | Unlikely; the scales (1–12) and wording are the same. |
 | Comprehension quiz | None | Five questions before the choice, repeated until all are correct | Possibly; likely the most consequential addition. Participants should understand the feedback rule better. |
 | Feedback rule on the choice screen | Presumably read once before choosing | Shown again on the choice screen | Possibly. |

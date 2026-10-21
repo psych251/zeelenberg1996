@@ -67,8 +67,8 @@ async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, 
   await page.locator("#jspsych-instructions-next").click();
   // 3. matching and attractiveness, on one screen. Gamble B's card shows "$X" until Update X is
   // clicked (or Enter pressed), and the ratings appear only then. An X outside ($0, $130) is
-  // refused; a typed X that was not updated blocks Continue; updating X after rating clears the
-  // ratings. The robot ends with X = 70, rated 7 (A) and 6 (B).
+  // refused; editing X after rating clears and hides the ratings straight away; an edited X that
+  // was not updated blocks Continue. The robot ends with X = 70, rated 7 (A) and 6 (B).
   const x = page.locator('[data-name="x"] input');
   const update = page.getByRole("button", { name: "Update X" });
   const card = page.locator(".x-value");
@@ -96,12 +96,14 @@ async function runUntilDebrief(page, { condition = null, quizWrongOnce = false, 
   await expect(card).toHaveText("$60");
   await rate(5, 5);
   await x.fill("70");
+  await expect(page.getByText("Your ratings were cleared because you changed X")).toBeVisible();
+  await expect(ratings).toHaveCount(0);
+  await expect(card).toHaveText("$60");
   await page.locator('input[value="Continue"]').click();
   await expect(page.getByText("Click Update X to show this amount on Gamble B")).toBeVisible();
-  await expect(card).toHaveText("$60");
   await update.click();
   await expect(card).toHaveText("$70");
-  await expect(page.getByText("Your ratings were cleared because X changed")).toBeVisible();
+  await expect(ratings).toHaveCount(1);
   await page.locator('input[value="Continue"]').click();
   await expect(page.getByText("Response required.").first()).toBeVisible();
   await rate(7, 6);
@@ -261,7 +263,7 @@ test.describe("experiment", () => {
     expect(trials.every((t) => t.condition === pdoc.condition)).toBe(true);
 
     // Matching and ratings are one row. X was shown twice (60, then 70; the refused 150 does not
-    // count), and moving X from 60 to 70 after rating cleared the ratings once.
+    // count), and editing X from 60 to 70 after rating cleared the ratings once.
     const matching = trials.find((t) => t.task === "matching");
     expect(matching.matched_x).toBe(70);
     expect([matching.attract_r, matching.attract_s]).toEqual([7, 6]);

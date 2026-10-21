@@ -195,12 +195,25 @@
 .jspsych-content .sd-description { color: var(--muted) !important; font-size: 16px; }
 .paste-note { margin-top: 8px; color: var(--danger); font-size: 14px; font-weight: 600; }
 
-/* Matching screen: the Update X button under the X box, and the note shown when changing X has
-   cleared the ratings. */
-.update-x-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 8px; }
-.update-x-row .jspsych-btn { margin: 0; }
-.update-x-row .x-note { margin: 0; color: var(--danger); font-size: 14px; font-weight: 600; }
-.update-x-row .x-note:empty { display: none; }
+/* Matching screen: the Update X button sits next to the X box, inside its question card, with
+   the note (shown when editing X has cleared the ratings) on the line below. Same look as every
+   other button; !important because SurveyJS styles buttons inside a survey. */
+.jspsych-content [data-name="x"] .sd-question__content {
+  display: flex !important; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+}
+.jspsych-content [data-name="x"] .sd-question__content > .sd-input { flex: 0 1 220px; }
+.jspsych-content .jspsych-btn.update-x {
+  margin: 0 !important; padding: 0 26px !important; height: 48px; line-height: 48px;
+  font-size: 16px !important; font-weight: 600 !important; color: #ffffff !important;
+  background-color: var(--brand) !important; border: 0 !important; border-radius: 999px !important;
+  box-shadow: 0 2px 0 var(--brand-deep) !important; cursor: pointer;
+}
+.jspsych-content .jspsych-btn.update-x:hover { background-color: var(--brand-deep) !important; }
+.jspsych-content .x-note {
+  flex: 1 1 100%; min-width: 0; margin: 0; white-space: normal; overflow-wrap: break-word;
+  color: var(--danger); font-size: 14px; font-weight: 600; line-height: 1.5;
+}
+.jspsych-content .x-note:empty { display: none; }
 
 /* ---- Regret scale (survey-likert plugin) -----------------------------------
  * The plugin writes each statement and its scale as separate siblings. Styled as the top and

@@ -363,16 +363,19 @@ function startProofOfHuman(saver) {
   // -------------------------------------------------------------------------
   // 3. Matching (original phase 1) and attractiveness ratings, on one screen
   // -------------------------------------------------------------------------
-  // The participant types X and clicks "Update X" (or presses Enter): the Gamble B card then shows
-  // that amount, and the two attractiveness ratings appear below. Updating X to a new value after
-  // rating clears the ratings, so the saved ratings always refer to the saved X. Continue needs
-  // both ratings and the X on the card to match the box. Recorded on the "matching" row:
-  // matched_x (final X), attract_r / attract_s (Gamble A / Gamble B, 1-12), x_updates (clicks
-  // that showed a valid X), x_history (each X shown, in order) and ratings_reset (times the
-  // ratings were cleared because X changed).
+  // The participant types X and clicks "Update X" (next to the box) or presses Enter: the Gamble B
+  // card then shows that amount, and the two attractiveness ratings appear below. As soon as the
+  // box is edited to a different amount, the ratings are cleared and hidden until X is updated
+  // again, so the saved ratings always refer to the X on the card. Continue needs both ratings and
+  // the X on the card to match the box. Recorded on the "matching" row: matched_x (final X),
+  // attract_r / attract_s (Gamble A / Gamble B, 1-12), x_updates (updates that showed a valid X),
+  // x_history (each X shown, in order) and ratings_reset (times ratings were cleared by editing X).
   let xUpdates = 0;
   let xHistory = [];
   let ratingsReset = 0;
+  let xObserver = null;
+  // The ratings are shown only while the box holds the amount on the card.
+  const RATINGS_SHOWN = "{x_shown} notempty and {x} = {x_shown}";
   const matching = {
     type: jsPsychSurvey,
     survey_json: {
@@ -400,26 +403,47 @@ function startProofOfHuman(saver) {
                 text: "Click Update X to show this amount on Gamble B before continuing." },
             ],
           },
-          { type: "html", name: "update_x",
-            html: '<div class="update-x-row"><button type="button" class="jspsych-btn update-x">Update X</button>' +
-              '<p class="x-note" aria-live="polite"></p></div>' },
-          { type: "html", name: "rate_intro", visibleIf: "{x_shown} notempty",
+          { type: "html", name: "rate_intro", visibleIf: RATINGS_SHOWN,
             html: "<p>Rate the attractiveness of each option on a scale ranging from not attractive (1) to very attractive (12).</p>" },
-          { ...scale12("attract_r", "Gamble A", "not attractive", "very attractive"), visibleIf: "{x_shown} notempty" },
-          { ...scale12("attract_s", "Gamble B", "not attractive", "very attractive"), visibleIf: "{x_shown} notempty" },
+          { ...scale12("attract_r", "Gamble A", "not attractive", "very attractive"), visibleIf: RATINGS_SHOWN },
+          { ...scale12("attract_s", "Gamble B", "not attractive", "very attractive"), visibleIf: RATINGS_SHOWN },
         ],
       }],
     },
     survey_function: (survey) => {
       let note = "";
-      // SurveyJS redraws questions (to show errors, or when the ratings appear), so the card and
-      // the note are re-applied from state after every render.
+      const xShown = () => {
+        const v = survey.getVariable("x_shown");
+        return v === undefined || v === null || v === "" ? null : Number(v);
+      };
+      // The Update X button and the note sit inside the X question, after the box. SurveyJS
+      // redraws questions (to show errors, or when the ratings appear), so the button is put back
+      // if it goes missing, and the card and note are re-applied from state.
       const sync = () => {
-        const shown = survey.getVariable("x_shown");
+        const content = document.querySelector('.jspsych-content [data-name="x"] .sd-question__content');
+        if (content && !content.querySelector(".update-x")) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "jspsych-btn update-x";
+          btn.textContent = "Update X";
+          btn.addEventListener("click", updateX);
+          const noteEl = document.createElement("p");
+          noteEl.className = "x-note";
+          noteEl.setAttribute("aria-live", "polite");
+          content.append(btn, noteEl);
+        }
         const card = document.querySelector(".jspsych-content .x-value");
-        if (card) card.textContent = shown === undefined || shown === null ? "$X" : money(Number(shown));
+        if (card) card.textContent = xShown() === null ? "$X" : money(xShown());
         const noteEl = document.querySelector(".jspsych-content .x-note");
-        if (noteEl) noteEl.textContent = note;
+        if (noteEl && noteEl.textContent !== note) noteEl.textContent = note;
+      };
+      const clearRatings = () => {
+        const rated = survey.getValue("attract_r") !== undefined || survey.getValue("attract_s") !== undefined;
+        if (!rated) return;
+        survey.clearValue("attract_r");
+        survey.clearValue("attract_s");
+        ratingsReset += 1;
+        note = "Your ratings were cleared because you changed X. Click Update X, then rate the gambles again.";
       };
       const updateX = () => {
         const xq = survey.getQuestionByName("x");
@@ -432,29 +456,22 @@ function startProofOfHuman(saver) {
           sync();
           return;
         }
-        const x = Number(value);
         note = "";
-        const rated = survey.getValue("attract_r") !== undefined || survey.getValue("attract_s") !== undefined;
-        if (prev !== undefined && prev !== null && Number(prev) !== x && rated) {
-          survey.clearValue("attract_r");
-          survey.clearValue("attract_s");
-          ratingsReset += 1;
-          note = "Your ratings were cleared because X changed. Please rate the gambles again.";
-        }
         xUpdates += 1;
-        xHistory.push(x);
+        xHistory.push(Number(value));
         sync();
       };
-      survey.onAfterRenderQuestion.add((_, options) => {
-        const name = options.question.name;
-        if (name === "update_x") {
-          const btn = options.htmlElement.querySelector(".update-x");
-          if (btn && !btn.dataset.bound) {
-            btn.dataset.bound = "on";
-            btn.addEventListener("click", updateX);
-          }
+      // Editing the box to a different amount clears the ratings straight away (they also hide,
+      // via RATINGS_SHOWN, until X is updated again).
+      survey.onValueChanged.add((_, options) => {
+        if (options.name !== "x" || xShown() === null) return;
+        if (Number(options.value) !== xShown() || options.value === "" || options.value === undefined) {
+          clearRatings();
+          sync();
         }
-        if (name === "x") {
+      });
+      survey.onAfterRenderQuestion.add((_, options) => {
+        if (options.question.name === "x") {
           const box = options.htmlElement.querySelector("input");
           if (box && !box.dataset.bound) {
             box.dataset.bound = "on";
@@ -466,9 +483,19 @@ function startProofOfHuman(saver) {
         }
         sync();
       });
+      // Put the button back whenever a redraw removes it.
+      const root = document.querySelector(".jspsych-content");
+      if (root && window.MutationObserver) {
+        xObserver = new MutationObserver(() => {
+          const content = document.querySelector('.jspsych-content [data-name="x"] .sd-question__content');
+          if (content && !content.querySelector(".update-x")) sync();
+        });
+        xObserver.observe(root, { childList: true, subtree: true });
+      }
     },
     data: { task: "matching", section: "matching" },
     on_finish: (data) => {
+      if (xObserver) xObserver.disconnect();
       matchedX = Number(data.response.x);
       data.matched_x = matchedX;
       data.attract_r = data.response.attract_r;
