@@ -162,9 +162,10 @@ min_screen_ms <- 300
 answer_tasks  <- c("matching", "attractiveness", "comprehension", "choice",
                    "preference_strength", "reasons", "regret_scale", "end_survey")
 # Proof of Human bot-risk score (0-100) at or above which a participant is excluded as a likely
-# bot. Set it after Pilot B, before preregistering. NA: scores are reported, nobody is excluded.
-# Participants with no score (the tracker was blocked or failed to load) are kept and counted.
-poh_exclude_at <- NA_real_
+# bot: 50, the start of the vendor's "review" band, chosen after Pilot B (no completer scored
+# above 15). NA would report scores without excluding anyone. Participants with no score (the
+# tracker was blocked or failed to load) are kept and counted.
+poh_exclude_at <- 50
 
 # Load one phase's exported data and apply the exclusion rule. Returns NULL if that phase
 # has not been exported yet, which is how every section below knows to skip itself.
@@ -426,7 +427,7 @@ exclusion criteria below" rather than "until the result is clear".
 # Planned sample and cost. Update minutes after Pilot B (median total_ms in participants.csv)
 # and the hourly rate from the Class Prolific Guidelines.
 n_total <- sum(two_and_half)        # 195 = 2.5 x the original 78, 65 per condition
-minutes <- 7                        # expected study length in minutes
+minutes <- 6                        # expected study length in minutes (Pilot B median: 5.7)
 hourly  <- 12                       # US$ per hour
 fee     <- 1/3                      # Prolific's service fee on top of pay
 cost_paid  <- n_total * minutes / 60 * hourly
@@ -1084,7 +1085,11 @@ if (nrow(att) > 0)
 
 # 2. Covariate model (risky vs safe feedback): is the feedback effect still there once any
 # leftover preference for R over S is taken into account?
-if (nrow(key_att) > 0)
+# The model needs both choices in the data; when everyone chose the same gamble its estimates
+# are meaningless (complete separation), so say so instead of printing them.
+if (nrow(key_att) > 0 && n_distinct(key_att$risky) < 2)
+  note("Logistic regression of choice on condition and rating difference: not computable yet (every participant chose the same gamble).")
+if (nrow(key_att) > 0 && n_distinct(key_att$risky) == 2)
   try_or_say(summary(glm(risky ~ risky_feedback + att_diff, family = binomial, data = key_att))$coefficients,
              "Logistic regression of choice on condition and rating difference")
 
