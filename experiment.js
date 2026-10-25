@@ -354,7 +354,7 @@ function startProofOfHuman(saver) {
        <p>In this study you will consider two gambles and answer some questions about them. The
        gambles are hypothetical: no real money is involved, but please answer as if it were.</p>
        <p>There are no right or wrong answers; we are interested in your own preferences. The study
-       takes about seven minutes. Please complete it in one sitting, on a laptop or desktop computer.</p>`,
+       takes about six minutes. Please complete it in one sitting, on a laptop or desktop computer.</p>`,
     ],
     show_clickable_nav: true,
     data: { task: "instructions", section: "intro" },
