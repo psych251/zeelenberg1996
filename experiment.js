@@ -32,7 +32,7 @@ window.TEMPLATE_VERSION = "0.1.0";
 const EXPERIMENT = {
   // Firestore path: experiments/<id>/participants/... Change it when you start a new study
   // so pilot data and real data never mix (e.g. "smith2016-pilot-a", "smith2016-final").
-  id: "zeelenberg1996-pilot-a",
+  id: "zeelenberg1996-pilot-b",
 
   // Trials per Firestore write. 1 = save every trial the moment it finishes (dropouts leave
   // partial data). The free tier allows 20,000 writes/day: with 200 participants x 100 trials
@@ -45,7 +45,7 @@ const EXPERIMENT = {
 
   // Prolific: if set, participants are redirected to Prolific when they finish.
   // Leave empty for local testing or non-Prolific samples.
-  prolific_completion_code: "",
+  prolific_completion_code: "CJOC8BE8",
 
   // Contact shown in consent and debrief.
   contact_email: "stanfordpsych251@gmail.com",
@@ -826,6 +826,7 @@ function startProofOfHuman(saver) {
       <h2>Thank You!</h2>
       <p>Thank you for taking part. This study tested whether knowing which outcomes you will
       learn after a decision changes which option people choose.</p>
+      <p>Please do not share what this study is about with anyone who might take part in it.</p>
       <p>The gambles were hypothetical, so neither gamble was played and there is no outcome to
       show you. If you have questions about this research, contact
       <a href="mailto:${EXPERIMENT.contact_email}">${EXPERIMENT.contact_email}</a>.</p>
