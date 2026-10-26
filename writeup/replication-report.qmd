@@ -56,6 +56,9 @@ library(jsonlite)
 # Phase 2 runs under its own id, so its data never mix with Phase 1's.
 experiment_id        <- "zeelenberg1996-pilot-b"
 experiment_id_phase2 <- "zeelenberg1996-phase2"
+# Pilot B, reported in Methods. Kept separate so that section still shows Pilot B after
+# experiment_id moves to the final study.
+pilot_b_id <- "zeelenberg1996-pilot-b"
 ```
 
 ```{r}
@@ -134,6 +137,7 @@ content of this report, including any errors introduced by AI tools.
 
 # Key statistics
 
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance
 
@@ -146,6 +150,7 @@ and preregistered exclusion rule. On the scientific-extension track, the
 Phase 2 row reports the new comparison: adapt its code and say so in the
 caption.
 :::
+--->
 
 ```{r}
 #| label: analysis-functions
@@ -441,9 +446,10 @@ knitr::kable(budget, digits = 2,
                                n_total, minutes, hourly))
 ```
 
-I will collect `r sum(two_and_half)` analyzable participants (2.5 times the original sample of `r sum(original$n)` (or about `r two_and_half[1]` per condition (because assignment is random, the per-condition numbers will be approximate))). Participants will be US residents on Prolific, fluent in English, aged 18 or older, and using a desktop or laptop computer. At about `r minutes` minutes per participant and `r scales::dollar(hourly)` per hour, including Prolific's service fee, the planned sample will cost about `r scales::dollar(cost_total, accuracy = 1)`.
+I will collect `r sum(two_and_half)` analyzable participants, 2.5 times the original sample of `r sum(original$n)`, or about `r two_and_half[1]` per condition; because assignment is random, the per-condition numbers will be approximate. Participants will be people on Prolific, fluent in English, aged 18 to 25, and using a desktop or laptop computer. I restricted the age range to bring the sample closer to the original's undergraduate participants. I will also use Prolific's quota sampling to recruit equal numbers of men and women. This is my own choice, since the original reports neither the age nor the gender of its participants. At about `r minutes` minutes per participant and `r scales::dollar(hourly)` per hour, including Prolific's service fee, the planned sample will cost about `r scales::dollar(cost_total, accuracy = 1)`.
 
-I will first recruit `r sum(two_and_half)` participants. After applying the exclusion criteria, I will recruit replacements in additional batches equal to the number excluded (assigned at random like the original batch) and repeat until `r sum(two_and_half)` participants have passed the exclusion criteria. The number recruited will depend only on the number of exclusions.
+I will first recruit `r sum(two_and_half)` participants. After applying the exclusion criteria, I will replace each excluded participant with a new participant of the same sex on Prolific's screener, assigned at random like the original batch, and repeat until `r sum(two_and_half)` participants have passed the exclusion criteria. This keeps the sexes as close to equal as possible among the analysed sample; because `r sum(two_and_half)` is odd, the split will be 98 and 97. The number recruited will depend only on the number of exclusions.
+
 
 ### Materials
 
@@ -515,7 +521,7 @@ In the original, "participants were seated in separate cubicles and given a ques
 | Step | What happens | Original | Exceptions |
 |---|---|---|---|
 | 1. Consent | Course consent text; "I do not agree" ends the study, and "I agree to participate" continues and starts the bot-detection tracker | Not described | Course requirement |
-| 2. Welcome | Explains that the gambles are hypothetical, that there are no right or wrong answers, and that the study takes about seven minutes in one sitting on a computer | Not described | New |
+| 2. Welcome | Explains that the gambles are hypothetical, that there are no right or wrong answers, and that the study takes about six minutes in one sitting on a computer | Not described | New |
 | 3. Matching and attractiveness | Participants type the value of X that makes the gambles equally attractive and click Update X, which shows it on Gamble B's card; they then rate both gambles from 1 to 12. Changing X clears the ratings, and Continue requires both ratings and an updated X between \$0 and \$130 | Phase 1: "make gamble S exactly as attractive as gamble R" (p. 151); "Next, he or she was asked to rate the attractiveness of each option" (p. 151) | One screen instead of two steps; Update X button; range check; buttons instead of paper |
 | 4. Feedback instructions | Participants are told they must choose between the gambles and read their condition's feedback text | Phase 2: "Before they made the choice, however, participants learned about possible feedback on foregone outcomes" (p. 151) | Second person |
 | 5. Comprehension quiz | Five questions; if any answer is wrong, participants return to step 4 with a notice and retake the quiz until all five are correct, without being told which was wrong; the number of attempts is recorded | Not in the original | New |
@@ -536,7 +542,71 @@ Several rules apply throughout:
 | Data saving | Responses are saved after every screen, with the time spent on each screen and how often and how long the participant left the browser tab; if saving fails at the end, participants see their completion code and are asked to download and email their data | Not applicable |
 | Bot detection | The Proof of Human tracker runs from consent to the end of the study. Its session ID is stored privately, and risk scores are retrieved from the vendor after data collection | None existed; the original was a supervised lab study |
 
-The study is expected to take 6 to 8 minutes. The median duration from Pilot B will be reported here before final data collection.
+The study takes about 6 minutes: in Pilot B, the median completion time was 5.7 minutes (range 2.3 to 10.6).
+
+### Pilot B
+
+Pilot B was run on Prolific with the final version of the study, recruiting US adults aged 18 or older without age or sex filters. Of 19 sessions, 3 were turned away by the device check, 2 declined consent, and 14 consented. Of those 14, 4 left before finishing, 3 of them during the comprehension quiz, and 10 completed the study; none of the completers met an exclusion criterion. Among the completers' 25 quiz attempts, item 4 was answered wrongly 11 times and item 5 9 times; both test the feedback rule, and 7 of the 10 completers needed more than one attempt to pass. The median completion time was 5.7 minutes (range 2.3 to 10.6).
+
+After Pilot B, I made these changes: I set the bot-risk exclusion threshold at 50, set the expected study length at 6 minutes, restricted the age range to 18 to 25, and added a quota for equal numbers of men and women, removed the US residence filter. The gamble labels A and B, the combined matching and attractiveness screen, and the change to the debrief were made before Pilot B, so Pilot B tested them.
+
+```{r}
+#| label: pilot-b-data
+#| include: false
+# Pilot B's comprehension quiz. The chart counts the attempts of people who completed the study;
+# the attempts table also shows those who left. Skipped if the Pilot B export is not there.
+pilot_b_dir <- file.path("..", "data", "raw", pilot_b_id)
+have_pilot_b <- all(file.exists(file.path(pilot_b_dir, c("participants.csv", "trials.csv"))))
+if (have_pilot_b) {
+  pb_participants <- read_csv(file.path(pilot_b_dir, "participants.csv"), show_col_types = FALSE)
+  pb_trials       <- read_csv(file.path(pilot_b_dir, "trials.csv"), show_col_types = FALSE)
+  pb_consented <- pb_trials |> filter(task == "consent", consented %in% TRUE) |> pull(participant_id)
+  pb_completed <- pb_participants |> filter(completed %in% TRUE, participant_id %in% pb_consented) |>
+    pull(participant_id)
+  pb_quiz      <- pb_trials |> filter(task == "comprehension")              # everyone who reached the quiz
+  pb_quiz_done <- pb_quiz |> filter(participant_id %in% pb_completed)        # completers only
+  quiz_items <- c(
+    q1 = "1. Chance of winning $130 with Gamble A",
+    q2 = "2. Chance of winning $X with Gamble B",
+    q3 = "3. Would you know the outcome of the gamble you choose?",
+    q4 = "4. If you choose Gamble A, would you know Gamble B's outcome?",
+    q5 = "5. If you choose Gamble B, would you know Gamble A's outcome?")
+  pb_item_errors <- tibble(item = names(quiz_items), label = unname(quiz_items)) |>
+    mutate(wrong = map_int(item, ~ sum(!pb_quiz_done[[paste0(.x, "_correct")]] %in% TRUE)),
+           attempts = nrow(pb_quiz_done), share = wrong / attempts)
+}
+```
+
+```{r}
+#| label: pilot-b-comprehension
+#| eval: !expr have_pilot_b
+#| fig-height: 3.2
+#| fig-width: 8
+#| fig-cap: !expr 'if (have_pilot_b) sprintf("Pilot B comprehension quiz: share of the %d quiz attempts by the %d participants who completed the study that answered each item wrongly. Items 4 and 5 test the feedback rule; their correct answers depend on the condition.", nrow(pb_quiz_done), n_distinct(pb_quiz_done$participant_id)) else ""'
+pb_item_errors |>
+  mutate(label = factor(label, levels = rev(unname(quiz_items)))) |>
+  ggplot(aes(x = share, y = label)) +
+  geom_col(fill = "#1E6E76", width = 0.6) +
+  geom_text(aes(label = sprintf("%d of %d", wrong, attempts)), hjust = -0.15, size = 3.4, colour = "grey25") +
+  scale_x_continuous(labels = scales::percent, limits = c(0, max(0.6, max(pb_item_errors$share) + 0.15)),
+                     expand = expansion(mult = c(0, 0))) +
+  labs(x = "Quiz attempts answering the item wrongly", y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank())
+```
+
+```{r}
+#| label: pilot-b-attempts
+#| eval: !expr have_pilot_b
+# How many tries each participant needed (the quiz repeats until all five answers are correct).
+pb_quiz |>
+  count(participant_id, name = "attempts") |>
+  mutate(outcome = if_else(participant_id %in% pb_completed, "Completed the study", "Did not complete")) |>
+  count(Attempts = attempts, outcome) |>
+  pivot_wider(names_from = outcome, values_from = n, values_fill = 0) |>
+  select(Attempts, any_of(c("Completed the study", "Did not complete"))) |>
+  knitr::kable(caption = "Pilot B: number of quiz attempts per participant who reached the quiz.")
+```
 
 ### Analysis plan
 
@@ -566,7 +636,7 @@ preregistration. You can pre-specify additional analyses here too.
 | 1 | Did not consent or did not complete the study | No complete data |
 | 2 | Repeat sessions: sessions will be linked by Prolific ID. Each person's first completed session will be kept, and the person excluded if an earlier session had already reached the feedback instructions | A participant who has already seen a feedback rule is no longer naive to the manipulation |
 | 3 | Any answer screen completed in under 300 ms: the matching and attractiveness screen, quiz, choice, strength of preference, reasons, Regret Scale and end form | Not humanly possible |
-| 4 | A Proof of Human bot-risk score (0–100) at or above a threshold that will be set from the Pilot B scores before preregistration. Participants without a score (tracker blocked or failed) will be kept, and their number reported | Likely a bot or AI agent |
+| 4 | A Proof of Human bot-risk score (0–100) of 50 or more, the threshold the vendor recommends for review, set after Pilot B and before preregistration. Participants without a score (tracker blocked or failed) will be kept, and their number reported | Likely a bot or AI agent |
 
 **Secondary analyses.** These follow the remaining analyses of Experiment 1 (Zeelenberg et al., 1996, p. 152). Like the original, they will not be corrected for multiple comparisons, and they will be interpreted as secondary to the key test.
 
@@ -583,7 +653,7 @@ preregistration. You can pre-specify additional analyses here too.
 | Matched X by condition | One-way ANOVA on X | F(2, 75) < 0.3 |
 | Attractiveness of R versus S | Paired t-test on the two ratings | 6.71 versus 7.41, t(77) = −3.27, p < .01 |
 
-**Exploratory analyses.** Because the original found that participants rated the gambles as not quite equally attractive after matching (p. 152), I will examine how well the matching worked: the number of participants who rated the two gambles exactly equally, and the mean difference between their ratings (R minus S), by condition; a logistic regression of choice on feedback condition (risky vs. safe) and the rating difference; and the key test repeated among participants who rated the gambles exactly equally. Any further analyses will be labelled as exploratory.
+**Exploratory analyses.** Because the original found that participants rated the gambles as not quite equally attractive after matching (p. 152), I will examine how well the matching worked: the number of participants who rated the two gambles exactly equally, and the mean difference between their ratings (R minus S), by condition; a logistic regression of choice on feedback condition (risky vs. safe) and the rating difference; and the key test repeated among participants who rated the gambles exactly equally. I will also examine whether trait regret-proneness, measured with the Regret Scale (Schwartz et al., 2002), strengthens the feedback effect, using a logistic regression of choice on the interaction between feedback condition and regret score, among participants in the risky and safe feedback conditions only. Any further analyses will be labelled as exploratory.
 
 
 ### Differences from the original study
@@ -603,7 +673,7 @@ and show the level of detail expected; replace them with yours.
 
 | Aspect | Original study | This replication | Expected to matter? |
 |---|---|---|---|
-| Sample | 78 psychology undergraduates at the University of Amsterdam, taking part as a course requirement (p. 151) | 195 paid US adults on Prolific, aged 18 or older and fluent in English | Possibly; online adult samples may differ from students in a lab in attention and in familiarity with gambles. |
+| Sample | 78 psychology undergraduates at the University of Amsterdam, taking part as a course requirement; age and gender not reported (p. 151) | 195 paid adults on Prolific, aged 18 to 25 and fluent in English, with equal numbers of men and women recruited through Prolific's quotas | Possibly. The age range moves the sample closer to the original's undergraduates. The original's sex ratio is unknown, so the equal split may differ from it; random assignment keeps the split similar across conditions, but it could shift how many participants choose the safe gamble overall. Online adult samples may also differ from students in a lab in attention and in familiarity with gambles. |
 | Era | Mid-1990s | 2026 | Possibly; gambling is more familiar today. Gambling frequency is collected, so this can be examined. |
 | Language | Probably Dutch (not stated) | English | Unknown |
 | Setting | Separate cubicles, paper questionnaire (p. 151) | Online, unsupervised, on the participant's own desktop or laptop | Possibly; attention may be lower online. The comprehension quiz, the speed rule and the repeat-session rule are intended to offset this. |
@@ -1100,6 +1170,57 @@ if (nrow(key_att) > 0 && is.null(matched_r))
 if (!is.null(matched_r))
   fmt_row("Equal raters only", matched_r) |>
     knitr::kable(caption = "Exploratory: the key comparison among participants who rated Gamble R and Gamble S exactly equally.")
+```
+
+```{r}
+#| label: exploratory-regret
+#| eval: !expr have_data
+# Exploratory: does trait regret-proneness strengthen the feedback effect? The Regret Scale
+# (Schwartz et al., 2002) score is the mean of its five items (1-7, item 5 reversed; higher =
+# more regret-prone). Logistic regression, among analysed participants in the risky- and
+# safe-feedback conditions, of choosing the risky gamble on condition (risky feedback = 1), the
+# regret score centred on its mean, and their interaction: a positive interaction means the
+# feedback effect is larger for more regret-prone participants. The scale is answered after the
+# choice, so the condition or the choice itself could have shifted it.
+reg <- trials |>
+  filter(task == "regret_scale", participant_id %in% keep$participant_id) |>
+  transmute(participant_id, regret_score = as.numeric(regret_score)) |>
+  inner_join(trials |>
+               filter(task == "choice", participant_id %in% keep$participant_id) |>
+               transmute(participant_id, condition, risky = as.integer(choice == "risky")),
+             by = "participant_id") |>
+  filter(condition %in% c("risky_feedback", "safe_feedback"), !is.na(regret_score)) |>
+  mutate(risky_feedback = as.integer(condition == "risky_feedback"),
+         regret_c = regret_score - mean(regret_score))
+
+regret_model <- function(d) {
+  if (nrow(d) == 0) stop("no analysed participants in the risky- and safe-feedback conditions")
+  if (n_distinct(d$risky) < 2) stop("every participant chose the same gamble")
+  if (n_distinct(d$risky_feedback) < 2) stop("needs participants in both feedback conditions")
+  fit <- suppressWarnings(glm(risky ~ risky_feedback * regret_c, family = binomial, data = d))
+  est <- summary(fit)$coefficients
+  # Estimates this large mean the groups are perfectly separated; they would not be meaningful.
+  if (!fit$converged || nrow(est) < 4 || any(abs(est[, "Estimate"]) > 15))
+    stop("the model cannot be estimated with these data (too few participants or perfect separation)")
+  tibble(Term = c("Intercept (safe feedback, average regret score)", "Risky feedback (vs safe)",
+                  "Regret score (per point, centred)", "Risky feedback x regret score"),
+         `Log-odds` = round(est[, "Estimate"], 2), SE = round(est[, "Std. Error"], 2),
+         z = round(est[, "z value"], 2),
+         p = format.pval(est[, "Pr(>|z|)"], digits = 2, eps = 0.001),
+         `Odds ratio [95% CI]` = sprintf("%.2f [%.2f, %.2f]", exp(est[, "Estimate"]),
+                                         exp(est[, "Estimate"] - 1.96 * est[, "Std. Error"]),
+                                         exp(est[, "Estimate"] + 1.96 * est[, "Std. Error"])))
+}
+if (nrow(reg) > 0)
+  try_or_say(regret_model(reg) |>
+               knitr::kable(caption = sprintf(paste(
+                 "Exploratory: logistic regression of choosing the risky gamble on feedback condition (risky vs safe),",
+                 "Regret Scale score (Schwartz et al., 2002; centred on its mean of %.2f) and their interaction (N = %d).",
+                 "A positive interaction means the feedback effect grows with regret-proneness. The scale was answered",
+                 "after the choice."), mean(reg$regret_score), nrow(reg))),
+             "Regret Scale moderation")
+if (nrow(reg) == 0)
+  note("Regret Scale moderation: not enough data yet (no analysed participants in the risky- and safe-feedback conditions).")
 ```
 
 ```{r}
