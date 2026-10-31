@@ -433,7 +433,7 @@ exclusion criteria below" rather than "until the result is clear".
 # and the hourly rate from the Class Prolific Guidelines.
 n_total <- sum(two_and_half)        # 195 = 2.5 x the original 78, 65 per condition
 minutes <- 6                        # expected study length in minutes (Pilot B median: 5.7)
-hourly  <- 12                       # US$ per hour
+hourly  <- 9                        # US$ per hour ($0.90 for 6 minutes)
 fee     <- 1/3                      # Prolific's service fee on top of pay
 cost_paid  <- n_total * minutes / 60 * hourly
 cost_total <- cost_paid * (1 + fee)
