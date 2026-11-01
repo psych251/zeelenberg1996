@@ -111,8 +111,8 @@ condition_labels <- c(risky_feedback = "Risky feedback",
     of expected feedback on risky decision making. *Organizational
     Behavior and Human Decision Processes, 65*(2), 148–158.
     <https://doi.org/10.1006/obhd.1996.0013>
--   **Preregistration:** [OSF registration](https://osf.io/XXXXX)
-    *(registered YYYY-MM-DD, before final data collection)*
+-   **Preregistration:** [OSF registration](https://doi.org/10.17605/OSF.IO/YGPJ3)
+    *(registered 2026-11-01, before final data collection)*
 -   **Live experiment:** <https://psych251.github.io/zeelenberg1996/>
     (take the study exactly as participants did)
 -   **Repository:** <https://github.com/psych251/zeelenberg1996>
