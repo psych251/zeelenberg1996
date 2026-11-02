@@ -1142,6 +1142,12 @@ matched_counts <- key_att |>
   filter(att_diff == 0) |>
   group_by(condition) |>
   summarise(risky = sum(risky), n = n(), .groups = "drop")
+# Ratings within 1 point of each other (|R - S| <= 1). Added after data collection; not
+# preregistered.
+near_counts <- key_att |>
+  filter(abs(att_diff) <= 1) |>
+  group_by(condition) |>
+  summarise(risky = sum(risky), n = n(), .groups = "drop")
 
 # 1. How often the two ratings were equal, and the mean difference, by condition.
 if (nrow(att) > 0)
@@ -1163,13 +1169,72 @@ if (nrow(key_att) > 0 && n_distinct(key_att$risky) == 2)
   try_or_say(summary(glm(risky ~ risky_feedback + att_diff, family = binomial, data = key_att))$coefficients,
              "Logistic regression of choice on condition and rating difference")
 
-# 3. The key test repeated among participants who rated the two gambles exactly equally.
+# 3. The key test repeated among participants who rated the two gambles exactly equally, and
+# among those whose ratings were within 1 point of each other.
 matched_r <- diff_ci(matched_counts)
+near_r    <- diff_ci(near_counts)
 if (nrow(key_att) > 0 && is.null(matched_r))
   note("Key test among equal raters: needs at least one equal rater in both the risky- and safe-feedback conditions.")
-if (!is.null(matched_r))
-  fmt_row("Equal raters only", matched_r) |>
-    knitr::kable(caption = "Exploratory: the key comparison among participants who rated Gamble R and Gamble S exactly equally.")
+if (!is.null(matched_r) || !is.null(near_r))
+  bind_rows(fmt_row("Equal raters only", matched_r, missing = "too few participants"),
+            fmt_row("Rated within 1 point", near_r, missing = "too few participants")) |>
+    knitr::kable(caption = paste(
+      "Exploratory: the key comparison among participants who rated Gamble R and Gamble S exactly equally,",
+      "and among those whose two ratings were within 1 point of each other (|R − S| ≤ 1).",
+      "The within-1-point row was added after data collection and was not preregistered."))
+```
+
+```{r}
+#| label: fig-x-updates
+#| eval: !expr 'have_data && all(c("x_updates", "ratings_reset", "x_history") %in% names(trials))'
+#| fig-cap: "Exploratory, not preregistered: did updating X lead to closer attractiveness ratings? The gap is how many points apart a participant's ratings of Gamble R and Gamble S were (0 = rated equally). (a) By how many times Update X was clicked: dots are participants, black points are means with 95% confidence intervals, and ringed dots are participants who changed X after rating and then rated again. (b) By the total amount X was changed across updates, with a linear fit and its 95% confidence interval."
+#| fig-subcap:
+#|   - "By number of X updates"
+#|   - "By how far X was moved"
+#| layout-ncol: 2
+#| fig-width: 5
+#| fig-height: 4.2
+# Exploratory: did participants who adjusted X more end with ratings closer together? Update X
+# can be clicked several times (x_updates, each value in x_history). Changing X after rating
+# clears the ratings (ratings_reset), so the saved ratings always go with the final X.
+set.seed(251)  # fixed jitter, so the figure is the same on every render
+xu <- trials |>
+  filter(task == "matching", participant_id %in% keep$participant_id,
+         !is.na(attract_r), !is.na(attract_s), !is.na(x_updates)) |>
+  mutate(gap = abs(attract_r - attract_s),
+         total_move = map_dbl(x_history, ~ if (is.na(.x)) 0 else sum(abs(diff(as.numeric(fromJSON(.x)))))),
+         rerated = coalesce(as.numeric(ratings_reset), 0) > 0,
+         jx = x_updates + runif(n(), -0.18, 0.18), jy = gap + runif(n(), -0.15, 0.15))
+xu_summary <- xu |>
+  group_by(x_updates) |>
+  summarise(n = n(), mean = mean(gap),
+            half = if (n() > 1) qt(0.975, n() - 1) * sd(gap) / sqrt(n()) else NA_real_, .groups = "drop")
+xu_theme <- theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank())
+
+# (a) Gap by number of updates.
+ggplot(xu, aes(jx, jy)) +
+  geom_point(alpha = 0.3, size = 1.6, colour = "#1E6E76", stroke = 0) +
+  geom_point(data = filter(xu, rerated), shape = 21, size = 3, colour = "grey15", fill = NA, stroke = 0.7) +
+  geom_errorbar(data = filter(xu_summary, !is.na(half)), inherit.aes = FALSE,
+                aes(x = x_updates, ymin = pmax(mean - half, 0), ymax = mean + half),
+                width = 0.12, linewidth = 0.7, colour = "grey15") +
+  geom_point(data = xu_summary, inherit.aes = FALSE, aes(x = x_updates, y = mean), size = 2.8, colour = "grey15") +
+  scale_x_continuous(breaks = xu_summary$x_updates,
+                     labels = sprintf("%d\n(n = %d)", xu_summary$x_updates, xu_summary$n)) +
+  scale_y_continuous(breaks = seq(0, 11, 2)) +
+  coord_cartesian(ylim = c(-0.3, 11.3)) +
+  labs(x = "Times Update X was clicked", y = "Gap between the R and S ratings (points)") +
+  xu_theme
+
+# (b) Gap by the total amount X was changed (0 = X never changed).
+ggplot(xu, aes(total_move, gap)) +
+  geom_smooth(method = "lm", formula = y ~ x, colour = "grey15", fill = "grey80", linewidth = 0.7) +
+  geom_point(aes(y = jy), alpha = 0.3, size = 1.6, colour = "#1E6E76", stroke = 0) +
+  scale_y_continuous(breaks = seq(0, 11, 2)) +
+  coord_cartesian(ylim = c(-0.3, 11.3)) +
+  labs(x = "Total change in X across updates ($)", y = "Gap between the R and S ratings (points)") +
+  xu_theme
 ```
 
 ```{r}
@@ -1460,7 +1525,9 @@ p2_stats  <- diff_ci(p2_counts)
 cat(sprintf("Phase 2: %d started, %d completed, %d analysed.\n",
             nrow(phase2$participants), nrow(phase2$complete), nrow(phase2$keep)))
 if (!is.null(p2_stats)) {
-  p_text <- if (p2_stats$p < 0.001) "p < .001" else sprintf("p = %.3f", p2_stats$p)
+  # With very few participants (e.g. everyone chose the same gamble) the test is undefined.
+  p_text <- if (!is.finite(p2_stats$p)) "p not computable yet" else
+    if (p2_stats$p < 0.001) "p < .001" else sprintf("p = %.3f", p2_stats$p)
   cat(sprintf("Key comparison: %.0f points [%.0f, %.0f], chi-square(1) = %.2f, %s.\n",
               100 * p2_stats$estimate, 100 * p2_stats$ci_low, 100 * p2_stats$ci_high,
               p2_stats$statistic, p_text))
