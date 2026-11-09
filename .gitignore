@@ -68,3 +68,6 @@ identifiers.csv
 # Claude Code files local to one machine (the skills in .claude/skills/ are shared and committed)
 .claude/settings.local.json
 .claude/launch.json
+
+# Midterm presentation working files (drawings, layers, decks): kept locally, not committed
+presentation/

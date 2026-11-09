@@ -693,6 +693,7 @@ and show the level of detail expected; replace them with yours.
 
 ### Methods addendum (post data collection)
 
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance
 
@@ -700,8 +701,12 @@ Leave this section out of the version you preregister. After data
 collection, report the actual sample and any deviation from the plan
 above.
 :::
+-->
 
 #### Actual sample
+
+Data were collected on Prolific on November 1st, 2026, from users aged 18 to 25 who were fluent in English and using a desktop or laptop computer, with equal numbers of men and women recruited through Prolific's quota on its sex screener. Participants were paid $9/hr for the study. Of 247 visits to the study, 229 sessions consented and 207 sessions reached the end. Of these 207 completed sessions, 2 were excluded as repeat sessions, none for answer screens completed in under 300 ms, and 10 for bot-risk scores of 50 or more (3 in the risky feedback, 5 in the choice-only and 2 in the safe feedback condition). The 2 completers without a bot-risk score were kept, as planned. This left 195 analysed participants, meeting the preregistered target: 65 in the risky feedback, 63 in the choice-only and 67 in the safe feedback condition. The groups were slightly unequal because assignment was simple randomization. Between 89% and 92% of consenting sessions completed the study in each condition, so dropout did not differ noticeably between conditions. The analysed participants had a mean age of 22.5 years (SD = 2.1); 94 identified as women, 99 as men and 1 as non-binary, and 1 preferred not to say.
+
 
 ```{r}
 #| label: no-data-notice
@@ -855,25 +860,13 @@ if (nrow(demo) > 0)
 
 #### Deviations from the preregistered plan
 
-::: {.callout-tip icon="false"}
-## Guidance
-
-Any deviation from the preregistered plan above, or "None". Changes made
-after seeing data belong here even if they seem minor, together with the
-reason.
-:::
+The experiment code, the key test and the exclusion rules were unchanged after preregistration. All of the following analyses were added after seeing the data and were not preregistered, so they are exploratory: the key test repeated among participants whose two attractiveness ratings were within 1 point of each other; the comparison of the matched value of X with $70, the value at which the two gambles have equal expected value, together with its correlation with the rating difference; the proportion choosing the risky gamble by whether X was set below, at or above $70; the figure relating the number of times X was updated, and the total amount it was changed, to the gap between the ratings; and the Regret Scale model refitted among participants who rated the gambles exactly equally or within 1 point, together with the comparison of these participants' regret scores with everyone else's. The table of equal ratings, the covariate model, the key test among participants who rated the gambles exactly equally, and the regret interaction were preregistered as exploratory analyses.
 
 ## Results
 
 ### Data preparation
 
-::: {.callout-tip icon="false"}
-## Guidance
-
-Data preparation follows the analysis plan. Loading and exclusions are
-done by the shared analysis code under Key statistics (open "Show the
-analysis code"). Describe anything you did to the data beyond that.
-:::
+Beyond loading the data and applying the exclusions, the data include three derived variables. Two were calculated by the experiment code when each response was saved: risk preference, following the original, as +1 for choosing the risky gamble or −1 for the safe gamble, multiplied by the strength of preference minus 0.5; and the Regret Scale score, as the mean of the five items with item 5 reverse-scored. The third, the rating difference, was computed in the analysis as the attractiveness rating of the risky gamble minus that of the safe gamble. Bot-risk scores were retrieved from the vendor with `scripts/poh-scores.js`.
 
 ### Confirmatory analysis
 
@@ -926,6 +919,11 @@ bind_rows(
 
 ### Replication assessment
 
+The key result did not replicate. With risky feedback, 18 of 65 participants (28%) chose the risky gamble, compared with 14 of 67 (21%) with safe feedback, a difference of 7 percentage points, 95% CI [−8, 21], χ²(1) = 0.83, p = .36. The interval includes zero and excludes the original estimate of 38 points. 
+
+The secondary tests agreed. Choice did not differ across all three conditions, χ²(2) = 0.85, p = .65, nor did risk preference, F(2, 192) = 0.49, p = .61, including the risky versus safe feedback contrast, t(192) = 0.72, p = .47. As in the original, the matched value of X did not differ by condition, F(2, 192) = 0.05, p = .95. Participants again rated the safe gamble as more attractive than the risky one after matching (8.48 versus 7.02), t(194) = −6.96, p < .001, but the gap of 1.47 points was about twice the original's 0.70.
+
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance
 
@@ -937,6 +935,7 @@ or a non-significant result whose interval still includes the original
 effect, are both informative and should be reported as such
 (Experimentology §3.2).
 :::
+-->
 
 ```{r}
 #| label: comparison
@@ -973,6 +972,8 @@ if (!is.null(rep)) {
 }
 ```
 
+
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance: show the original next to your replication
 
@@ -1012,6 +1013,9 @@ source of the original values or figure in the caption. If the original
 reported no variability, say so rather than leaving it out silently.
 :::
 
+-->
+
+
 ```{r}
 #| label: fig-comparison
 #| eval: !expr have_data
@@ -1023,6 +1027,7 @@ comparison_plot(Original = original, `Phase 1: replication` = risky)
 
 ### Exploratory analyses
 
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance
 
@@ -1030,6 +1035,13 @@ Any follow-up analyses (optional). Label them clearly as exploratory:
 they were not planned, so they generate hypotheses rather than test
 them.
 :::
+
+-->
+
+Analyses marked as added after data collection were not preregistered and should be read as hypothesis-generating. Among participants in the risky and safe feedback conditions, 28 of 132 rated the two gambles exactly equally (preregistered). Among them, the feedback effect was 31 points, 95% CI [−1, 63], p = .077, close to the original estimate but imprecise. Among those whose ratings were within 1 point of each other (added after data collection), it was 26 points [2, 50], p = .038. In the preregistered covariate model, neither the feedback condition (p = .24) nor the rating difference (p = .067) was a significant predictor of choice, although the rating difference came close. The preregistered regret analysis asked whether regret-proneness strengthens the feedback effect; it did not, and the interaction ran the other way, odds ratio 0.42 [0.20, 0.90], p = .026: more regret-prone participants showed a smaller feedback effect. Refitted among participants who rated the gambles exactly equally or within 1 point (added after data collection), the interaction kept the same direction but was not significant (p = .36 and .17), and participants who rated the gambles equally had lower regret scores than everyone else (4.23 versus 4.89, p = .010).
+
+The matched value of X was also examined after data collection. The two gambles have equal expected value at X = $70. Mean X was $75.56, $5.56 above this point, 95% CI [1.78, 9.35], p = .004, so on average participants set the safe gamble's prize higher than needed to equalise expected value. Higher values of X went with rating the safe gamble as more attractive relative to the risky one, r = −.25 [−.38, −.11], p < .001. The risky gamble was chosen by 40% of participants who set X below $70, 23% of those who set it at exactly $70, and 13% of those who set it above $70. Finally, most participants (178 of 195) clicked Update X only once and never changed their first value. Those who updated X two or three times ended with somewhat closer ratings on average, but these groups were small (12 and 5 participants) and their confidence intervals overlapped. Across all participants, the total amount X was changed was unrelated to the final gap between the ratings.
+
 
 ```{r}
 #| label: secondary-original
@@ -1185,6 +1197,59 @@ if (!is.null(matched_r) || !is.null(near_r))
 ```
 
 ```{r}
+#| label: exploratory-x-ev
+#| eval: !expr have_data
+# Exploratory, not preregistered (added after data collection): how the matched value of X
+# compares with the value that gives the two gambles equal expected value. Gamble R pays $130
+# with probability .35 and Gamble S pays X with probability .65, so their expected values are
+# equal at X = .35 x 130 / .65 = $70 (rounded, so that X = 70 compares as equal). All three
+# conditions; X and the ratings are both set before the feedback rule is shown.
+ev_equal_x <- round(0.35 * 130 / 0.65, 2)
+x_ev <- trials |>
+  filter(task == "matching", participant_id %in% keep$participant_id, !is.na(matched_x)) |>
+  transmute(participant_id, x = as.numeric(matched_x)) |>
+  inner_join(att, by = "participant_id")
+
+# 1. Mean X minus $70, and the correlation of X with the rating difference (R minus S).
+x_test_row <- function(label, test, shift = 0) {
+  r <- tryCatch(suppressWarnings(test()), error = function(e) NULL)
+  if (is.null(r) || is.null(r$conf.int) || !is.finite(r$statistic))
+    return(tibble(Statistic = label, `Estimate [95% CI]` = "too few participants", Test = "", p = ""))
+  tibble(Statistic = label,
+         `Estimate [95% CI]` = sprintf("%.2f [%.2f, %.2f]", r$estimate - shift, r$conf.int[1] - shift, r$conf.int[2] - shift),
+         Test = sprintf("t(%d) = %.2f", as.integer(r$parameter), r$statistic),
+         p = format.pval(r$p.value, digits = 2, eps = 0.001))
+}
+if (nrow(x_ev) > 0)
+  bind_rows(x_test_row(sprintf("Mean X minus \\$%g (one-sample t-test)", ev_equal_x),
+                       function() t.test(x_ev$x, mu = ev_equal_x), shift = ev_equal_x),
+            x_test_row("Correlation of X with the rating difference, R − S (Pearson r)",
+                       function() cor.test(x_ev$x, x_ev$att_diff))) |>
+    knitr::kable(caption = sprintf(paste(
+      "Exploratory, not preregistered: the matched value of X compared with \\$%g, the value at which the two",
+      "gambles have equal expected value (35%% × \\$130 = 65%% × \\$%g), and its correlation with the attractiveness",
+      "rating difference (R minus S; negative = S rated higher). All three conditions, N = %d; mean X = \\$%.2f",
+      "(SD %.2f). The original's mean was %.2f (guilders)."),
+      ev_equal_x, ev_equal_x, nrow(x_ev), mean(x_ev$x), sd(x_ev$x), original_secondary$matched_x_mean))
+
+# 2. How many chose the risky gamble, by where X was set relative to $70.
+x_levels <- sprintf(c("Below \\$%g", "Exactly \\$%g", "Above \\$%g"), ev_equal_x)
+if (nrow(x_ev) > 0)
+  x_ev |>
+    mutate(`X set` = factor(case_when(x < ev_equal_x ~ x_levels[1], x == ev_equal_x ~ x_levels[2],
+                                      TRUE ~ x_levels[3]), levels = x_levels)) |>
+    group_by(`X set`, .drop = FALSE) |>
+    summarise(n = n(),
+              `Chose R` = if (n() > 0) sprintf("%d (%.0f%%)", sum(risky), 100 * mean(risky)) else "–",
+              .groups = "drop") |>
+    knitr::kable(caption = sprintf(paste(
+      "Exploratory, not preregistered: number (and percentage) choosing the risky gamble (R), by where X was set",
+      "relative to the equal-expected-value point (\\$%g). All three conditions, N = %d."), ev_equal_x, nrow(x_ev)))
+if (nrow(x_ev) == 0)
+  note("Matched X versus the equal-expected-value point: not enough data yet (no analysed participants with a matched X and both ratings).")
+```
+
+```{r}
 #| label: fig-x-updates
 #| eval: !expr 'have_data && all(c("x_updates", "ratings_reset", "x_history") %in% names(trials))'
 #| fig-cap: "Exploratory, not preregistered: did updating X lead to closer attractiveness ratings? The gap is how many points apart a participant's ratings of Gamble R and Gamble S were (0 = rated equally). (a) By how many times Update X was clicked: dots are participants, black points are means with 95% confidence intervals, and ringed dots are participants who changed X after rating and then rated again. (b) By the total amount X was changed across updates, with a linear fit and its 95% confidence interval."
@@ -1289,6 +1354,69 @@ if (nrow(reg) == 0)
 ```
 
 ```{r}
+#| label: exploratory-regret-matched
+#| eval: !expr have_data
+# Exploratory, not preregistered (added after data collection): the Regret Scale model above,
+# refitted among participants who rated Gamble R and Gamble S exactly equally (att_diff == 0) and
+# among those whose ratings were within 1 point of each other (|R - S| <= 1). The regret score
+# keeps the centring from the full risky/safe-feedback sample, so "average regret score" is the
+# same point in every row. Uses `att` (exploratory-attractiveness) and `reg` / `regret_model()`.
+reg_att <- reg |>
+  inner_join(select(att, participant_id, att_diff), by = "participant_id")
+
+# 1. Feedback effect at the average regret score, and the feedback x regret interaction, by group.
+# A group whose model cannot be estimated says why instead of showing numbers.
+# p-values to two significant digits, each on its own (regret_model() formats its column jointly).
+fmt_p <- function(x) ifelse(x < 0.001, "<0.001", formatC(x, digits = 2, format = "fg", flag = "#"))
+regret_row <- function(label, d) {
+  fit <- tryCatch(regret_model(d), error = function(e) conditionMessage(e))
+  ok  <- is.data.frame(fit)
+  p   <- if (ok) suppressWarnings(as.numeric(fit$p)) else NA   # "<0.001" becomes NA, kept as is below
+  tibble(Group = label, n = nrow(d), `Chose R` = sum(d$risky),
+         `Risky feedback, OR [95% CI]` = if (ok) fit$`Odds ratio [95% CI]`[2] else paste("cannot be estimated:", fit),
+         `p (feedback)` = if (ok) coalesce(fmt_p(p[2]), fit$p[2]) else "",
+         `Feedback x regret, OR [95% CI]` = if (ok) fit$`Odds ratio [95% CI]`[4] else "",
+         `p (interaction)` = if (ok) coalesce(fmt_p(p[4]), fit$p[4]) else "")
+}
+if (nrow(reg_att) > 0)
+  bind_rows(regret_row("All risky- and safe-feedback participants (table above)", reg),
+            regret_row("Rated equally", filter(reg_att, att_diff == 0)),
+            regret_row("Rated within 1 point", filter(reg_att, abs(att_diff) <= 1))) |>
+    knitr::kable(caption = sprintf(paste(
+      "Exploratory, not preregistered: the Regret Scale model above refitted among participants who rated",
+      "Gamble R and Gamble S exactly equally, and among those whose ratings were within 1 point of each other",
+      "(|R − S| ≤ 1). In every row the regret score is centred on the mean of all %d risky- and safe-feedback",
+      "participants (%.2f). Risky feedback: odds ratio for choosing the risky gamble after risky vs safe feedback,",
+      "at that average score. Feedback x regret: how that odds ratio changes per point of regret score (below 1 =",
+      "a smaller feedback effect for more regret-prone participants). The within-1-point cut was chosen after",
+      "seeing the data."), nrow(reg), mean(reg$regret_score)))
+
+# 2. Were the participants in these groups more or less regret-prone than everyone else in the
+# risky- and safe-feedback conditions? Welch two-sample t-test on the regret score.
+msd <- function(x) if (length(x) < 2) sprintf("%.2f", mean(x)) else sprintf("%.2f (%.2f)", mean(x), sd(x))
+regret_gap_row <- function(label, in_group) {
+  a  <- reg_att$regret_score[in_group]
+  b  <- reg_att$regret_score[!in_group]
+  tt <- tryCatch(t.test(a, b), error = function(e) NULL)
+  tibble(Group = label, n = length(a), `Regret score, mean (SD)` = if (length(a)) msd(a) else "–",
+         `Everyone else, n` = length(b), `Everyone else, mean (SD)` = if (length(b)) msd(b) else "–",
+         `Difference [95% CI]` = if (is.null(tt)) "too few participants" else
+           sprintf("%.2f [%.2f, %.2f]", unname(tt$estimate[1] - tt$estimate[2]), tt$conf.int[1], tt$conf.int[2]),
+         p = if (is.null(tt)) "" else fmt_p(tt$p.value))
+}
+if (nrow(reg_att) > 0)
+  bind_rows(regret_gap_row("Rated equally", reg_att$att_diff == 0),
+            regret_gap_row("Rated within 1 point", abs(reg_att$att_diff) <= 1)) |>
+    knitr::kable(caption = paste(
+      "Exploratory, not preregistered: Regret Scale score (1–7, higher = more regret-prone) of risky- and",
+      "safe-feedback participants who rated the two gambles equally or within 1 point of each other, compared with",
+      "everyone else in those two conditions (difference = group minus everyone else; Welch t-test). The scale",
+      "was answered after the choice."))
+if (nrow(reg_att) == 0)
+  note("Regret Scale among equal raters: not enough data yet (no risky- or safe-feedback participants with both ratings and a regret score).")
+```
+
+```{r}
 #| label: reported-measures
 #| eval: !expr have_data
 # Measures the Analysis plan reports but does not use to exclude anyone, by condition. Columns
@@ -1341,6 +1469,8 @@ if (nrow(errors) > 0) {
 
 ### Summary of replication attempt
 
+
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance
 
@@ -1350,9 +1480,14 @@ replicated, or failed to replicate. Base that judgment on the
 replication assessment above: the size of the effect relative to the
 original, not just the p value.
 :::
+-->
+
+This replication of Zeelenberg et al. (1996, Experiment 1) did not reproduce the original finding. The difference in risky choice between the risky and safe feedback conditions was 7 percentage points, 95% CI [−8, 21], compared with 38 points in the original. The interval includes zero and excludes the original estimate, so the data are consistent with no effect and inconsistent with an effect as large as the original's.
 
 ### Commentary
 
+
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance
 
@@ -1362,9 +1497,19 @@ the differences between your study and the original are definitely,
 plausibly, or unlikely to be moderators of the result; and (c) any
 objections or challenges raised by you or the original authors.
 :::
+-->
+
+The exploratory analyses suggest that matching worked less well than in the original: participants preferred the safe gamble by about twice as much as the original's participants did, and few rated the two gambles equally. The matched values of X point the same way. On average, participants set the safe gamble's prize above the value that equalises expected value, those who set it higher rated the safe gamble as relatively more attractive, and they rarely chose the risky gamble. Most participants also kept their first value of X rather than adjusting it. When one gamble is clearly preferred, anticipated regret has little room to change the choice. This fits the pattern of the results: risky choice was close to the original with safe feedback (21% versus 23%) but much lower with risky feedback (28% versus 62%) and in the choice-only condition (25% versus 42%). Among participants who rated the gambles exactly equally, a preregistered group, the effect was closer to the original's but imprecise; the within-1-point group, defined after the data, showed the same pattern. The regret interaction ran opposite to the direction the preregistration asked about, and because the Regret Scale was answered after the choice, the choice itself may have affected it.
+
+Of the differences listed in the Methods, the sample and the matching procedure now seem the most plausible moderators. Online participants may have engaged less with the matching task than students in a lab.
+
+In correspondence, the first author of the original study confirmed that the original questionnaire labelled the gambles A and B, that the feedback conditions were worded to be as similar as possible, and that participants were not told to revise X but could have done so on paper (M. Zeelenberg, personal communication, October 20, 2026). In addition, the original paper appears to report its two comparisons with the choice-only condition in reverse order; this does not affect the key test.
+
 
 # Phase 2: Extension
 
+
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance: choosing your extension
 
@@ -1389,12 +1534,13 @@ Follow the Extension guidelines page on Canvas. In brief:
 
 State your track on the line below, and delete the others.
 :::
+-->
 
-**Track:** Best-practices upgrade / Best-practices rescue / Scientific
-extension (approved at Milestone 3)
+**Track:** Best-practices rescue
 
 ## Rationale
 
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance
 
@@ -1405,9 +1551,15 @@ precise or least trustworthy, and how will the changes improve it? For a
 scientific extension: what question does the added condition answer, and
 why does it follow from the original finding?
 :::
+-->
+
+Phase 1 found a 7-point effect, 95% CI [−8, 21], far below the original's 38 points. The most plausible reason is that matching did not make the two gambles equally attractive, so the safe gamble dominated. After matching, participants rated the safe gamble 1.47 points higher than the risky one, about twice the original's gap of 0.70; only 28 of 132 participants in the key conditions rated the gambles equally; and 75% of all participants chose the safe gamble. Risky choice was low even in the choice-only condition (25%, compared with 42% in the original). Three changes address this. Participants who rate the gambles unequally will adjust X and rate them again (row 3), and the instructions will explain the task more clearly (rows 1 and 2). Two features of the Phase 1 data suggest the instructions were part of the problem: mean X was $5.56 above the $70 at which the gambles have equal expected value, 95% CI [1.78, 9.35], and some reasons treated X as money to be paid or a deal to be improved ("smaller entry amount", "Id lose less"). A third possibility is that participants favoured the gamble they had designed: of the 23 participants who set X at $120 or more, 21 chose the safe gamble, and another participant explained choosing the safe gamble "since it was born from myself". Half of the participants will therefore set the prize of the risky gamble instead (row 4).
+
+The remaining changes improve the test or measure possible explanations. Because in Phase 1 the ratings were the only check on matching, participants who reach equal ratings will then be asked whether the gambles actually feel equally attractive, and those who say they do not will end the study before the feedback rule (row 9). In their reasons, 11 participants wanted to learn both outcomes and 5 wanted to avoid that, so curiosity may work against regret aversion; a question at the end will measure it (row 10). Because some reasons were written in Portuguese or Italian or were off-topic, Phase 2 will recruit only participants whose first language is English (row 7). To increase precision within a limited budget, Phase 2 drops the choice-only condition, which the key test does not use (row 5), and uses a larger sample per condition (row 6).
 
 ## Changes from Phase 1
 
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance
 
@@ -1418,16 +1570,26 @@ study only). If it is not in this table, it does not change: same
 materials, wording, procedure, exclusion rule and analysis. The rows
 below are examples for the demo; replace them with yours.
 :::
+-->
 
 | \# | Category | Phase 1 | Phase 2 | Why |
 |---------------|---------------|---------------|---------------|---------------|
-| 1 | Sample | 27 analysed participants | 300 analysed participants (150 per frame) | Phase 1's interval was too wide to distinguish the original effect from a much smaller one. |
-| 2 | Checks | No comprehension check | After the choice, participants say how many people are at risk (600) | Confirms participants read the scenario; failures are reported, and excluded only if preregistered. |
-| 3 | Exploratory measure | None | At the end: "How confident are you in your choice?" (1–7) | Exploratory only; collected after every confirmatory measure. |
+| 1 | Instructions | Matching instruction plus a note on X | X is described as a prize the participant could win, not money they pay or bet; the instruction gives no example values and does not mention $70 or expected value | In Phase 1, mean X was above the equal-value point and some reasons treated X as a cost; examples or the equal-value point would anchor X. |
+| 2 | Instructions | Welcome page says the gambles are hypothetical and to answer as if they were real | At matching, participants are told the gambles are simulated, that no real money is involved and they will not receive either gamble, and that their goal is to make the gambles equally attractive, not to make a better gamble. | Some Phase 1 participants appear to have tried to improve the safe gamble rather than match it. |
+| 3 | Measurement | One pass: set X, rate both gambles, continue | If the two ratings are unequal, a prompt says which gamble was rated higher, without saying which way to move X; the participant changes X and rates both again until the two ratings are equal, with no limit on tries; the ratings are cleared and X must be changed before rating again. The number of tries gets recorded. | Matching left the safe gamble clearly preferred, and in Phase 1 the original's Experiment 2 procedure of adjusting until the ratings are equal was not used. |
+| 4 | Design | Everyone sets X for the safe gamble: $130 at 35% versus X at 65% | Two versions, assigned at random independently of condition. Version 1 is as in Phase 1. In version 2, participants set the risky gamble's prize: X at 35% versus $70 at 65%, with X above $70 and below $500; the gambles have equal expected value at X = $130. The matching question and its explanation, the gamble cards, and quiz items 1 and 2 have version-2 copies; the feedback texts name only Gamble A and Gamble B, so they are identical in both versions | Tests whether participants favour the gamble whose prize they set; of 23 Phase 1 participants who set X at $120 or more, 21 chose the safe gamble. |
+| 5 | Design | Three conditions: risky feedback, choice only, safe feedback | Two conditions: risky and safe feedback | The key test uses only these two, so the whole budget goes to it; the cost is losing the choice-only baseline, so it cannot be said which condition moved. |
+| 6 | Sample | 195 analysed participants | 186 analysed participants, 93 per condition | See Power and sample. |
+| 7 | Sample | Fluent in English | First language English (Prolific filter) | Many Phase 1 participants needed several quiz attempts, and some reasons were not in English or were off-topic. |
+| 8 | Sample | No restriction on earlier participation | Phase 1 and pilot participants blocked on Prolific | Phase 2 runs under a new experiment id, so its repeat-session rule cannot see Phase 1's data. |
+| 9 | Checks | None | Right after matching, before the feedback rule: "You rated Gamble A and Gamble B as equally attractive. Do they feel equally attractive to you? Your answer will not affect whether your Prolific submission is approved or how much you are paid." Those who answer No say which gamble is more attractive and why (typed), and the study ends for them; they are excluded from the analysis | In Phase 1 the ratings were the only check on matching. Because the check comes before the feedback rule, excluding on it cannot depend on the manipulation. |
+| 10 | Exploratory measure | None | At the end: “When you made your choice, how did you feel about finding out how the gamble you did not choose would have turned out?” (1–7: 1 = I preferred not to find out, 4 = I did not mind either way, 7 = I wanted to find out) | Curiosity about the other outcome may work against regret aversion. |
 
 Everything not listed above is identical to Phase 1.
 
 ## Power and sample
+
+<!--
 
 ::: {.callout-tip icon="false"}
 ## Guidance
@@ -1442,9 +1604,16 @@ code below; the table uses Phase 1's estimate if you have it and the
 original's otherwise.
 :::
 
+-->
+
+I plan 93 analysed participants per condition, 186 in total, which gives 80% power to detect an effect half the size of the original (19 points), the smallest effect I would count as a successful rescue. This sample has 98% power to detect the 26-point effect found among Phase 1 participants whose ratings were within 1 point, but only 19% power to detect Phase 1's overall estimate of 7 points. Phase 1's median duration was 7.2 minutes; the added matching tries and end questions should lengthen the study to 8.5 minutes. At $9 per hour plus Prolific's fee, the main study will cost about $350.
+
+If the Phase 1 failure was caused by matching, the Phase 2 estimate should move toward the original: among Phase 1 participants who rated the gambles exactly equally, a preregistered exploratory analysis, the effect was 31 points, and among those whose ratings were within 1 point, an analysis added after data collection, it was 26 points, although both come from small groups and are probably inflated. If matching was not the cause, the estimate should stay near Phase 1's 7 points. Either way, the 95% confidence interval should narrow from about ±15 points in Phase 1 to about ±12. Participants who say the gambles do not feel equally attractive, and those excluded under the Phase 1 rules, will be replaced until 186 participants remain.
+
+
 ```{r}
 #| label: phase2-power
-phase2_n_per_group <- 150   # planned analysed participants per condition in Phase 2
+phase2_n_per_group <- 93   # planned analysed participants per condition in Phase 2
 
 p1_counts <- if (have_data) risky_counts(phase1)
 p1_stats  <- if (have_data) diff_ci(p1_counts)
@@ -1484,6 +1653,8 @@ tibble(
 
 ## Analysis plan
 
+
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance
 
@@ -1499,6 +1670,15 @@ Run Phase 2 under a new `EXPERIMENT.id` in `experiment.js` (for example
 `smith2016-phase2`) and set `experiment_id_phase2` at the top of this
 file to match, so the two phases' data never mix.
 :::
+-->
+
+**Key analysis.** The confirmatory test is identical to Phase 1's: a Pearson chi-square test without continuity correction on the 2 × 2 table of feedback condition (risky versus safe) by choice, two-sided, α = .05, on the Phase 2 data alone and pooled across the two versions. The effect size is the difference in the percentage choosing the risky gamble, with a 95% confidence interval. I will judge the result by whether the interval excludes zero, and whether it includes the original's 38 points and Phase 1's 7 points.
+
+**Exclusions.** The four Phase 1 exclusion rules apply unchanged, and the speed rule (under 300 ms) also covers the new answer screens. One rule is added: participants who answer No when asked, right after matching, whether the gambles feel equally attractive end the study at that point and are excluded. They never see the feedback rule and have no choice data. Excluded participants will be replaced until 186 remain. Phase 1 and pilot participants are blocked on Prolific. The questions at the end of the study come after the choice and are never used to exclude anyone.
+
+**Secondary analyses.** Risk preference is compared between the risky and safe feedback conditions with a Welch two-sample t-test, replacing the Phase 1 ANOVA and contrasts. As a check on randomization, the matched value of X is compared between conditions within each version; X is not pooled across versions, because it is the prize of a different gamble in each. The feedback × regret interaction in a logistic regression of choice, now preregistered, is tested two-sided. Analyses that need the choice-only condition (the three-condition χ² test, the comparisons with choice only, the ANOVA and the linear trend) are dropped, as is the paired t-test on the ratings, which are now meant to be equal.
+
+**Exploratory analyses.** I will examine whether setting X for the risky gamble increases risky choice (the effect of version) and whether the feedback effect differs between versions; the number of matching tries, and the values of X in each version compared with the equal-value point ($70 in version 1, $130 in version 2); the number of participants who said the gambles did not feel equally attractive, by version, with which gamble they found more attractive and their typed reasons; and curiosity, by condition and choice, including the feedback × curiosity interaction on choice. Finally, I will report a pooled estimate of the key comparison across both phases, labelled exploratory, while noting that the procedures differ.
 
 ## Results
 
