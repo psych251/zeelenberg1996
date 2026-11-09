@@ -113,7 +113,9 @@ condition_labels <- c(risky_feedback = "Risky feedback",
     <https://doi.org/10.1006/obhd.1996.0013>
 -   **Preregistration:** [OSF registration](https://doi.org/10.17605/OSF.IO/YGPJ3)
     *(registered 2026-11-01, before final data collection)*
--   **Live experiment:** <https://psych251.github.io/zeelenberg1996/>
+-   **Phase 1 live experiment:** <https://psych251.github.io/zeelenberg1996/>
+    (take the study exactly as participants did)
+-   **Phase 2 live experiment:** <https://psych251.github.io/zeelenberg1996/phase2/>
     (take the study exactly as participants did)
 -   **Repository:** <https://github.com/psych251/zeelenberg1996>
     (experiment code, data, and this report)

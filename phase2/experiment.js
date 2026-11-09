@@ -53,8 +53,10 @@ const EXPERIMENT = {
   // Firestore path: experiments/<id>/participants/... Change it when you start a new study
   // so pilot data and real data never mix (e.g. "smith2016-pilot-a", "smith2016-final").
   // Phase 2 runs under its own id, so its data never mix with Phase 1's ("zeelenberg1996-final").
-  // Must match experiment_id_phase2 in writeup/replication-report.qmd.
-  id: "zeelenberg1996-phase2",
+  // TESTING NOW: "-test" keeps test and pilot runs out of the real Phase 2 data. Before real data
+  // collection, change it to "zeelenberg1996-phase2", which must match experiment_id_phase2 in
+  // writeup/replication-report.qmd (and EXPERIMENT_ID in tests/phase2.spec.js).
+  id: "zeelenberg1996-phase2-test",
 
   // Trials per Firestore write. 1 = save every trial the moment it finishes (dropouts leave
   // partial data). The free tier allows 20,000 writes/day: with 200 participants x 100 trials

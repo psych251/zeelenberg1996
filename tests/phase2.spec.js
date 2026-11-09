@@ -12,7 +12,8 @@ const { test, expect } = require("@playwright/test");
 
 const EMULATOR = process.env.EMULATOR === "1" || !!process.env.FIRESTORE_EMULATOR_HOST;
 const PROJECT = "demo-psych251";
-const EXPERIMENT_ID = "zeelenberg1996-phase2";
+// Must match EXPERIMENT.id in phase2/experiment.js ("-test" while testing; drop it for real data).
+const EXPERIMENT_ID = "zeelenberg1996-phase2-test";
 const FS = `http://localhost:8080/v1/projects/${PROJECT}/databases/(default)/documents`;
 const CONDITIONS = ["risky_feedback", "safe_feedback"];
 const VERSIONS = ["x_on_safe", "x_on_risky"];
