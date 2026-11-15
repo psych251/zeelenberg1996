@@ -20,7 +20,7 @@ const VERSIONS = ["x_on_safe", "x_on_risky"];
 
 // The part of the study each screen belongs to, mirroring `section` in phase2/experiment.js.
 const SECTION_OF = {
-  consent: "intro", instructions: "intro", matching: "matching", equality_check: "matching",
+  consent: "intro", instructions: "intro", x_check: "matching", matching: "matching", equality_check: "matching",
   feedback_instructions: "feedback_rules", comprehension: "feedback_rules",
   choice: "decision", preference_strength: "decision", reasons: "decision",
   regret_scale: "regret_scale", curiosity: "curiosity", end_survey: "about_you", debrief: "debrief",
@@ -80,10 +80,19 @@ const surveyContinue = (page) => page.locator('input[value="Continue"]').click()
 
 // Plays Phase 2 from consent to "All done". `matching(page)` does the matching screen;
 // `feltEqual` answers the equality check ("Yes", or "No" to end the study there).
-async function runPhase2(page, { condition, matching, feltEqual = "Yes", choose = "Gamble A", quizTexts = [] }) {
+async function runPhase2(page, { condition, matching, feltEqual = "Yes", choose = "Gamble A", quizTexts = [], xGamble = "B" }) {
   await page.getByRole("button", { name: "I agree to participate" }).click();
   await expect(page.getByText("takes about nine minutes")).toBeVisible();
   await page.locator("#jspsych-instructions-next").click();
+
+  // "What is X?" check (row 11): a wrong answer is refused with a note; the right one continues.
+  const xq = page.locator('[data-name="x_meaning"]');
+  await expect(page.getByText(`Before you start: in Gamble ${xGamble}, what is X?`)).toBeVisible();
+  await xq.getByText("The amount you pay to play the gamble", { exact: true }).click();
+  await surveyContinue(page);
+  await expect(page.getByText(`Not quite: X is the amount you could win with Gamble ${xGamble}. Please answer again.`)).toBeVisible();
+  await xq.getByText("The amount you could win", { exact: true }).click();
+  await surveyContinue(page);
 
   await matching(page);
 
@@ -159,7 +168,10 @@ test.describe("phase 2", () => {
         // X sits on Gamble B; the new explanation is shown; the range is (0, 130).
         await expect(p.getByText("Make Gamble B exactly as attractive as Gamble A")).toBeVisible();
         await expect(p.getByText("X is a prize: the amount you could win with Gamble B")).toBeVisible();
-        await expect(p.getByText("you will not receive either gamble")).toBeVisible();
+        await expect(p.getByText("Your goal is to make the two gambles equally attractive to you.")).toBeVisible();
+        // The wording dropped after review must not appear.
+        await expect(p.getByText("simulated")).toHaveCount(0);
+        await expect(p.getByText("better gamble")).toHaveCount(0);
         await x.fill("150");
         await update.click();
         await expect(p.getByText("more than $0 and less than $130")).toBeVisible();
@@ -194,9 +206,11 @@ test.describe("phase 2", () => {
     expect(pdoc.felt_equal).toBe("yes");
     expect(pdoc.screened_out).toBe(false);
     expect(trials.map((t) => t.task)).toEqual([
-      "consent", "instructions", "matching", "equality_check", "feedback_instructions", "comprehension",
+      "consent", "instructions", "x_check", "matching", "equality_check", "feedback_instructions", "comprehension",
       "choice", "preference_strength", "reasons", "regret_scale", "curiosity", "end_survey", "debrief",
     ]);
+    const xc = trials.find((t) => t.task === "x_check");
+    expect([xc.x_check_answer, xc.x_check_attempts, xc.x_check_first_answer]).toEqual(["win", 2, "pay"]);
     expect(pdoc.n_trials).toBe(trials.length);
     expect(trials.every((t) => t.participant_id === id && t.matching_version === "x_on_safe")).toBe(true);
 
@@ -227,6 +241,7 @@ test.describe("phase 2", () => {
     await runPhase2(page, {
       condition: "safe_feedback",
       choose: "Gamble B",
+      xGamble: "A",
       // Quiz items 1 and 2 name each gamble's prize in this version.
       quizTexts: ["What is the chance of winning $130 with Gamble A?", "What is the chance of winning $70 with Gamble B?"],
       matching: async (p) => {
@@ -274,7 +289,7 @@ test.describe("phase 2", () => {
     expect(pdoc.completed).toBe(true);
     expect(pdoc.felt_equal).toBe("no");
     expect(pdoc.screened_out).toBe(true);
-    expect(trials.map((t) => t.task)).toEqual(["consent", "instructions", "matching", "equality_check", "debrief"]);
+    expect(trials.map((t) => t.task)).toEqual(["consent", "instructions", "x_check", "matching", "equality_check", "debrief"]);
     const eq = trials.find((t) => t.task === "equality_check");
     expect([eq.felt_equal, eq.more_attractive, eq.felt_equal_reason]).toEqual(["no", "safe", NO_REASON]);
     expect(trials.some((t) => t.task === "choice" || t.task === "feedback_instructions")).toBe(false);

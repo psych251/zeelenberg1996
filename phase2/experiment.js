@@ -4,9 +4,9 @@
  *
  * This file is a copy of Phase 1's experiment.js with exactly the changes listed in the report's
  * "Changes from Phase 1" table (writeup/replication-report.qmd); everything else is identical:
- *   Row 1, 2  Matching explanation: X is a prize, not money paid or bet; the gambles are simulated
- *             and neither is received; the goal is to make them equally attractive, not to make a
- *             better gamble. The welcome's stated duration is updated.
+ *   Row 1     Matching explanation: X is a prize, not money paid or bet, and the goal is to make
+ *             the two gambles equally attractive.
+ *   Row 2     The welcome's stated duration: about nine minutes.
  *   Row 3     Matching repeats until the two attractiveness ratings are equal (no limit on tries):
  *             unequal ratings are refused with a note naming the gamble rated higher, the ratings
  *             are cleared, and X must be changed before rating again.
@@ -18,6 +18,7 @@
  *             attractive? Those who answer No say which and why, and the study ends for them
  *             (they see the debrief and finish); they are excluded in the report.
  *   Row 10    After the Regret Scale: curiosity about the non-chosen gamble's outcome (1-7).
+ *   Row 11    Before matching, a "What is X?" check that must be answered correctly to continue.
  *
  * Phase 1 design notes, unchanged unless listed above:
  *
@@ -411,6 +412,59 @@ function startProofOfHuman(saver) {
   };
 
   // -------------------------------------------------------------------------
+  // 2b. "What is X?" check (Phase 2, row 11), before matching. The answer must be correct to
+  //     continue: a wrong answer is refused with a note giving the right one. Recorded on the
+  //     "x_check" row: x_check_attempts, x_check_first_answer and x_check_answer. Never used to
+  //     exclude anyone.
+  // -------------------------------------------------------------------------
+  let xCheckRefused = 0;   // clicks on Continue refused with a (wrong) answer selected
+  let xCheckFirst = null;
+  const xCheck = {
+    type: jsPsychSurvey,
+    survey_json: {
+      showQuestionNumbers: "off",
+      completeText: "Continue",
+      pages: [{
+        elements: [
+          { type: "html", name: "x_cards", html: `<div class="gamble-page">${gambleCards(null, version)}</div>` },
+          { type: "radiogroup", name: "x_meaning", isRequired: true,
+            title: `Before you start: in Gamble ${version.xGamble}, what is X?`,
+            // The correct answer is not listed first.
+            choices: [
+              { value: "pay", text: "The amount you pay to play the gamble" },
+              { value: "win", text: "The amount you could win" },
+              { value: "chance", text: "The chance of winning" },
+            ] },
+        ],
+      }],
+    },
+    survey_function: (survey) => {
+      // A wrong answer is refused. (SurveyJS also re-checks as soon as the answer is changed after
+      // an error, so attempts are counted per click on Continue below, not here.)
+      survey.onValidateQuestion.add((_, options) => {
+        if (options.name !== "x_meaning" || options.value === undefined || options.value === null) return;
+        if (options.value !== "win") {
+          options.error = `Not quite: X is the amount you could win with Gamble ${version.xGamble}. Please answer again.`;
+        }
+      });
+      // Once per refused click on Continue with an answer selected (an empty answer gets
+      // SurveyJS's own "Response required" and is not counted).
+      survey.onValidatedErrorsOnCurrentPage.add((_, options) => {
+        const v = survey.getValue("x_meaning");
+        if (options.errors.length === 0 || v === undefined || v === null) return;
+        xCheckRefused += 1;
+        if (xCheckFirst === null) xCheckFirst = v;
+      });
+    },
+    data: { task: "x_check", section: "matching" },
+    on_finish: (data) => {
+      data.x_check_answer = data.response.x_meaning;
+      data.x_check_attempts = xCheckRefused + 1;   // the refused tries plus the accepted one
+      data.x_check_first_answer = xCheckFirst === null ? data.x_check_answer : xCheckFirst;
+    },
+  };
+
+  // -------------------------------------------------------------------------
   // 3. Matching (original phase 1) and attractiveness ratings, on one screen
   // -------------------------------------------------------------------------
   // The participant types X and clicks "Update X" (next to the box) or presses Enter: the Gamble B
@@ -450,13 +504,12 @@ function startProofOfHuman(saver) {
             type: "text", name: "x", inputType: "number", isRequired: true,
             // Version 1 asks to make B as attractive as A, as in Phase 1; version 2 the reverse (row 4).
             title: `Make Gamble ${version.xGamble} exactly as attractive as Gamble ${version.otherGamble}: write down the value of X for which you find the gambles equally attractive.`,
-            // Rows 1 and 2: X is a prize, not money paid or bet; the gambles are simulated and
-            // neither is received; the goal is equal attractiveness, not a better gamble. Still no
-            // example values, and no mention of expected value.
+            // Row 1: X is a prize, not money paid or bet, and the goal is to make the gambles equally
+            // attractive. The rest is Phase 1's text. Still no example values, and no mention of
+            // expected value.
             description: `X is a prize: the amount you could win with Gamble ${version.xGamble}. It is not money ` +
-              "you pay or bet. The gambles are simulated: no real money is involved, and you will not " +
-              "receive either gamble. Your goal is not to make a better gamble, but to make the two " +
-              "gambles equally attractive to you. Pick the amount that would make you " +
+              "you pay or bet. Your goal is to make the two gambles equally attractive to you. " +
+              "Pick the amount that would make you " +
               "equally happy to play either gamble, so you would not mind which one you got. There is " +
               "no right or wrong answer. Enter an amount in dollars and click Update X.",
             validators: [
@@ -1000,6 +1053,7 @@ function startProofOfHuman(saver) {
   await jsPsych.run([
     consent,
     welcome,
+    xCheck,
     matching,
     equalityCheck,
     // Row 9: participants who answer No skip everything from the feedback rule to the end form

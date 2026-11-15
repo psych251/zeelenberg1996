@@ -56,9 +56,6 @@ library(jsonlite)
 # Phase 2 runs under its own id, so its data never mix with Phase 1's.
 experiment_id        <- "zeelenberg1996-final"
 experiment_id_phase2 <- "zeelenberg1996-phase2"
-# Pilot B, reported in Methods. Kept separate so that section still shows Pilot B after
-# experiment_id moves to the final study.
-pilot_b_id <- "zeelenberg1996-pilot-b"
 ```
 
 ```{r}
@@ -552,63 +549,6 @@ Pilot B was run on Prolific with the final version of the study, recruiting US a
 
 After Pilot B, I made these changes: I set the bot-risk exclusion threshold at 50, set the expected study length at 6 minutes, restricted the age range to 18 to 25, and added a quota for equal numbers of men and women, removed the US residence filter. The gamble labels A and B, the combined matching and attractiveness screen, and the change to the debrief were made before Pilot B, so Pilot B tested them.
 
-```{r}
-#| label: pilot-b-data
-#| include: false
-# Pilot B's comprehension quiz. The chart counts the attempts of people who completed the study;
-# the attempts table also shows those who left. Skipped if the Pilot B export is not there.
-pilot_b_dir <- file.path("..", "data", "raw", pilot_b_id)
-have_pilot_b <- all(file.exists(file.path(pilot_b_dir, c("participants.csv", "trials.csv"))))
-if (have_pilot_b) {
-  pb_participants <- read_csv(file.path(pilot_b_dir, "participants.csv"), show_col_types = FALSE)
-  pb_trials       <- read_csv(file.path(pilot_b_dir, "trials.csv"), show_col_types = FALSE)
-  pb_consented <- pb_trials |> filter(task == "consent", consented %in% TRUE) |> pull(participant_id)
-  pb_completed <- pb_participants |> filter(completed %in% TRUE, participant_id %in% pb_consented) |>
-    pull(participant_id)
-  pb_quiz      <- pb_trials |> filter(task == "comprehension")              # everyone who reached the quiz
-  pb_quiz_done <- pb_quiz |> filter(participant_id %in% pb_completed)        # completers only
-  quiz_items <- c(
-    q1 = "1. Chance of winning $130 with Gamble A",
-    q2 = "2. Chance of winning $X with Gamble B",
-    q3 = "3. Would you know the outcome of the gamble you choose?",
-    q4 = "4. If you choose Gamble A, would you know Gamble B's outcome?",
-    q5 = "5. If you choose Gamble B, would you know Gamble A's outcome?")
-  pb_item_errors <- tibble(item = names(quiz_items), label = unname(quiz_items)) |>
-    mutate(wrong = map_int(item, ~ sum(!pb_quiz_done[[paste0(.x, "_correct")]] %in% TRUE)),
-           attempts = nrow(pb_quiz_done), share = wrong / attempts)
-}
-```
-
-```{r}
-#| label: pilot-b-comprehension
-#| eval: !expr have_pilot_b
-#| fig-height: 3.2
-#| fig-width: 8
-#| fig-cap: !expr 'if (have_pilot_b) sprintf("Pilot B comprehension quiz: share of the %d quiz attempts by the %d participants who completed the study that answered each item wrongly. Items 4 and 5 test the feedback rule; their correct answers depend on the condition.", nrow(pb_quiz_done), n_distinct(pb_quiz_done$participant_id)) else ""'
-pb_item_errors |>
-  mutate(label = factor(label, levels = rev(unname(quiz_items)))) |>
-  ggplot(aes(x = share, y = label)) +
-  geom_col(fill = "#1E6E76", width = 0.6) +
-  geom_text(aes(label = sprintf("%d of %d", wrong, attempts)), hjust = -0.15, size = 3.4, colour = "grey25") +
-  scale_x_continuous(labels = scales::percent, limits = c(0, max(0.6, max(pb_item_errors$share) + 0.15)),
-                     expand = expansion(mult = c(0, 0))) +
-  labs(x = "Quiz attempts answering the item wrongly", y = NULL) +
-  theme_minimal(base_size = 12) +
-  theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank())
-```
-
-```{r}
-#| label: pilot-b-attempts
-#| eval: !expr have_pilot_b
-# How many tries each participant needed (the quiz repeats until all five answers are correct).
-pb_quiz |>
-  count(participant_id, name = "attempts") |>
-  mutate(outcome = if_else(participant_id %in% pb_completed, "Completed the study", "Did not complete")) |>
-  count(Attempts = attempts, outcome) |>
-  pivot_wider(names_from = outcome, values_from = n, values_fill = 0) |>
-  select(Attempts, any_of(c("Completed the study", "Did not complete"))) |>
-  knitr::kable(caption = "Pilot B: number of quiz attempts per participant who reached the quiz.")
-```
 
 ### Analysis plan
 
@@ -974,6 +914,68 @@ if (!is.null(rep)) {
 }
 ```
 
+```{r}
+#| label: figure-style
+#| include: false
+# Look shared by the effect-size and X figures: Avenir Next where installed (otherwise the default
+# sans font), warm-grey text, light gridlines only, labels written on the plot instead of legends.
+# Study colours match the bar chart (Original grey, Phase 1 teal, Phase 2 amber); the risky and
+# safe gambles are a colour-blind-safe vermillion/blue pair. The figures are drawn with the ragg
+# device where it is installed, so the font and minus signs display properly.
+fig_dev  <- if (requireNamespace("ragg", quietly = TRUE)) "ragg_png" else "png"
+fig_font <- if (requireNamespace("systemfonts", quietly = TRUE) &&
+                "Avenir Next" %in% systemfonts::system_fonts()$family) "Avenir Next" else "sans"
+fig_ink <- "#2B2B2B"; fig_ink2 <- "#5C5C5C"; fig_rule <- "#E9E6E1"
+fig_theme <- theme_minimal(base_size = 12.5, base_family = fig_font) +
+  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(colour = fig_rule, linewidth = 0.45),
+        axis.title = element_text(colour = fig_ink, size = 11.5),
+        axis.title.x = element_text(margin = margin(t = 9)), axis.title.y = element_text(margin = margin(r = 9)),
+        axis.text = element_text(colour = fig_ink2, size = 10.5),
+        legend.position = "none", plot.margin = margin(14, 18, 10, 12))
+fig_study_cols  <- c(Original = "#8C8C8C", `Phase 1: replication` = "#1E6E76", `Phase 2: extension` = "#B8792A")
+fig_choice_cols <- c(R = "#D55E00", S = "#0072B2")
+```
+
+```{r}
+#| label: fig-effect-size
+#| eval: !expr 'have_data && !is.null(rep)'
+#| dev: !expr fig_dev
+#| fig-width: 8
+#| fig-height: !expr 'if (have_phase2) 4 else 3.2'
+#| fig-cap: "The key effect in each study: the difference in the percentage of participants choosing the risky gamble (R), risky-feedback minus safe-feedback condition, in percentage points, with its 95% confidence interval and the number of participants in those two conditions. The solid line marks no difference; the dashed line marks the original estimate (Zeelenberg et al., 1996, Experiment 1, counts from Figure 1, p. 152). A Phase 2 row appears once Phase 2 data are exported."
+# The statistic the replication is judged on (Analysis plan), drawn directly rather than left
+# for the reader to subtract from the bars.
+study_row <- function(r, study) if (!is.null(r)) mutate(r, Study = study)
+eff <- bind_rows(study_row(orig, "Original"), study_row(rep, "Phase 1: replication"),
+                 if (have_phase2) study_row(diff_ci(risky_counts(phase2)), "Phase 2: extension")) |>
+  mutate(Study = factor(Study, levels = rev(intersect(names(fig_study_cols), Study))), ypos = as.numeric(Study),
+         est = round(100 * estimate),
+         lab = sprintf("%s points   [%.0f, %.0f]   N = %d", ifelse(est == 0, "0", sprintf("%+d", est)),
+                       100 * ci_low, 100 * ci_high, N))
+top  <- max(eff$ypos) + 0.62
+xlim <- c(min(-25, 100 * eff$ci_low - 5), max(70, 100 * eff$ci_high + 5))
+ggplot(eff, aes(x = 100 * estimate, y = ypos, colour = Study)) +
+  geom_vline(xintercept = 0, colour = "#9A9A9A", linewidth = 0.55) +
+  geom_vline(xintercept = 100 * orig$estimate, colour = "#B5B5B5", linewidth = 0.55, linetype = "22") +
+  annotate("text", x = -1.2, y = top, label = "No difference", hjust = 1, size = 3.7, colour = fig_ink2, family = fig_font) +
+  annotate("text", x = 100 * orig$estimate + 1.2, y = top, label = "Original estimate", hjust = 0, size = 3.7,
+           colour = fig_ink2, family = fig_font) +
+  geom_linerange(aes(xmin = 100 * ci_low, xmax = 100 * ci_high), linewidth = 1.6, lineend = "round") +
+  geom_point(size = 4.6) +
+  geom_point(size = 1.8, colour = "white") +
+  geom_label(aes(label = lab), nudge_y = 0.3, size = 3.8, colour = fig_ink, fill = "white", label.size = 0,
+             label.padding = unit(0.15, "lines"), family = fig_font) +
+  scale_colour_manual(values = fig_study_cols) +
+  scale_y_continuous(breaks = eff$ypos, labels = as.character(eff$Study)) +
+  scale_x_continuous(breaks = seq(-100, 100, 20), labels = function(x) ifelse(x == 0, "0", sprintf("%+d", x))) +
+  coord_cartesian(xlim = xlim, ylim = c(0.6, top + 0.12), clip = "off") +
+  labs(x = "Difference in % choosing the risky gamble, risky minus safe feedback (points)", y = NULL) +
+  fig_theme +
+  theme(panel.grid.major.y = element_blank(), panel.grid.major.x = element_line(colour = fig_rule, linewidth = 0.45),
+        axis.text.y = element_text(size = 12, colour = fig_ink, face = "bold"))
+```
+
 
 <!--
 ::: {.callout-tip icon="false"}
@@ -1249,6 +1251,41 @@ if (nrow(x_ev) > 0)
       "relative to the equal-expected-value point (\\$%g). All three conditions, N = %d."), ev_equal_x, nrow(x_ev)))
 if (nrow(x_ev) == 0)
   note("Matched X versus the equal-expected-value point: not enough data yet (no analysed participants with a matched X and both ratings).")
+```
+
+```{r}
+#| label: fig-x-choice
+#| eval: !expr 'have_data && exists("x_ev") && nrow(x_ev) > 0'
+#| dev: !expr fig_dev
+#| fig-width: 9
+#| fig-height: 5.6
+#| fig-cap: !expr 'if (exists("x_ev")) sprintf("Exploratory, not preregistered: the value of X each participant set, and the gamble they then chose (all three conditions, N = %d). Each dot is one participant, at their X rounded to the nearest $5; participants who chose the risky gamble (R) are stacked above the line, those who chose the safe gamble (S) below. The dashed line marks $%g, where the two gambles have equal expected value. X was set before the feedback rule was shown.", nrow(x_ev), ev_equal_x) else ""'
+# Exploratory, not preregistered (added after data collection): where participants set X, split
+# by the gamble they chose. Uses x_ev and ev_equal_x from exploratory-x-ev.
+xd <- x_ev |>
+  mutate(chose = ifelse(risky == 1, "R", "S"), bin = round(x / 5) * 5) |>
+  arrange(bin, chose) |> group_by(bin, chose) |> mutate(k = row_number()) |> ungroup() |>
+  mutate(y = ifelse(chose == "R", k - 0.5, -(k - 0.5)))
+ymax <- max(c(xd$y, 0)) + 3
+ymin <- min(c(xd$y, 0)) - 1.5
+ggplot(xd, aes(bin, y, colour = chose)) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 0, ymax = ymax, fill = "#FBF1EB") +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = ymin, ymax = 0, fill = "#EEF4F9") +
+  geom_hline(yintercept = 0, colour = "#8F8F8F", linewidth = 0.5) +
+  geom_vline(xintercept = ev_equal_x, colour = "#7A7A7A", linewidth = 0.55, linetype = "22") +
+  annotate("text", x = ev_equal_x + 1.5, y = ymax - 1.2, label = sprintf("Equal expected value: $%g", ev_equal_x),
+           hjust = 0, size = 3.7, colour = fig_ink2, family = fig_font) +
+  geom_point(size = 2.5, alpha = 0.95) +
+  annotate("text", x = 1, y = ymax - 1.2, label = sprintf("Chose R, the risky gamble (%d)", sum(xd$chose == "R")),
+           hjust = 0, size = 3.9, colour = fig_ink, fontface = "bold", family = fig_font) +
+  annotate("text", x = 1, y = ymin + 1.5, label = sprintf("Chose S, the safe gamble (%d)", sum(xd$chose == "S")),
+           hjust = 0, size = 3.9, colour = fig_ink, fontface = "bold", family = fig_font) +
+  scale_colour_manual(values = fig_choice_cols) +
+  scale_x_continuous(breaks = seq(0, 130, 10), labels = function(v) paste0("$", v)) +
+  scale_y_continuous(labels = function(v) abs(v), breaks = seq(-100, 100, 10)) +
+  coord_cartesian(xlim = c(-4, 134), ylim = c(ymin, ymax), expand = FALSE) +
+  labs(x = "Matched value of X: the prize participants set for Gamble S", y = "Participants") +
+  fig_theme + theme(panel.grid.major.y = element_blank())
 ```
 
 ```{r}
@@ -1555,7 +1592,7 @@ why does it follow from the original finding?
 :::
 -->
 
-Phase 1 found a 7-point effect, 95% CI [−8, 21], far below the original's 38 points. The most plausible reason is that matching did not make the two gambles equally attractive, so the safe gamble dominated. After matching, participants rated the safe gamble 1.47 points higher than the risky one, about twice the original's gap of 0.70; only 28 of 132 participants in the key conditions rated the gambles equally; and 75% of all participants chose the safe gamble. Risky choice was low even in the choice-only condition (25%, compared with 42% in the original). Three changes address this. Participants who rate the gambles unequally will adjust X and rate them again (row 3), and the instructions will explain the task more clearly (rows 1 and 2). Two features of the Phase 1 data suggest the instructions were part of the problem: mean X was $5.56 above the $70 at which the gambles have equal expected value, 95% CI [1.78, 9.35], and some reasons treated X as money to be paid or a deal to be improved ("smaller entry amount", "Id lose less"). A third possibility is that participants favoured the gamble they had designed: of the 23 participants who set X at $120 or more, 21 chose the safe gamble, and another participant explained choosing the safe gamble "since it was born from myself". Half of the participants will therefore set the prize of the risky gamble instead (row 4).
+Phase 1 found a 7-point effect, 95% CI [−8, 21], far below the original's 38 points. The most plausible reason is that matching did not make the two gambles equally attractive, so the safe gamble dominated. After matching, participants rated the safe gamble 1.47 points higher than the risky one, about twice the original's gap of 0.70; only 28 of 132 participants in the key conditions rated the gambles equally; and 75% of all participants chose the safe gamble. Risky choice was low even in the choice-only condition (25%, compared with 42% in the original). Three changes address this. Participants who rate the gambles unequally will adjust X and rate them again (row 3), and the matching instructions will explain the task more clearly (row 1), with a question before matching that checks participants understand what X is (row 11). Two features of the Phase 1 data suggest the instructions were part of the problem: mean X was $5.56 above the $70 at which the gambles have equal expected value, 95% CI [1.78, 9.35], and some reasons treated X as money to be paid or a deal to be improved ("smaller entry amount", "Id lose less"). A third possibility is that participants favoured the gamble they had designed: of the 23 participants who set X at $120 or more, 21 chose the safe gamble, and another participant explained choosing the safe gamble "since it was born from myself". Half of the participants will therefore set the prize of the risky gamble instead (row 4).
 
 The remaining changes improve the test or measure possible explanations. Because in Phase 1 the ratings were the only check on matching, participants who reach equal ratings will then be asked whether the gambles actually feel equally attractive, and those who say they do not will end the study before the feedback rule (row 9). In their reasons, 11 participants wanted to learn both outcomes and 5 wanted to avoid that, so curiosity may work against regret aversion; a question at the end will measure it (row 10). Because some reasons were written in Portuguese or Italian or were off-topic, Phase 2 will recruit only participants whose first language is English (row 7). To increase precision within a limited budget, Phase 2 drops the choice-only condition, which the key test does not use (row 5), and uses a larger sample per condition (row 6).
 
@@ -1576,8 +1613,8 @@ below are examples for the demo; replace them with yours.
 
 | \# | Category | Phase 1 | Phase 2 | Why |
 |---------------|---------------|---------------|---------------|---------------|
-| 1 | Instructions | Matching instruction plus a note on X | X is described as a prize the participant could win, not money they pay or bet; the instruction gives no example values and does not mention $70 or expected value | In Phase 1, mean X was above the equal-value point and some reasons treated X as a cost; examples or the equal-value point would anchor X. |
-| 2 | Instructions | Welcome page says the gambles are hypothetical and to answer as if they were real | At matching, participants are told the gambles are simulated, that no real money is involved and they will not receive either gamble, and that their goal is to make the gambles equally attractive, not to make a better gamble. | Some Phase 1 participants appear to have tried to improve the safe gamble rather than match it. |
+| 1 | Instructions | Matching instruction plus a note on X | The explanation below the matching question reads: "X is a prize: the amount you could win with Gamble B. It is not money you pay or bet. Your goal is to make the two gambles equally attractive to you. Pick the amount that would make you equally happy to play either gamble, so you would not mind which one you got. There is no right or wrong answer. Enter an amount in dollars and click Update X." In version 2 it names Gamble A. It gives no example values and does not mention $70 or expected value | In Phase 1, mean X was above the equal-value point, and some reasons treated X as a cost or tried to improve one gamble rather than match them; examples or the equal-value point would anchor X. |
+| 2 | Instructions | Welcome page says the study takes about six minutes | Welcome page says the study takes about nine minutes; the rest of the welcome page, including "answer as if it were real", is unchanged | The matching loop and the new questions make the study longer. |
 | 3 | Measurement | One pass: set X, rate both gambles, continue | If the two ratings are unequal, a prompt says which gamble was rated higher, without saying which way to move X; the participant changes X and rates both again until the two ratings are equal, with no limit on tries; the ratings are cleared and X must be changed before rating again. The number of tries gets recorded. | Matching left the safe gamble clearly preferred, and in Phase 1 the original's Experiment 2 procedure of adjusting until the ratings are equal was not used. |
 | 4 | Design | Everyone sets X for the safe gamble: $130 at 35% versus X at 65% | Two versions, assigned at random independently of condition. Version 1 is as in Phase 1. In version 2, participants set the risky gamble's prize: X at 35% versus $70 at 65%, with X above $70 and below $500; the gambles have equal expected value at X = $130. The matching question and its explanation, the gamble cards, and quiz items 1 and 2 have version-2 copies; the feedback texts name only Gamble A and Gamble B, so they are identical in both versions | Tests whether participants favour the gamble whose prize they set; of 23 Phase 1 participants who set X at $120 or more, 21 chose the safe gamble. |
 | 5 | Design | Three conditions: risky feedback, choice only, safe feedback | Two conditions: risky and safe feedback | The key test uses only these two, so the whole budget goes to it; the cost is losing the choice-only baseline, so it cannot be said which condition moved. |
@@ -1586,6 +1623,7 @@ below are examples for the demo; replace them with yours.
 | 8 | Sample | No restriction on earlier participation | Phase 1 and pilot participants blocked on Prolific | Phase 2 runs under a new experiment id, so its repeat-session rule cannot see Phase 1's data. |
 | 9 | Checks | None | Right after matching, before the feedback rule: "You rated Gamble A and Gamble B as equally attractive. Do they feel equally attractive to you? Your answer will not affect whether your Prolific submission is approved or how much you are paid." Those who answer No say which gamble is more attractive and why (typed), and the study ends for them; they are excluded from the analysis | In Phase 1 the ratings were the only check on matching. Because the check comes before the feedback rule, excluding on it cannot depend on the manipulation. |
 | 10 | Exploratory measure | None | At the end: “When you made your choice, how did you feel about finding out how the gamble you did not choose would have turned out?” (1–7: 1 = I preferred not to find out, 4 = I did not mind either way, 7 = I wanted to find out) | Curiosity about the other outcome may work against regret aversion. |
+| 11 | Checks | None | Before matching, a screen shows the two gamble cards with $X and asks "Before you start: in Gamble B, what is X?" (in version 2, Gamble A), with three answers in this order: the amount you pay to play the gamble, the amount you could win, and the chance of winning. A wrong answer shows "Not quite: X is the amount you could win with Gamble B. Please answer again." and the participant stays until answering correctly. The number of attempts and the first answer are recorded; this check is never used to exclude anyone | Some Phase 1 reasons treated X as money paid rather than a prize. |
 
 Everything not listed above is identical to Phase 1.
 
