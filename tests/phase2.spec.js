@@ -86,12 +86,17 @@ async function runPhase2(page, { condition, matching, feltEqual = "Yes", choose 
   await expect(page.getByText("takes about nine minutes")).toBeVisible();
   await page.locator("#jspsych-instructions-next").click();
 
-  // "What is X?" check (row 11): a wrong answer is refused with a note; the right one continues.
+  // "What is X?" check (row 11): a wrong answer brings the question back, answer cleared, with a
+  // note that does not reveal the right answer; the right one continues.
   const xq = page.locator('[data-name="x_meaning"]');
   await expect(page.getByText(`Before you start: in Gamble ${xGamble}, what is X?`)).toBeVisible();
+  await expect(page.getByText("That answer was not correct")).toHaveCount(0);
   await xq.getByText("The amount you pay to play the gamble", { exact: true }).click();
   await surveyContinue(page);
-  await expect(page.getByText(`Not quite: X is the amount you could win with Gamble ${xGamble}. Please answer again.`)).toBeVisible();
+  await expect(page.getByText("That answer was not correct. Please look at the two gambles again and answer again.")).toBeVisible();
+  await expect(page.getByText(`in Gamble ${xGamble}, what is X?`)).toBeVisible();
+  await expect(xq.locator("input:checked")).toHaveCount(0);
+  await expect(page.getByText("X is the amount you could win")).toHaveCount(0);
   await xq.getByText("The amount you could win", { exact: true }).click();
   await surveyContinue(page);
 
@@ -214,13 +219,15 @@ test.describe("phase 2", () => {
     expect(pdoc.felt_equal).toBe("yes");
     expect(pdoc.screened_out).toBe(false);
     expect(trials.map((t) => t.task)).toEqual([
-      "consent", "instructions", "x_check", "matching", "equality_check", "feedback_instructions", "comprehension",
+      "consent", "instructions", "x_check", "x_check", "matching", "equality_check", "feedback_instructions", "comprehension",
       "choice", "preference_strength", "reasons", "regret_scale", "curiosity", "regret_check", "end_survey", "debrief",
     ]);
     const rc = trials.find((t) => t.task === "regret_check");
     expect([rc.less_regret_gamble, rc.regret_avoidance, rc.choice]).toEqual(["risky", 5, "risky"]);
-    const xc = trials.find((t) => t.task === "x_check");
-    expect([xc.x_check_answer, xc.x_check_attempts, xc.x_check_first_answer]).toEqual(["win", 2, "pay"]);
+    // One row per attempt; the last (correct) one also carries the total and the first answer.
+    const xc = trials.filter((t) => t.task === "x_check");
+    expect(xc.map((t) => [t.x_check_attempt, t.x_check_answer, t.x_check_correct])).toEqual([[1, "pay", false], [2, "win", true]]);
+    expect([xc[1].x_check_attempts, xc[1].x_check_first_answer]).toEqual([2, "pay"]);
     expect(pdoc.n_trials).toBe(trials.length);
     expect(trials.every((t) => t.participant_id === id && t.matching_version === "x_on_safe")).toBe(true);
 
@@ -299,7 +306,7 @@ test.describe("phase 2", () => {
     expect(pdoc.completed).toBe(true);
     expect(pdoc.felt_equal).toBe("no");
     expect(pdoc.screened_out).toBe(true);
-    expect(trials.map((t) => t.task)).toEqual(["consent", "instructions", "x_check", "matching", "equality_check", "debrief"]);
+    expect(trials.map((t) => t.task)).toEqual(["consent", "instructions", "x_check", "x_check", "matching", "equality_check", "debrief"]);
     const eq = trials.find((t) => t.task === "equality_check");
     expect([eq.felt_equal, eq.more_attractive, eq.felt_equal_reason]).toEqual(["no", "safe", NO_REASON]);
     expect(trials.some((t) => t.task === "choice" || t.task === "feedback_instructions")).toBe(false);

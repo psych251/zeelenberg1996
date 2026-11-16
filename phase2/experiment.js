@@ -416,20 +416,26 @@ function startProofOfHuman(saver) {
   };
 
   // -------------------------------------------------------------------------
-  // 2b. "What is X?" check (Phase 2, row 11), before matching. The answer must be correct to
-  //     continue: a wrong answer is refused with a note giving the right one. Recorded on the
-  //     "x_check" row: x_check_attempts, x_check_first_answer and x_check_answer. Never used to
-  //     exclude anyone.
+  // 2b. "What is X?" check (Phase 2, row 11), before matching, repeated until answered correctly.
+  //     A wrong answer brings the same screen back, answer cleared, with a note that the answer was
+  //     not correct; the note does not say which answer is right. One "x_check" row per attempt:
+  //     x_check_attempt, x_check_answer, x_check_correct; the last (correct) row also carries
+  //     x_check_attempts (the total) and x_check_first_answer. Never used to exclude anyone.
   // -------------------------------------------------------------------------
-  let xCheckRefused = 0;   // clicks on Continue refused with a (wrong) answer selected
+  let xCheckAttempt = 0;
   let xCheckFirst = null;
   const xCheck = {
     type: jsPsychSurvey,
-    survey_json: {
+    survey_json: () => ({
       showQuestionNumbers: "off",
       completeText: "Continue",
       pages: [{
         elements: [
+          // From the second attempt on, a note that the previous answer was not correct.
+          ...(xCheckAttempt > 0
+            ? [{ type: "html", name: "x_retry",
+                 html: '<p class="quiz-retry">That answer was not correct. Please look at the two gambles again and answer again.</p>' }]
+            : []),
           { type: "html", name: "x_cards", html: `<div class="gamble-page">${gambleCards(null, version)}</div>` },
           { type: "radiogroup", name: "x_meaning", isRequired: true,
             title: `Before you start: in Gamble ${version.xGamble}, what is X?`,
@@ -441,31 +447,23 @@ function startProofOfHuman(saver) {
             ] },
         ],
       }],
-    },
-    survey_function: (survey) => {
-      // A wrong answer is refused. (SurveyJS also re-checks as soon as the answer is changed after
-      // an error, so attempts are counted per click on Continue below, not here.)
-      survey.onValidateQuestion.add((_, options) => {
-        if (options.name !== "x_meaning" || options.value === undefined || options.value === null) return;
-        if (options.value !== "win") {
-          options.error = `Not quite: X is the amount you could win with Gamble ${version.xGamble}. Please answer again.`;
-        }
-      });
-      // Once per refused click on Continue with an answer selected (an empty answer gets
-      // SurveyJS's own "Response required" and is not counted).
-      survey.onValidatedErrorsOnCurrentPage.add((_, options) => {
-        const v = survey.getValue("x_meaning");
-        if (options.errors.length === 0 || v === undefined || v === null) return;
-        xCheckRefused += 1;
-        if (xCheckFirst === null) xCheckFirst = v;
-      });
-    },
+    }),
     data: { task: "x_check", section: "matching" },
     on_finish: (data) => {
+      xCheckAttempt += 1;
+      data.x_check_attempt = xCheckAttempt;
       data.x_check_answer = data.response.x_meaning;
-      data.x_check_attempts = xCheckRefused + 1;   // the refused tries plus the accepted one
-      data.x_check_first_answer = xCheckFirst === null ? data.x_check_answer : xCheckFirst;
+      data.x_check_correct = data.x_check_answer === "win";
+      if (xCheckFirst === null) xCheckFirst = data.x_check_answer;
+      if (data.x_check_correct) {
+        data.x_check_attempts = xCheckAttempt;
+        data.x_check_first_answer = xCheckFirst;
+      }
     },
+  };
+  const xCheckLoop = {
+    timeline: [xCheck],
+    loop_function: () => !jsPsych.data.get().filter({ task: "x_check" }).last(1).values()[0].x_check_correct,
   };
 
   // -------------------------------------------------------------------------
@@ -1093,7 +1091,7 @@ function startProofOfHuman(saver) {
   await jsPsych.run([
     consent,
     welcome,
-    xCheck,
+    xCheckLoop,
     matching,
     equalityCheck,
     // Row 9: participants who answer No skip everything from the feedback rule to the end form
