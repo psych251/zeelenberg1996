@@ -145,6 +145,18 @@ async function runPhase2(page, { condition, matching, feltEqual = "Yes", choose 
     await page.locator("#jspsych-survey-likert-next").click();
     // Regret check (row 12): both questions are required.
     await expect(page.getByText("which gamble was less likely to leave you feeling regret?")).toBeVisible();
+    // Reminder above the questions: the feedback rule for this condition and the gamble chosen.
+    await expect(page.getByText("As a reminder, before you chose you read:")).toBeVisible();
+    expect(await page.locator(".gamble-page[data-condition]").getAttribute("data-condition")).toBe(condition);
+    const alwaysKnown = condition === "risky_feedback" ? "Gamble A" : "Gamble B";
+    await expect(page.locator(".feedback-rule")).toContainText(`You would always know the outcome of ${alwaysKnown}`);
+    await expect(page.locator(".gamble-page")).toContainText(`You chose ${choose}.`);
+    // The 1-7 scale is centred in its card (midpoint of 1 and 7 within a few pixels of the card's).
+    const ra = page.locator('[data-name="regret_avoidance"]');
+    const card = await ra.boundingBox();
+    const one = await ra.locator(".sd-rating__item").first().boundingBox();
+    const seven = await ra.locator(".sd-rating__item").last().boundingBox();
+    expect(Math.abs((one.x + seven.x + seven.width) / 2 - (card.x + card.width / 2))).toBeLessThan(4);
     await surveyContinue(page);
     await expect(page.getByText("Response required.").first()).toBeVisible();
     await page.locator('[data-name="less_regret"]').getByText("Gamble A", { exact: true }).click();

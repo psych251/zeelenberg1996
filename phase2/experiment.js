@@ -20,7 +20,8 @@
  *   Row 10    After the Regret Scale: curiosity about the non-chosen gamble's outcome (1-7).
  *   Row 11    Before matching, a "What is X?" check that must be answered correctly to continue.
  *   Row 12    After the curiosity question: which gamble was less likely to leave regret, and how
- *             much the participant tried to avoid regret (1-7).
+ *             much the participant tried to avoid regret (1-7, centred). Above the questions, a
+ *             reminder of the gambles, the condition's feedback rule and the gamble chosen.
  *
  * Phase 1 design notes, unchanged unless listed above:
  *
@@ -954,7 +955,10 @@ function startProofOfHuman(saver) {
   // 8c. Regret check (Phase 2, row 12). Exploratory, after the curiosity question and before the
   //     end form: which gamble was less likely to leave regret (coded like the choice: Gamble A =
   //     "risky", Gamble B = "safe"), and how much the participant tried to avoid regret (1-7).
-  //     The gamble cards are shown as a reminder of which gamble is A and which is B.
+  //     Above the questions, as a reminder: the gamble cards, the feedback rule for the
+  //     participant's condition (the same text and box as on the choice screen), and the gamble
+  //     they chose (the same sentence as on the strength screen). The 1-7 scale is centred
+  //     (style in phase2/index.html).
   // -------------------------------------------------------------------------
   const regretCheck = {
     type: jsPsychSurvey,
@@ -963,7 +967,11 @@ function startProofOfHuman(saver) {
       completeText: "Continue",
       pages: [{
         elements: [
-          { type: "html", name: "regret_cards", html: `<div class="gamble-page">${gambleCards(matchedX, version)}</div>` },
+          { type: "html", name: "regret_cards",
+            html: `<div class="gamble-page" data-condition="${condition}">${gambleCards(matchedX, version)}
+              <p>As a reminder, before you chose you read:</p>
+              <p class="feedback-rule">${FEEDBACK_TEXT[condition]}</p>
+              <p>You chose <strong>Gamble ${chosen === "risky" ? "A" : "B"}</strong>.</p></div>` },
           { type: "radiogroup", name: "less_regret", isRequired: true,
             title: "Thinking about the two gambles and what you would find out afterwards, which gamble was less likely to leave you feeling regret?",
             choices: [

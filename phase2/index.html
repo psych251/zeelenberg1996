@@ -31,6 +31,11 @@
   <script src="../src/illustrations.js"></script>
 
   <link rel="stylesheet" href="../src/experiment.css">
+  <style>
+    /* Phase 2 only (Phase 1's styles are not changed): the 1-7 scale on the regret-check screen
+       (row 12) sits in the middle of its card, with its end labels under 1 and 7. */
+    .jspsych-content [data-name="regret_avoidance"] .sd-rating { margin-inline: auto; }
+  </style>
 </head>
 <body>
   <!-- jsPsych renders into the body. The Phase 2 experiment starts from phase2/experiment.js. -->
