@@ -58,11 +58,11 @@ window.TEMPLATE_VERSION = "0.1.0";
 const EXPERIMENT = {
   // Firestore path: experiments/<id>/participants/... Change it when you start a new study
   // so pilot data and real data never mix (e.g. "smith2016-pilot-a", "smith2016-final").
-  // Phase 2 runs under its own id, so its data never mix with Phase 1's ("zeelenberg1996-final").
-  // PILOT NOW: "-pilot" keeps the non-naive pilot runs out of the real Phase 2 data. After the
-  // pilot, before registering and launching, change it to "zeelenberg1996-phase2", which must match
-  // experiment_id_phase2 in writeup/replication-report.qmd (and EXPERIMENT_ID in tests/phase2.spec.js).
-  id: "zeelenberg1996-phase2-pilot",
+  // Phase 2 runs under its own id, so its data never mix with Phase 1's ("zeelenberg1996-final") or
+  // the Phase 2 pilot's ("zeelenberg1996-phase2-pilot"). It must match experiment_id_phase2 in
+  // writeup/replication-report.qmd and EXPERIMENT_ID in tests/phase2.spec.js. Once this is live,
+  // every visit to the Phase 2 page is saved as real data: check changes with the emulator only.
+  id: "zeelenberg1996-phase2",
 
   // Trials per Firestore write. 1 = save every trial the moment it finishes (dropouts leave
   // partial data). The free tier allows 20,000 writes/day: with 200 participants x 100 trials
@@ -75,9 +75,9 @@ const EXPERIMENT = {
 
   // Prolific: if set, participants are redirected to Prolific when they finish.
   // Leave empty for local testing or non-Prolific samples.
-  // Phase 2 is a new Prolific study with its own completion code: paste it here once Prolific
-  // shows it. Left empty so nobody is sent back with Phase 1's code ("CJOC8BE8").
-  prolific_completion_code: "",
+  // Phase 2 is its own Prolific study: this must be the code listed in that study's completion
+  // settings. (It is the same code as Phase 1's.)
+  prolific_completion_code: "CJOC8BE8",
 
   // Contact shown in consent and debrief.
   contact_email: "stanfordpsych251@gmail.com",
