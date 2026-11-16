@@ -22,6 +22,8 @@
  *   Row 12    After the curiosity question: which gamble was less likely to leave regret, and how
  *             much the participant tried to avoid regret (1-7, centred). Above the questions, a
  *             reminder of the gambles, the condition's feedback rule and the gamble chosen.
+ *   Row 13    Reasons screen: "You chose Gamble A." above the question, which reads "Write down
+ *             the reasons for your choice of Gamble A." (or B: the gamble chosen).
  *
  * Phase 1 design notes, unchanged unless listed above:
  *
@@ -841,18 +843,22 @@ function startProofOfHuman(saver) {
   let pasteAttempts = 0;
   let keystrokes = 0;
   let tooShortAttempts = 0;   // clicks on Continue that were refused (empty or too short)
+  // Phase 2 (row 13): the screen first says which gamble was chosen (the same sentence as on the
+  // strength screen), and the question names that gamble, so that the reasons are about the choice
+  // of gamble rather than the strength rating just given.
   const reasons = {
     type: jsPsychSurvey,
-    survey_json: {
+    survey_json: () => ({
       showQuestionNumbers: "off",
       completeText: "Continue",
       pages: [{
         elements: [
+          { type: "html", name: "chosen", html: `<p>You chose <strong>Gamble ${chosen === "risky" ? "A" : "B"}</strong>.</p>` },
           { type: "comment", name: "reasons", isRequired: true, rows: 4,
-            title: "Write down the reasons for your choice." },
+            title: `Write down the reasons for your choice of Gamble ${chosen === "risky" ? "A" : "B"}.` },
         ],
       }],
-    },
+    }),
     survey_function: (survey) => {
       // Minimum length. An empty box already gets SurveyJS's own "Response required".
       survey.onValidateQuestion.add((_, options) => {

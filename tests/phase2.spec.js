@@ -130,6 +130,9 @@ async function runPhase2(page, { condition, matching, feltEqual = "Yes", choose 
     await page.getByRole("button", { name: choose }).click();
     await page.locator('[data-name="strength"]').getByText("9", { exact: true }).click();
     await surveyContinue(page);
+    // Reasons (row 13): the screen names the gamble chosen, and so does the question.
+    await expect(page.locator('[data-name="chosen"]')).toHaveText(`You chose ${choose}.`);
+    await expect(page.getByText(`Write down the reasons for your choice of ${choose}.`, { exact: true })).toBeVisible();
     await page.locator('[data-name="reasons"] textarea').pressSequentially(REASONS_TEXT);
     await surveyContinue(page);
     await expect(page.locator(".jspsych-survey-likert-opts").first()).toBeVisible();
