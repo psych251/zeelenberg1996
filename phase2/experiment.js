@@ -19,6 +19,8 @@
  *             (they see the debrief and finish); they are excluded in the report.
  *   Row 10    After the Regret Scale: curiosity about the non-chosen gamble's outcome (1-7).
  *   Row 11    Before matching, a "What is X?" check that must be answered correctly to continue.
+ *   Row 12    After the curiosity question: which gamble was less likely to leave regret, and how
+ *             much the participant tried to avoid regret (1-7).
  *
  * Phase 1 design notes, unchanged unless listed above:
  *
@@ -54,10 +56,10 @@ const EXPERIMENT = {
   // Firestore path: experiments/<id>/participants/... Change it when you start a new study
   // so pilot data and real data never mix (e.g. "smith2016-pilot-a", "smith2016-final").
   // Phase 2 runs under its own id, so its data never mix with Phase 1's ("zeelenberg1996-final").
-  // TESTING NOW: "-test" keeps test and pilot runs out of the real Phase 2 data. Before real data
-  // collection, change it to "zeelenberg1996-phase2", which must match experiment_id_phase2 in
-  // writeup/replication-report.qmd (and EXPERIMENT_ID in tests/phase2.spec.js).
-  id: "zeelenberg1996-phase2-test",
+  // PILOT NOW: "-pilot" keeps the non-naive pilot runs out of the real Phase 2 data. After the
+  // pilot, before registering and launching, change it to "zeelenberg1996-phase2", which must match
+  // experiment_id_phase2 in writeup/replication-report.qmd (and EXPERIMENT_ID in tests/phase2.spec.js).
+  id: "zeelenberg1996-phase2-pilot",
 
   // Trials per Firestore write. 1 = save every trial the moment it finishes (dropouts leave
   // partial data). The free tier allows 20,000 writes/day: with 200 participants x 100 trials
@@ -163,8 +165,10 @@ function gambleCards(x, version) {
 
 // The parts of the study, recorded as `section` on every row so the time spent on each part can
 // be added up. Listed in the order participants meet them.
-// Phase 2 adds "curiosity" (row 10); the equality check (row 9) belongs to "matching".
-const SECTIONS = ["intro", "matching", "feedback_rules", "decision", "regret_scale", "curiosity", "about_you", "debrief"];
+// Phase 2 adds "curiosity" (row 10) and "regret_check" (row 12); the equality check (row 9) and
+// the "What is X?" check (row 11) belong to "matching".
+const SECTIONS = ["intro", "matching", "feedback_rules", "decision", "regret_scale", "curiosity", "regret_check",
+  "about_you", "debrief"];
 
 // What participants read about feedback before choosing (paper pp. 151-152, second person).
 // The risky and safe texts are exact mirror images, so the conditions differ only in R vs S.
@@ -949,6 +953,42 @@ function startProofOfHuman(saver) {
   };
 
   // -------------------------------------------------------------------------
+  // 8c. Regret check (Phase 2, row 12). Exploratory, after the curiosity question and before the
+  //     end form: which gamble was less likely to leave regret (coded like the choice: Gamble A =
+  //     "risky", Gamble B = "safe"), and how much the participant tried to avoid regret (1-7).
+  //     The gamble cards are shown as a reminder of which gamble is A and which is B.
+  // -------------------------------------------------------------------------
+  const regretCheck = {
+    type: jsPsychSurvey,
+    survey_json: () => ({
+      showQuestionNumbers: "off",
+      completeText: "Continue",
+      pages: [{
+        elements: [
+          { type: "html", name: "regret_cards", html: `<div class="gamble-page">${gambleCards(matchedX, version)}</div>` },
+          { type: "radiogroup", name: "less_regret", isRequired: true,
+            title: "Thinking about the two gambles and what you would find out afterwards, which gamble was less likely to leave you feeling regret?",
+            choices: [
+              { value: "risky", text: "Gamble A" },
+              { value: "safe", text: "Gamble B" },
+              { value: "no_difference", text: "No difference" },
+            ] },
+          { type: "rating", name: "regret_avoidance", isRequired: true,
+            title: "When you made your choice, how much were you trying to avoid feeling regret later?",
+            rateMin: 1, rateMax: 7, displayMode: "buttons",
+            minRateDescription: "Not at all", maxRateDescription: "Very much", rateDescriptionLocation: "bottom" },
+        ],
+      }],
+    }),
+    data: { task: "regret_check", section: "regret_check" },
+    on_finish: (data) => {
+      data.less_regret_gamble = data.response.less_regret;
+      data.regret_avoidance = data.response.regret_avoidance;
+      data.choice = chosen;
+    },
+  };
+
+  // -------------------------------------------------------------------------
   // 9. End form: feedback (optional), gambling history, demographics. Each of the other questions
   //     must be answered, but always offers "Prefer not to say", as the consent text promises.
   // -------------------------------------------------------------------------
@@ -1059,7 +1099,7 @@ function startProofOfHuman(saver) {
     // Row 9: participants who answer No skip everything from the feedback rule to the end form
     // and go straight to the debrief, so the study ends for them.
     {
-      timeline: [comprehensionLoop, choice, strength, reasons, regretScale, curiosity, endSurvey],
+      timeline: [comprehensionLoop, choice, strength, reasons, regretScale, curiosity, regretCheck, endSurvey],
       conditional_function: () => feltEqual === "yes",
     },
     debrief,

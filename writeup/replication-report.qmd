@@ -164,7 +164,10 @@ note <- function(...) cat(paste0(...), "\n")
 # (the screen alone takes 150 ms to fade in), so it marks an automated response.
 min_screen_ms <- 300
 answer_tasks  <- c("matching", "attractiveness", "comprehension", "choice",
-                   "preference_strength", "reasons", "regret_scale", "end_survey")
+                   "preference_strength", "reasons", "regret_scale", "end_survey",
+                   # Phase 2's new answer screens (its Analysis plan: the speed rule covers them).
+                   # Phase 1 has none of them, so this does not change Phase 1.
+                   "x_check", "equality_check", "curiosity", "regret_check")
 # Proof of Human bot-risk score (0-100) at or above which a participant is excluded as a likely
 # bot: 50, the start of the vendor's "review" band, chosen after Pilot B (no completer scored
 # above 15). NA would report scores without excluding anyone. Participants with no score (the
@@ -183,6 +186,19 @@ read_phase <- function(id) {
   # Bot-risk scores, written by scripts/poh-scores.js after the export (NULL until then).
   poh_path <- file.path(dir, "poh.csv")
   poh <- if (file.exists(poh_path)) read_csv(poh_path, show_col_types = FALSE) else NULL
+
+  # Data check (added after the Phase 1 robustness review): a trial saved twice would be counted
+  # twice in every analysis, so stop rather than analyse such an export.
+  dup <- trials |> count(participant_id, trial_index) |> filter(n > 1)
+  if (nrow(dup) > 0)
+    stop(sprintf("%s: %d trial rows appear more than once (same participant and trial_index). Re-export the data before analysing it.",
+                 id, sum(dup$n) - nrow(dup)))
+  # The same for participants.csv (added after the second review pass): a participant listed twice
+  # would be counted twice in the funnel and the sample description.
+  dup_p <- participants |> count(participant_id) |> filter(n > 1)
+  if (nrow(dup_p) > 0)
+    stop(sprintf("%s: %d participants appear more than once in participants.csv. Re-export the data before analysing it.",
+                 id, nrow(dup_p)))
 
   # Every participant document is one page load, including visits that never consented. Someone
   # who clicks "I do not agree" also reaches the end of the study (completed = TRUE), so a
@@ -204,6 +220,12 @@ read_phase <- function(id) {
     filter(task %in% answer_tasks, participant_id %in% complete$participant_id,
            as.numeric(rt) < min_screen_ms) |>
     distinct(participant_id) |> pull(participant_id)
+  # An answer screen with no recorded response time cannot be checked against this rule. Such
+  # completers are kept (no evidence either way) and counted, so the sample text can report them.
+  missing_rt_ids <- trials |>
+    filter(task %in% answer_tasks, participant_id %in% complete$participant_id,
+           is.na(suppressWarnings(as.numeric(rt)))) |>
+    distinct(participant_id) |> pull(participant_id)
 
   # Exclusion 3, likely bots: a bot-risk score at or above poh_exclude_at. No score is no
   # evidence either way, so those participants are kept.
@@ -212,12 +234,21 @@ read_phase <- function(id) {
       pull(participant_id)
   } else character(0)
 
-  keep <- complete |> filter(!participant_id %in% c(repeat_ids, too_fast_ids, bot_ids))
+  # Exclusion 4 (Phase 2 only): answering No at the equality check, right after matching. Those
+  # participants end the study there, before the feedback rule, and have no choice data. Phase 1
+  # had no equality check, so nobody is excluded on it there.
+  screened_ids <- if ("felt_equal" %in% names(trials)) {
+    trials |> filter(task == "equality_check", participant_id %in% complete$participant_id, felt_equal %in% "no") |>
+      distinct(participant_id) |> pull(participant_id)
+  } else character(0)
+
+  keep <- complete |> filter(!participant_id %in% c(repeat_ids, too_fast_ids, bot_ids, screened_ids))
 
   list(participants = participants, trials = trials, errors = errors, poh = poh,
        consented_ids = consented_ids, complete = complete, keep = keep,
        has_repeat_flags = has_repeat_flags, repeat_ids = repeat_ids, too_fast_ids = too_fast_ids,
-       bot_ids = bot_ids)
+       missing_rt_ids = missing_rt_ids,
+       bot_ids = bot_ids, screened_ids = screened_ids)
 }
 
 # The key comparison's raw counts: how many analysed participants chose the risky gamble (R)
@@ -242,6 +273,50 @@ diff_ci <- function(counts) {
          estimate = unname(pt$estimate[1] - pt$estimate[2]),
          ci_low = pt$conf.int[1], ci_high = pt$conf.int[2],
          statistic = unname(pt$statistic), p = pt$p.value)
+}
+
+# Fisher's exact test on the same counts, for small groups where some expected cell counts fall
+# below 5 and the chi-square approximation is rough. Returns the formatted p ("" if a condition
+# is missing).
+fisher_p <- function(counts) {
+  rf <- counts[counts$condition == "risky_feedback", ]
+  sf <- counts[counts$condition == "safe_feedback", ]
+  if (nrow(rf) == 0 || nrow(sf) == 0) return("")
+  tab <- matrix(c(rf$risky, rf$n - rf$risky, sf$risky, sf$n - sf$risky), nrow = 2, byrow = TRUE)
+  format.pval(fisher.test(tab)$p.value, digits = 2, eps = 0.001)
+}
+
+# Logistic regression of choosing the risky gamble (risky = 1) as a table of terms with log-odds,
+# SE, z, p and odds ratios. Stops with a reason instead of printing estimates that cannot be
+# trusted: an outcome or predictor that does not vary, a model that does not converge, or
+# estimates so large that the groups are perfectly separated.
+logit_table <- function(d, formula, labels) {
+  if (nrow(d) == 0) stop("no analysed participants")
+  if (n_distinct(d$risky) < 2) stop("every participant chose the same gamble")
+  for (v in all.vars(formula)[-1]) if (n_distinct(d[[v]]) < 2) stop(sprintf("%s does not vary", v))
+  fit <- suppressWarnings(glm(formula, family = binomial, data = d))
+  est <- summary(fit)$coefficients
+  if (!fit$converged || nrow(est) < length(labels) || any(abs(est[, "Estimate"]) > 15))
+    stop("the model cannot be estimated with these data (too few participants or perfect separation)")
+  tibble(Term = labels,
+         `Log-odds` = round(est[, "Estimate"], 2), SE = round(est[, "Std. Error"], 2),
+         z = round(est[, "z value"], 2),
+         p = format.pval(est[, "Pr(>|z|)"], digits = 2, eps = 0.001),
+         `Odds ratio [95% CI]` = sprintf("%.2f [%.2f, %.2f]", exp(est[, "Estimate"]),
+                                         exp(est[, "Estimate"] - 1.96 * est[, "Std. Error"]),
+                                         exp(est[, "Estimate"] + 1.96 * est[, "Std. Error"])))
+}
+
+# The Regret Scale moderation model, shared so that Phase 2's preregistered test is exactly
+# Phase 1's: choice on feedback condition (risky feedback = 1), the centred regret score
+# (regret_c) and their interaction.
+regret_model <- function(d) {
+  if (nrow(d) == 0) stop("no analysed participants in the risky- and safe-feedback conditions")
+  if (n_distinct(d$risky) < 2) stop("every participant chose the same gamble")
+  if (n_distinct(d$risky_feedback) < 2) stop("needs participants in both feedback conditions")
+  logit_table(d, risky ~ risky_feedback * regret_c,
+              c("Intercept (safe feedback, average regret score)", "Risky feedback (vs safe)",
+                "Regret score (per point, centred)", "Risky feedback x regret score"))
 }
 
 # Side-by-side figure: any number of studies on the same axes, in the order given.
@@ -726,6 +801,10 @@ if (is.null(phase1$poh)) {
   cat(" No bot-risk threshold has been set yet, so nobody was excluded on bot-risk scores.")
 }
 if (!phase1$has_repeat_flags) cat(" These data were exported before repeat sessions were flagged, so that rule could not be applied; export again to apply it.")
+if (length(phase1$missing_rt_ids) > 0)
+  cat(sprintf(" For %d completer%s, at least one answer screen had no recorded response time, so the speed rule could not be checked on that screen; %s kept.",
+              length(phase1$missing_rt_ids), if (length(phase1$missing_rt_ids) == 1) "" else "s",
+              if (length(phase1$missing_rt_ids) == 1) "this participant was" else "they were"))
 if (nrow(keep) == 0) cat(" No participants remain for analysis yet, so the results below are empty.")
 cat("\n")
 ```
@@ -1187,6 +1266,8 @@ if (nrow(key_att) > 0 && n_distinct(key_att$risky) == 2)
 
 # 3. The key test repeated among participants who rated the two gambles exactly equally, and
 # among those whose ratings were within 1 point of each other.
+# Fisher's exact test (fisher_p, in the shared analysis code) alongside the chi-square: these
+# groups are small, so some expected cell counts fall below 5. Added after data collection.
 matched_r <- diff_ci(matched_counts)
 near_r    <- diff_ci(near_counts)
 if (nrow(key_att) > 0 && is.null(matched_r))
@@ -1194,10 +1275,38 @@ if (nrow(key_att) > 0 && is.null(matched_r))
 if (!is.null(matched_r) || !is.null(near_r))
   bind_rows(fmt_row("Equal raters only", matched_r, missing = "too few participants"),
             fmt_row("Rated within 1 point", near_r, missing = "too few participants")) |>
+    mutate(`Fisher p` = c(fisher_p(matched_counts), fisher_p(near_counts))) |>
     knitr::kable(caption = paste(
       "Exploratory: the key comparison among participants who rated Gamble R and Gamble S exactly equally,",
       "and among those whose two ratings were within 1 point of each other (|R − S| ≤ 1).",
-      "The within-1-point row was added after data collection and was not preregistered."))
+      "The within-1-point row was added after data collection and was not preregistered.",
+      "p is the preregistered uncorrected chi-square; Fisher p is Fisher's exact test, added after data",
+      "collection because these groups are small."))
+```
+
+```{r}
+#| label: exploratory-cutoffs
+#| eval: !expr have_data
+# Exploratory, not preregistered (added after data collection): the key comparison among
+# risky- and safe-feedback participants whose two attractiveness ratings were within c points of
+# each other, for c = 0 to 4, and for everyone. Shows how the within-1-point result depends on
+# where the cut is drawn. Uses key_att and fisher_p from exploratory-attractiveness.
+cutoff_row <- function(label, d) {
+  counts <- d |> group_by(condition) |> summarise(risky = sum(risky), n = n(), .groups = "drop")
+  fmt_row(label, diff_ci(counts), missing = "too few participants") |>
+    mutate(`Fisher p` = fisher_p(counts))
+}
+if (nrow(key_att) > 0)
+  bind_rows(cutoff_row("|R − S| ≤ 0 (rated equally)", filter(key_att, att_diff == 0)),
+            lapply(1:4, function(cut) cutoff_row(sprintf("|R − S| ≤ %d", cut), filter(key_att, abs(att_diff) <= cut))),
+            cutoff_row("Everyone (the key test)", key_att)) |>
+    rename(`Rating gap` = Study) |>
+    knitr::kable(caption = paste(
+      "Exploratory, not preregistered: the key comparison among risky- and safe-feedback participants whose",
+      "ratings of Gamble R and Gamble S were at most 0, 1, 2, 3 or 4 points apart, and among everyone. Each",
+      "row includes the rows above it. The 1-point cut in the previous table was chosen after data collection;",
+      "this table shows the result at the neighbouring cuts. p is the uncorrected chi-square; Fisher p is",
+      "Fisher's exact test."))
 ```
 
 ```{r}
@@ -1362,24 +1471,7 @@ reg <- trials |>
   mutate(risky_feedback = as.integer(condition == "risky_feedback"),
          regret_c = regret_score - mean(regret_score))
 
-regret_model <- function(d) {
-  if (nrow(d) == 0) stop("no analysed participants in the risky- and safe-feedback conditions")
-  if (n_distinct(d$risky) < 2) stop("every participant chose the same gamble")
-  if (n_distinct(d$risky_feedback) < 2) stop("needs participants in both feedback conditions")
-  fit <- suppressWarnings(glm(risky ~ risky_feedback * regret_c, family = binomial, data = d))
-  est <- summary(fit)$coefficients
-  # Estimates this large mean the groups are perfectly separated; they would not be meaningful.
-  if (!fit$converged || nrow(est) < 4 || any(abs(est[, "Estimate"]) > 15))
-    stop("the model cannot be estimated with these data (too few participants or perfect separation)")
-  tibble(Term = c("Intercept (safe feedback, average regret score)", "Risky feedback (vs safe)",
-                  "Regret score (per point, centred)", "Risky feedback x regret score"),
-         `Log-odds` = round(est[, "Estimate"], 2), SE = round(est[, "Std. Error"], 2),
-         z = round(est[, "z value"], 2),
-         p = format.pval(est[, "Pr(>|z|)"], digits = 2, eps = 0.001),
-         `Odds ratio [95% CI]` = sprintf("%.2f [%.2f, %.2f]", exp(est[, "Estimate"]),
-                                         exp(est[, "Estimate"] - 1.96 * est[, "Std. Error"]),
-                                         exp(est[, "Estimate"] + 1.96 * est[, "Std. Error"])))
-}
+# regret_model() is in the shared analysis code, so Phase 2 runs exactly the same model.
 if (nrow(reg) > 0)
   try_or_say(regret_model(reg) |>
                knitr::kable(caption = sprintf(paste(
@@ -1521,7 +1613,7 @@ original, not just the p value.
 :::
 -->
 
-This replication of Zeelenberg et al. (1996, Experiment 1) did not reproduce the original finding. The difference in risky choice between the risky and safe feedback conditions was 7 percentage points, 95% CI [−8, 21], compared with 38 points in the original. The interval includes zero and excludes the original estimate, so the data are consistent with no effect and inconsistent with an effect as large as the original's.
+This replication of Zeelenberg et al. (1996, Experiment 1) did not reproduce the original finding. The difference in risky choice between the risky and safe feedback conditions was 7 percentage points, 95% CI [−8, 21], compared with 38 points in the original. The interval includes zero and excludes the original estimate, so under this procedure, run online with this matching step, the data are consistent with no effect and inconsistent with an effect as large as the original's. This conclusion is limited by how well matching worked: the original's prediction concerns choices between gambles a person finds equally attractive, but only 51 of 195 participants rated the two gambles as equally attractive, and 75% chose the safe gamble, compared with 58% in the original. 
 
 ### Commentary
 
@@ -1624,6 +1716,7 @@ below are examples for the demo; replace them with yours.
 | 9 | Checks | None | Right after matching, before the feedback rule: "You rated Gamble A and Gamble B as equally attractive. Do they feel equally attractive to you? Your answer will not affect whether your Prolific submission is approved or how much you are paid." Those who answer No say which gamble is more attractive and why (typed), and the study ends for them; they are excluded from the analysis | In Phase 1 the ratings were the only check on matching. Because the check comes before the feedback rule, excluding on it cannot depend on the manipulation. |
 | 10 | Exploratory measure | None | At the end: “When you made your choice, how did you feel about finding out how the gamble you did not choose would have turned out?” (1–7: 1 = I preferred not to find out, 4 = I did not mind either way, 7 = I wanted to find out) | Curiosity about the other outcome may work against regret aversion. |
 | 11 | Checks | None | Before matching, a screen shows the two gamble cards with $X and asks "Before you start: in Gamble B, what is X?" (in version 2, Gamble A), with three answers in this order: the amount you pay to play the gamble, the amount you could win, and the chance of winning. A wrong answer shows "Not quite: X is the amount you could win with Gamble B. Please answer again." and the participant stays until answering correctly. The number of attempts and the first answer are recorded; this check is never used to exclude anyone | Some Phase 1 reasons treated X as money paid rather than a prize. |
+| 12 | Exploratory measure | None | At the end, after the curiosity question and before the end form, one screen with two required questions: "Thinking about the two gambles and what you would find out afterwards, which gamble was less likely to leave you feeling regret?" (Gamble A / Gamble B / No difference), and "When you made your choice, how much were you trying to avoid feeling regret later?" (1 = Not at all to 7 = Very much) | A direct check of the original's proposed mechanism, anticipated regret, which none of the other measures assesses. |
 
 Everything not listed above is identical to Phase 1.
 
@@ -1646,9 +1739,9 @@ original's otherwise.
 
 -->
 
-I plan 93 analysed participants per condition, 186 in total, which gives 80% power to detect an effect half the size of the original (19 points), the smallest effect I would count as a successful rescue. This sample has 98% power to detect the 26-point effect found among Phase 1 participants whose ratings were within 1 point, but only 19% power to detect Phase 1's overall estimate of 7 points. Phase 1's median duration was 7.2 minutes; the added matching tries and end questions should lengthen the study to 8.5 minutes. At $9 per hour plus Prolific's fee, the main study will cost about $350.
+I plan 93 analysed participants per condition, 186 in total, which gives 80% power to detect an effect half the size of the original (19 points), the smallest effect I would count as a successful rescue. Phase 1's median duration was 7.2 minutes; the added matching tries and end questions should lengthen the study to 8.5 minutes. At $9 per hour plus Prolific's fee, the main study will cost about $350.
 
-If the Phase 1 failure was caused by matching, the Phase 2 estimate should move toward the original: among Phase 1 participants who rated the gambles exactly equally, a preregistered exploratory analysis, the effect was 31 points, and among those whose ratings were within 1 point, an analysis added after data collection, it was 26 points, although both come from small groups and are probably inflated. If matching was not the cause, the estimate should stay near Phase 1's 7 points. Either way, the 95% confidence interval should narrow from about ±15 points in Phase 1 to about ±12. Participants who say the gambles do not feel equally attractive, and those excluded under the Phase 1 rules, will be replaced until 186 participants remain.
+If the Phase 1 failure was caused by matching, the Phase 2 estimate should move toward the original. If matching was not the cause, the estimate should stay near Phase 1's 7 points. Either way, the 95% confidence interval should narrow from about ±15 points in Phase 1 to about ±12. Participants who say the gambles do not feel equally attractive, and those excluded under the Phase 1 rules, will be replaced until 186 participants remain.
 
 
 ```{r}
@@ -1718,7 +1811,7 @@ file to match, so the two phases' data never mix.
 
 **Secondary analyses.** Risk preference is compared between the risky and safe feedback conditions with a Welch two-sample t-test, replacing the Phase 1 ANOVA and contrasts. As a check on randomization, the matched value of X is compared between conditions within each version; X is not pooled across versions, because it is the prize of a different gamble in each. The feedback × regret interaction in a logistic regression of choice, now preregistered, is tested two-sided. Analyses that need the choice-only condition (the three-condition χ² test, the comparisons with choice only, the ANOVA and the linear trend) are dropped, as is the paired t-test on the ratings, which are now meant to be equal.
 
-**Exploratory analyses.** I will examine whether setting X for the risky gamble increases risky choice (the effect of version) and whether the feedback effect differs between versions; the number of matching tries, and the values of X in each version compared with the equal-value point ($70 in version 1, $130 in version 2); the number of participants who said the gambles did not feel equally attractive, by version, with which gamble they found more attractive and their typed reasons; and curiosity, by condition and choice, including the feedback × curiosity interaction on choice. Finally, I will report a pooled estimate of the key comparison across both phases, labelled exploratory, while noting that the procedures differ.
+**Exploratory analyses.** I will examine whether setting X for the risky gamble increases risky choice (the effect of version) and whether the feedback effect differs between versions; the number of matching tries, and the values of X in each version compared with the equal-value point ($70 in version 1, $130 in version 2); the number of participants who said the gambles did not feel equally attractive, by version, with which gamble they found more attractive and their typed reasons; and curiosity, by condition and choice, including the feedback × curiosity interaction on choice; which gamble participants named as less likely to leave them feeling regret, by condition, where the original's account predicts Gamble A after risky feedback and Gamble B after safe feedback, and whether participants chose the gamble they named; and how much participants were trying to avoid regret, by condition and choice. Both regret questions are answered after the choice, so neither is used to exclude anyone. Finally, I will report a pooled estimate of the key comparison across both phases, labelled exploratory, while noting that the procedures differ.
 
 ## Results
 
@@ -1738,20 +1831,106 @@ if (!have_phase2) {
 ```
 
 ```{r}
-#| label: phase2-results
+#| label: phase2-sample
 #| eval: !expr have_phase2
+# Phase 2 data, loaded and excluded by the shared read_phase() (the four Phase 1 rules plus the
+# equality-check rule). Helpers used by the Phase 2 chunks below.
+p2 <- phase2
+p2_conds <- condition_labels[c("risky_feedback", "safe_feedback")]
+p2_version_labels <- c(x_on_safe  = "Version 1: X sets Gamble B's prize",
+                       x_on_risky = "Version 2: X sets Gamble A's prize")
+p2_has <- function(...) all(c(...) %in% names(p2$trials))
+p2_rows <- function(task_name, ids = p2$keep$participant_id)
+  p2$trials |> filter(task == task_name, participant_id %in% ids)
+# Analysed participants' choices (one row each), with their matching version.
+p2_choice <- p2_rows("choice") |>
+  transmute(participant_id, condition, risky = as.integer(choice == "risky"),
+            version = if (p2_has("matching_version")) matching_version else NA_character_)
+msd <- function(x) if (length(x) < 2) sprintf("%.2f", mean(x)) else sprintf("%.2f (%.2f)", mean(x), sd(x))
+
+# Funnel. Every page load is a row in participants.csv.
+p2_steps <- c("Opened the study", "Consented", "Completed", "Screened out at the equality check",
+              "Passed exclusion criteria")
+bind_rows(
+  p2$participants |> mutate(step = p2_steps[1]),
+  p2$participants |> filter(participant_id %in% p2$consented_ids) |> mutate(step = p2_steps[2]),
+  p2$complete |> mutate(step = p2_steps[3]),
+  p2$complete |> filter(participant_id %in% p2$screened_ids) |> mutate(step = p2_steps[4]),
+  p2$keep |> mutate(step = p2_steps[5])
+) |>
+  mutate(step = factor(step, levels = p2_steps),
+         condition = factor(coalesce(unname(condition_labels[condition]), "No condition (turned away)"),
+                            levels = c(condition_labels, "No condition (turned away)"))) |>
+  count(step, condition, .drop = FALSE) |>
+  pivot_wider(names_from = condition, values_from = n, values_fill = 0) |>
+  select(where(~ !is.numeric(.x) || sum(.x) > 0)) |>
+  mutate(Total = rowSums(across(-step))) |>
+  rename(Step = step) |>
+  knitr::kable(caption = paste(
+    "Phase 2: participants at each step, by feedback condition. Participants who answered No at the",
+    "equality check ended the study there and are excluded; the other exclusion rules are Phase 1's."))
+```
+
+```{r}
+#| label: phase2-sample-text
+#| eval: !expr have_phase2
+#| echo: false
+#| results: asis
+cat(sprintf(paste("Phase 2: of %d visits, %d consented and %d completed the study. Of the completers, %d answered No",
+                  "at the equality check and ended the study there, %d were excluded as repeat sessions, %d for",
+                  "answering a screen in under %d ms and %d for a bot-risk score of %g or more (a participant can",
+                  "meet more than one), leaving %d analysed."),
+            nrow(p2$participants), length(unique(p2$consented_ids)), nrow(p2$complete), length(p2$screened_ids),
+            length(p2$repeat_ids), length(p2$too_fast_ids), min_screen_ms, length(p2$bot_ids), poh_exclude_at,
+            nrow(p2$keep)))
+if (is.null(p2$poh)) cat(" Bot-risk scores have not been fetched for these data yet, so that rule could not be applied.")
+if (length(p2$missing_rt_ids) > 0)
+  cat(sprintf(" For %d completer(s), at least one answer screen had no recorded response time, so the speed rule could not be checked on that screen; they were kept.",
+              length(p2$missing_rt_ids)))
+cat("\n")
+```
+
+```{r}
+#| label: phase2-confirmatory
+#| eval: !expr have_phase2
+# Key analysis, identical to Phase 1's: uncorrected Pearson chi-square on feedback condition
+# (risky vs safe) by choice, pooled across the two matching versions; effect size = difference in
+# the percentage choosing the risky gamble with its 95% CI (diff_ci, shared with Phase 1).
 p2_counts <- risky_counts(phase2)
 p2_stats  <- diff_ci(p2_counts)
-cat(sprintf("Phase 2: %d started, %d completed, %d analysed.\n",
-            nrow(phase2$participants), nrow(phase2$complete), nrow(phase2$keep)))
-if (!is.null(p2_stats)) {
-  # With very few participants (e.g. everyone chose the same gamble) the test is undefined.
-  p_text <- if (!is.finite(p2_stats$p)) "p not computable yet" else
-    if (p2_stats$p < 0.001) "p < .001" else sprintf("p = %.3f", p2_stats$p)
-  cat(sprintf("Key comparison: %.0f points [%.0f, %.0f], chi-square(1) = %.2f, %s.\n",
-              100 * p2_stats$estimate, 100 * p2_stats$ci_low, 100 * p2_stats$ci_high,
-              p2_stats$statistic, p_text))
-}
+p2_choice |>
+  mutate(Condition = factor(unname(condition_labels[condition]), levels = condition_labels),
+         Choice = factor(ifelse(risky == 1, "Gamble R (risky)", "Gamble S (safe)"),
+                         levels = c("Gamble R (risky)", "Gamble S (safe)"))) |>
+  count(Condition, Choice, .drop = FALSE) |>
+  pivot_wider(names_from = Choice, values_from = n, values_fill = 0) |>
+  filter(`Gamble R (risky)` + `Gamble S (safe)` > 0) |>
+  knitr::kable(caption = "Phase 2: choices of analysed participants, by feedback condition (both matching versions).")
+if (!is.null(p2_stats))
+  fmt_row("Phase 2: extension", p2_stats) |>
+    knitr::kable(align = "lrlllr", caption = paste(
+      "Phase 2 key test (preregistered): difference in the percentage choosing the risky gamble, risky-feedback",
+      "minus safe-feedback condition, with its 95% CI and the uncorrected chi-square, pooled across the two",
+      "matching versions."))
+if (is.null(p2_stats))
+  note("Phase 2 key test: needs analysed participants in both the risky- and safe-feedback conditions.")
+```
+
+```{r}
+#| label: phase2-verdict
+#| eval: !expr 'have_phase2 && !is.null(p2_stats)'
+#| echo: false
+#| results: asis
+# The preregistered judgment: does the interval exclude zero, and does it include the original's
+# estimate and Phase 1's?
+inside <- function(x) x >= p2_stats$ci_low & x <= p2_stats$ci_high
+orig_est <- diff_ci(original)$estimate
+p1_est <- if (have_data && !is.null(diff_ci(risky_counts(phase1)))) diff_ci(risky_counts(phase1))$estimate else NA
+cat(sprintf("The Phase 2 95%% interval %s zero, %s the original estimate of %.0f points%s.\n",
+            if (inside(0)) "includes" else "excludes",
+            if (inside(orig_est)) "includes" else "does not include", 100 * orig_est,
+            if (is.na(p1_est)) "" else sprintf(", and %s Phase 1's estimate of %.0f points",
+                                               if (inside(p1_est)) "includes" else "does not include", 100 * p1_est)))
 ```
 
 ```{r}
@@ -1763,6 +1942,304 @@ if (!is.null(p2_stats)) {
 comparison_plot(Original = original,
                 `Phase 1: replication` = if (have_data) risky_counts(phase1),
                 `Phase 2: extension` = risky_counts(phase2))
+```
+
+```{r}
+#| label: phase2-secondary
+#| eval: !expr have_phase2
+# Secondary analyses (preregistered for Phase 2).
+# (a) Risk preference, risky vs safe feedback: Welch two-sample t-test (replaces Phase 1's ANOVA
+#     and contrasts, which needed the choice-only condition).
+rp2 <- p2_rows("preference_strength") |>
+  transmute(participant_id, condition, rp = as.numeric(risk_preference)) |>
+  filter(condition %in% names(p2_conds), !is.na(rp))
+try_or_say({
+  tt <- t.test(rp ~ factor(condition, levels = names(p2_conds)), data = rp2)
+  tibble(`Risky feedback, mean (SD)` = msd(rp2$rp[rp2$condition == "risky_feedback"]),
+         `Safe feedback, mean (SD)` = msd(rp2$rp[rp2$condition == "safe_feedback"]),
+         `Difference [95% CI]` = sprintf("%.2f [%.2f, %.2f]", unname(tt$estimate[1] - tt$estimate[2]),
+                                         tt$conf.int[1], tt$conf.int[2]),
+         t = round(unname(tt$statistic), 2), df = round(unname(tt$parameter), 1),
+         p = format.pval(tt$p.value, digits = 2, eps = 0.001), N = nrow(rp2)) |>
+    knitr::kable(caption = paste(
+      "Phase 2 (preregistered secondary): risk preference, (+1 risky / -1 safe) x (strength - 0.5), from -11.5",
+      "(strongly safe) to 11.5 (strongly risky), compared between the risky- and safe-feedback conditions",
+      "(Welch two-sample t-test; difference = risky minus safe feedback)."))
+}, "Phase 2 risk preference")
+
+# (b) Randomization check: matched X by condition within each matching version (X is a different
+#     gamble's prize in each version, so it is not pooled).
+if (p2_has("matching_version", "matched_x")) {
+  xm2 <- p2_rows("matching") |>
+    transmute(condition, version = matching_version, x = as.numeric(matched_x)) |>
+    filter(condition %in% names(p2_conds), !is.na(x))
+  xm_row <- function(v) {
+    d <- filter(xm2, version == v)
+    a <- d$x[d$condition == "risky_feedback"]; b <- d$x[d$condition == "safe_feedback"]
+    tt <- tryCatch(t.test(a, b), error = function(e) NULL)
+    tibble(Version = unname(p2_version_labels[v]),
+           `Risky feedback, mean X (SD)` = if (length(a)) msd(a) else "-",
+           `Safe feedback, mean X (SD)` = if (length(b)) msd(b) else "-",
+           `Difference [95% CI]` = if (is.null(tt)) "too few participants" else
+             sprintf("%.2f [%.2f, %.2f]", unname(tt$estimate[1] - tt$estimate[2]), tt$conf.int[1], tt$conf.int[2]),
+           t = if (is.null(tt)) "" else sprintf("%.2f", tt$statistic),
+           p = if (is.null(tt)) "" else format.pval(tt$p.value, digits = 2, eps = 0.001))
+  }
+  if (nrow(xm2) > 0)
+    bind_rows(lapply(intersect(names(p2_version_labels), unique(xm2$version)), xm_row)) |>
+      knitr::kable(caption = paste(
+        "Phase 2 (preregistered randomization check): matched value of X by feedback condition, within each",
+        "matching version (Welch t-test). X is set before the feedback rule is shown."))
+}
+
+# (c) Regret Scale moderation, tested two-sided: the same model as Phase 1 (regret_model), with the
+#     regret score centred on Phase 2's mean.
+reg2 <- p2_rows("regret_scale") |>
+  transmute(participant_id, regret_score = as.numeric(regret_score)) |>
+  inner_join(p2_choice, by = "participant_id") |>
+  filter(condition %in% names(p2_conds), !is.na(regret_score)) |>
+  mutate(risky_feedback = as.integer(condition == "risky_feedback"),
+         regret_c = regret_score - mean(regret_score))
+if (nrow(reg2) > 0)
+  try_or_say(regret_model(reg2) |>
+               knitr::kable(caption = sprintf(paste(
+                 "Phase 2 (preregistered secondary, two-sided): logistic regression of choosing the risky gamble on",
+                 "feedback condition (risky vs safe), Regret Scale score (centred on its mean of %.2f) and their",
+                 "interaction (N = %d). The scale was answered after the choice."),
+                 mean(reg2$regret_score), nrow(reg2))),
+             "Phase 2 Regret Scale moderation")
+```
+
+```{r}
+#| label: fig-phase2-version
+#| eval: !expr 'have_phase2 && "matching_version" %in% names(phase2$trials)'
+#| dev: !expr fig_dev
+#| fig-width: 8.5
+#| fig-height: 4.4
+#| fig-cap: "Phase 2 by matching version (the design as randomized): percentage of analysed participants choosing the risky gamble (R) in each feedback condition, with 95% confidence intervals and the number choosing R out of the number in each group. In version 1 participants set the prize of Gamble B (the safe gamble), as in Phase 1; in version 2 they set the prize of Gamble A (the risky gamble). The version comparison is exploratory."
+dv <- p2_choice |>
+  filter(condition %in% names(p2_conds), !is.na(version)) |>
+  group_by(version, condition) |>
+  summarise(risky = sum(risky), n = n(), .groups = "drop") |>
+  rowwise() |> mutate(prop_ci(risky, n)) |> ungroup() |>
+  mutate(Version = factor(unname(p2_version_labels[version]), levels = p2_version_labels),
+         Condition = factor(unname(condition_labels[condition]), levels = p2_conds))
+ggplot(dv, aes(Condition, p)) +
+  geom_linerange(aes(ymin = low, ymax = high), linewidth = 1.6, lineend = "round", colour = fig_study_cols[["Phase 2: extension"]]) +
+  geom_point(size = 4.6, colour = fig_study_cols[["Phase 2: extension"]]) +
+  geom_point(size = 1.8, colour = "white") +
+  geom_text(aes(label = sprintf("%.0f%%  (%d of %d)", 100 * p, risky, n)), nudge_x = 0.12, hjust = 0,
+            size = 3.6, colour = fig_ink, family = fig_font) +
+  facet_wrap(~ Version) +
+  scale_y_continuous(labels = scales::percent, limits = c(0, 1), breaks = seq(0, 1, 0.25)) +
+  scale_x_discrete(expand = expansion(add = c(0.5, 0.9))) +
+  labs(x = NULL, y = "Chose the risky gamble (R)") +
+  fig_theme +
+  theme(strip.text = element_text(face = "bold", colour = fig_ink, size = 11.5, hjust = 0),
+        panel.spacing = unit(1.4, "lines"))
+```
+
+```{r}
+#| label: phase2-exploratory
+#| eval: !expr have_phase2
+# Exploratory analyses (Phase 2 Analysis plan). None of them is used to exclude anyone.
+# (Each table is its own top-level statement so that it is printed; inside a { } block only the
+# last one would be.)
+
+# 1. Matching version: does setting X for the risky gamble change risky choice, and does the
+#    feedback effect differ between versions?
+ver2 <- if (p2_has("matching_version")) {
+  p2_choice |>
+    filter(condition %in% names(p2_conds), !is.na(version)) |>
+    mutate(risky_feedback = as.integer(condition == "risky_feedback"),
+           version2 = as.integer(version == "x_on_risky"))
+} else tibble()
+if (nrow(ver2) > 0)
+  try_or_say(logit_table(ver2, risky ~ risky_feedback + version2,
+                         c("Intercept (safe feedback, version 1)", "Risky feedback (vs safe)",
+                           "Version 2: X sets Gamble A's prize (vs version 1)")) |>
+               knitr::kable(caption = sprintf(paste(
+                 "Phase 2, exploratory: logistic regression of choosing the risky gamble on feedback condition and",
+                 "matching version (N = %d). The version term is the effect of setting X for the risky gamble",
+                 "instead of the safe one."), nrow(ver2))),
+             "Version effect")
+if (nrow(ver2) > 0)
+  try_or_say(logit_table(ver2, risky ~ risky_feedback * version2,
+                         c("Intercept (safe feedback, version 1)", "Risky feedback (vs safe), version 1",
+                           "Version 2 (vs version 1), safe feedback", "Risky feedback x version 2")) |>
+               knitr::kable(caption = sprintf(paste(
+                 "Phase 2, exploratory: the same model with the feedback x version interaction (N = %d). The",
+                 "interaction tests whether the feedback effect differs between the two matching versions."),
+                 nrow(ver2))),
+             "Feedback x version")
+
+# 2. Matching: tries, and X compared with the equal-expected-value point of each version ($70 when
+#    X is Gamble B's prize; $130 when X is Gamble A's prize).
+mt2 <- if (p2_has("matching_version", "matching_tries", "x_gamble", "fixed_prize")) {
+  p2_rows("matching") |>
+    transmute(version = matching_version, x = as.numeric(matched_x), tries = as.numeric(matching_tries),
+              ev_point = round(ifelse(x_gamble == "safe", 0.35 * as.numeric(fixed_prize) / 0.65,
+                                      0.65 * as.numeric(fixed_prize) / 0.35), 2))
+} else tibble()
+mt_row <- function(v) {
+  d <- filter(mt2, version == v)
+  tt <- tryCatch(t.test(d$x, mu = d$ev_point[1]), error = function(e) NULL)
+  tibble(Version = unname(p2_version_labels[v]), N = nrow(d),
+         `Tries: median (max)` = sprintf("%g (%g)", median(d$tries), max(d$tries)),
+         `Equal on first try` = sprintf("%d (%.0f%%)", sum(d$tries == 1), 100 * mean(d$tries == 1)),
+         `Mean X (SD)` = msd(d$x), `Equal-value X` = sprintf("$%g", d$ev_point[1]),
+         `Mean X minus equal value [95% CI]` = if (is.null(tt)) "too few participants" else
+           sprintf("%.2f [%.2f, %.2f]", unname(tt$estimate) - d$ev_point[1], tt$conf.int[1] - d$ev_point[1],
+                   tt$conf.int[2] - d$ev_point[1]),
+         p = if (is.null(tt)) "" else format.pval(tt$p.value, digits = 2, eps = 0.001))
+}
+if (nrow(mt2) > 0)
+  bind_rows(lapply(intersect(names(p2_version_labels), unique(mt2$version)), mt_row)) |>
+    knitr::kable(caption = paste(
+      "Phase 2, exploratory: matching tries (rated attempts until the two ratings were equal) and the matched",
+      "value of X compared with the value at which the two gambles have equal expected value (one-sample",
+      "t-test), by matching version, analysed participants."))
+
+# 3. Equality check: how many answered No, by version, which gamble they found more attractive,
+#    and their typed reasons. Everyone who reached the check and was not excluded for another reason.
+eq2 <- if (p2_has("matching_version", "felt_equal", "more_attractive", "felt_equal_reason")) {
+  p2$trials |>
+    filter(task == "equality_check",
+           participant_id %in% setdiff(p2$complete$participant_id, c(p2$repeat_ids, p2$too_fast_ids, p2$bot_ids))) |>
+    transmute(version = matching_version, felt_equal, more_attractive, felt_equal_reason)
+} else tibble()
+if (nrow(eq2) > 0)
+  eq2 |>
+    mutate(Version = factor(unname(p2_version_labels[version]), levels = p2_version_labels)) |>
+    group_by(Version, .drop = FALSE) |>
+    summarise(Answered = n(), `Answered No` = sum(felt_equal %in% "no"),
+              `% No` = if (n() > 0) sprintf("%.0f%%", 100 * mean(felt_equal %in% "no")) else "-",
+              `No: Gamble A more attractive` = sum(more_attractive %in% "risky"),
+              `No: Gamble B more attractive` = sum(more_attractive %in% "safe"), .groups = "drop") |>
+    knitr::kable(caption = paste(
+      "Phase 2, exploratory: answers to the equality check (\"Do they feel equally attractive to you?\"),",
+      "asked right after matching, by matching version. Those who answered No ended the study there."))
+no2 <- if (nrow(eq2) > 0) filter(eq2, felt_equal %in% "no") else tibble()
+if (nrow(no2) > 0)
+  no2 |>
+    arrange(version) |>
+    transmute(Version = unname(p2_version_labels[version]),
+              `More attractive` = ifelse(more_attractive == "risky", "Gamble A", "Gamble B"),
+              # Pipes, dollar signs and line breaks would break the table.
+              Reason = gsub("[\r\n]+", " ", gsub("|", "/", gsub("$", "\\$", felt_equal_reason, fixed = TRUE), fixed = TRUE))) |>
+    knitr::kable(caption = "Phase 2, exploratory: the typed reasons of participants who answered No at the equality check (anonymous).")
+
+# 4. Curiosity (1 = preferred not to find out the other gamble's outcome, 7 = wanted to find out),
+#    by condition and choice, and the feedback x curiosity interaction on choice.
+cu2 <- if (p2_has("curiosity")) {
+  p2_rows("curiosity") |>
+    transmute(participant_id, curiosity = as.numeric(curiosity)) |>
+    inner_join(p2_choice, by = "participant_id") |>
+    filter(condition %in% names(p2_conds), !is.na(curiosity))
+} else tibble()
+# Mean (SD), n of a score by feedback condition, for those who chose R, chose S, and all.
+by_cond_choice <- function(d, score) {
+  d |>
+    mutate(Condition = factor(unname(condition_labels[condition]), levels = p2_conds), s = {{ score }}) |>
+    group_by(Condition, .drop = FALSE) |>
+    summarise(`Chose R: mean (SD), n` = if (any(risky == 1)) sprintf("%s, %d", msd(s[risky == 1]), sum(risky == 1)) else "-",
+              `Chose S: mean (SD), n` = if (any(risky == 0)) sprintf("%s, %d", msd(s[risky == 0]), sum(risky == 0)) else "-",
+              `All: mean (SD), n` = if (n() > 0) sprintf("%s, %d", msd(s), n()) else "-", .groups = "drop")
+}
+if (nrow(cu2) > 0)
+  by_cond_choice(cu2, curiosity) |>
+    knitr::kable(caption = paste(
+      "Phase 2, exploratory: curiosity about the non-chosen gamble's outcome (1 = I preferred not to find out,",
+      "4 = I did not mind either way, 7 = I wanted to find out), by feedback condition and choice."))
+if (nrow(cu2) > 0)
+  try_or_say(logit_table(cu2 |> mutate(risky_feedback = as.integer(condition == "risky_feedback"),
+                                       curiosity_c = curiosity - mean(curiosity)),
+                         risky ~ risky_feedback * curiosity_c,
+                         c("Intercept (safe feedback, average curiosity)", "Risky feedback (vs safe)",
+                           "Curiosity (per point, centred)", "Risky feedback x curiosity")) |>
+               knitr::kable(caption = sprintf(paste(
+                 "Phase 2, exploratory: logistic regression of choosing the risky gamble on feedback condition,",
+                 "curiosity (centred on its mean of %.2f) and their interaction (N = %d). Curiosity was asked",
+                 "after the choice."), mean(cu2$curiosity), nrow(cu2))),
+             "Feedback x curiosity")
+
+# 5. Regret questions: which gamble participants named as less likely to leave regret (the original's
+#    account predicts Gamble A after risky feedback and Gamble B after safe feedback), whether they
+#    chose the gamble they named, and how much they tried to avoid regret, by condition and choice.
+rc2 <- if (p2_has("less_regret_gamble", "regret_avoidance")) {
+  p2_rows("regret_check") |>
+    transmute(participant_id, named = less_regret_gamble, avoid = as.numeric(regret_avoidance)) |>
+    inner_join(p2_choice, by = "participant_id") |>
+    filter(condition %in% names(p2_conds), !is.na(named))
+} else tibble()
+named_tab <- if (nrow(rc2) > 0) table(factor(rc2$condition, levels = names(p2_conds)),
+                                      factor(rc2$named, levels = c("risky", "safe", "no_difference"))) else NULL
+named_p <- if (!is.null(named_tab)) tryCatch(
+  format.pval(fisher.test(named_tab[rowSums(named_tab) > 0, colSums(named_tab) > 0, drop = FALSE])$p.value,
+              digits = 2, eps = 0.001), error = function(e) "not computable") else ""
+if (!is.null(named_tab))
+  tibble(Condition = unname(p2_conds),
+         `Named Gamble A` = as.integer(named_tab[, "risky"]), `Named Gamble B` = as.integer(named_tab[, "safe"]),
+         `No difference` = as.integer(named_tab[, "no_difference"]),
+         `Named the predicted gamble` = sprintf("%d of %d", c(named_tab["risky_feedback", "risky"],
+                                                               named_tab["safe_feedback", "safe"]),
+                                                as.integer(rowSums(named_tab)))) |>
+    knitr::kable(caption = sprintf(paste(
+      "Phase 2, exploratory: which gamble participants named as less likely to leave them feeling regret, by",
+      "feedback condition. The original's account predicts Gamble A after risky feedback and Gamble B after safe",
+      "feedback. Fisher's exact test of condition by answer: p = %s. Asked after the choice."), named_p))
+if (nrow(rc2) > 0)
+  rc2 |>
+    filter(named %in% c("risky", "safe")) |>
+    mutate(Condition = factor(unname(condition_labels[condition]), levels = p2_conds),
+           chose_named = (risky == 1) == (named == "risky")) |>
+    group_by(Condition, .drop = FALSE) |>
+    summarise(`Named Gamble A or B` = n(), `Chose the gamble they named` = sum(chose_named),
+              `%` = if (n() > 0) sprintf("%.0f%%", 100 * mean(chose_named)) else "-", .groups = "drop") |>
+    knitr::kable(caption = "Phase 2, exploratory: whether participants chose the gamble they named as less likely to leave them feeling regret.")
+rv2 <- if (nrow(rc2) > 0) filter(rc2, !is.na(avoid)) else tibble()
+avoid_p <- if (nrow(rv2) > 0) tryCatch({
+  a <- anova(lm(avoid ~ condition * factor(risky), data = rv2))
+  format.pval(a["condition:factor(risky)", "Pr(>F)"], digits = 2, eps = 0.001)
+}, error = function(e) "not computable") else ""
+if (nrow(rv2) > 0)
+  by_cond_choice(rv2, avoid) |>
+    knitr::kable(caption = sprintf(paste(
+      "Phase 2, exploratory: how much participants were trying to avoid feeling regret when they chose (1 = not",
+      "at all, 7 = very much), by feedback condition and choice. Condition x choice interaction in a linear",
+      "model: p = %s. Asked after the choice."), avoid_p))
+```
+
+```{r}
+#| label: phase2-pooled
+#| eval: !expr 'have_data && have_phase2'
+# Exploratory: the key comparison pooled across Phase 1 and Phase 2 (risky vs safe feedback only),
+# for everyone, and for Phase 1's equal raters together with Phase 2 (where everyone analysed rated
+# the gambles equally and said they felt equally attractive). The procedures differ between the
+# phases, so these pooled estimates are exploratory.
+pool_counts <- function(...) bind_rows(...) |>
+  filter(condition %in% names(p2_conds)) |>
+  group_by(condition) |> summarise(risky = sum(risky), n = sum(n), .groups = "drop")
+p1_eq_ids <- if (all(c("attract_r", "attract_s") %in% names(phase1$trials))) {
+  phase1$trials |>
+    filter(task %in% c("matching", "attractiveness"), participant_id %in% phase1$keep$participant_id,
+           !is.na(attract_r), !is.na(attract_s), attract_r == attract_s) |>
+    pull(participant_id)
+} else character(0)
+p1_eq_counts <- phase1$trials |>
+  filter(task == "choice", participant_id %in% p1_eq_ids) |>
+  group_by(condition) |> summarise(risky = sum(choice == "risky"), n = n(), .groups = "drop")
+pooled_all <- pool_counts(risky_counts(phase1), risky_counts(phase2))
+pooled_eq  <- pool_counts(p1_eq_counts, risky_counts(phase2))
+bind_rows(fmt_row("Phases 1 and 2, everyone", diff_ci(pooled_all), missing = "too few participants") |>
+            mutate(`Fisher p` = fisher_p(pooled_all)),
+          fmt_row("Phase 1 equal raters and Phase 2", diff_ci(pooled_eq), missing = "too few participants") |>
+            mutate(`Fisher p` = fisher_p(pooled_eq))) |>
+  knitr::kable(caption = paste(
+    "Exploratory: the key comparison (risky minus safe feedback) pooled across both phases, for everyone and",
+    "for Phase 1's participants who rated the gambles exactly equally together with all of Phase 2's (who all",
+    "rated them equally and said they felt equally attractive). The phases' procedures differ, so these pooled",
+    "estimates are exploratory. p is the uncorrected chi-square; Fisher p is Fisher's exact test."))
 ```
 
 ## Discussion

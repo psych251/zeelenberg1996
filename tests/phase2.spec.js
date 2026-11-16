@@ -12,8 +12,8 @@ const { test, expect } = require("@playwright/test");
 
 const EMULATOR = process.env.EMULATOR === "1" || !!process.env.FIRESTORE_EMULATOR_HOST;
 const PROJECT = "demo-psych251";
-// Must match EXPERIMENT.id in phase2/experiment.js ("-test" while testing; drop it for real data).
-const EXPERIMENT_ID = "zeelenberg1996-phase2-test";
+// Must match EXPERIMENT.id in phase2/experiment.js ("-pilot" during the pilot; drop it for real data).
+const EXPERIMENT_ID = "zeelenberg1996-phase2-pilot";
 const FS = `http://localhost:8080/v1/projects/${PROJECT}/databases/(default)/documents`;
 const CONDITIONS = ["risky_feedback", "safe_feedback"];
 const VERSIONS = ["x_on_safe", "x_on_risky"];
@@ -23,7 +23,8 @@ const SECTION_OF = {
   consent: "intro", instructions: "intro", x_check: "matching", matching: "matching", equality_check: "matching",
   feedback_instructions: "feedback_rules", comprehension: "feedback_rules",
   choice: "decision", preference_strength: "decision", reasons: "decision",
-  regret_scale: "regret_scale", curiosity: "curiosity", end_survey: "about_you", debrief: "debrief",
+  regret_scale: "regret_scale", curiosity: "curiosity", regret_check: "regret_check", end_survey: "about_you",
+  debrief: "debrief",
 };
 const REGRET_ANSWERS = [5, 4, 6, 3, 2];   // score (5 + 4 + 6 + 3 + (8 - 2)) / 5 = 4.8
 const REASONS_TEXT = "Robot participant says hi. I chose this gamble.";
@@ -137,6 +138,13 @@ async function runPhase2(page, { condition, matching, feltEqual = "Yes", choose 
     await expect(page.getByText("how did you feel about finding out how the gamble you did not choose")).toBeVisible();
     await page.locator('input[name="Q0"][value="5"]').check();   // 6 on the 1-7 scale
     await page.locator("#jspsych-survey-likert-next").click();
+    // Regret check (row 12): both questions are required.
+    await expect(page.getByText("which gamble was less likely to leave you feeling regret?")).toBeVisible();
+    await surveyContinue(page);
+    await expect(page.getByText("Response required.").first()).toBeVisible();
+    await page.locator('[data-name="less_regret"]').getByText("Gamble A", { exact: true }).click();
+    await page.locator('[data-name="regret_avoidance"]').getByText("5", { exact: true }).click();
+    await surveyContinue(page);
     // End form, unchanged from Phase 1.
     await page.locator('input[name="gamble_freq_12mo"][value="Never"]').check();
     await page.locator('input[name="feedback_reliance"][value="Prefer not to say"]').check();
@@ -207,8 +215,10 @@ test.describe("phase 2", () => {
     expect(pdoc.screened_out).toBe(false);
     expect(trials.map((t) => t.task)).toEqual([
       "consent", "instructions", "x_check", "matching", "equality_check", "feedback_instructions", "comprehension",
-      "choice", "preference_strength", "reasons", "regret_scale", "curiosity", "end_survey", "debrief",
+      "choice", "preference_strength", "reasons", "regret_scale", "curiosity", "regret_check", "end_survey", "debrief",
     ]);
+    const rc = trials.find((t) => t.task === "regret_check");
+    expect([rc.less_regret_gamble, rc.regret_avoidance, rc.choice]).toEqual(["risky", 5, "risky"]);
     const xc = trials.find((t) => t.task === "x_check");
     expect([xc.x_check_answer, xc.x_check_attempts, xc.x_check_first_answer]).toEqual(["win", 2, "pay"]);
     expect(pdoc.n_trials).toBe(trials.length);

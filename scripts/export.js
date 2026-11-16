@@ -132,10 +132,16 @@ function writeCsv(file, rows, firstColumns) {
   //   earlier_saw_feedback  an earlier session reached the feedback instructions
   // A screen is saved only once it is finished, so "reached the feedback instructions" means
   // finished the screen just before them: the combined matching-and-ratings screen, or in data
-  // from before that change, the separate attractiveness screen.
+  // from before that change, the separate attractiveness screen. Phase 2 puts an equality check
+  // between matching and the feedback instructions, and answering No there ends the study before
+  // the feedback rule; so in data that have equality-check rows, only an equality check answered
+  // Yes counts. Data without an equality check (Phase 1) are handled exactly as before.
   const consentedIds = new Set(trials.filter((t) => t.task === "consent" && t.consented === true).map((t) => t.participant_id));
+  const hasEqualityCheck = trials.some((t) => t.task === "equality_check");
   const sawFeedbackIds = new Set(trials
-    .filter((t) => t.task === "attractiveness" || (t.task === "matching" && t.attract_r != null))
+    .filter((t) => hasEqualityCheck
+      ? t.task === "equality_check" && t.felt_equal === "yes"
+      : t.task === "attractiveness" || (t.task === "matching" && t.attract_r != null))
     .map((t) => t.participant_id));
   const pidOf = new Map(identifiers.map((r) => [r.participant_id, r.prolific_pid]));
   const personOf = (p) => (pidOf.get(p.participant_id) ? "pid:" + pidOf.get(p.participant_id) : p.uid ? "uid:" + p.uid : null);
