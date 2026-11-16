@@ -676,7 +676,7 @@ function startProofOfHuman(saver) {
             html: `<div class="gamble-page"><p>You rated Gamble A and Gamble B as equally attractive.</p>${gambleCards(matchedX, version)}</div>` },
           { type: "radiogroup", name: "felt_equal", isRequired: true,
             title: "Do they feel equally attractive to you?",
-            description: "Your answer will not affect whether your Prolific submission is approved or how much you are paid.",
+            description: "Your answer will not affect whether your Prolific submission is approved.",
             choices: [{ value: "yes", text: "Yes" }, { value: "no", text: "No" }] },
           { type: "radiogroup", name: "more_attractive", isRequired: true, visibleIf: "{felt_equal} = 'no'",
             title: "Which gamble feels more attractive?",

@@ -104,7 +104,7 @@ async function runPhase2(page, { condition, matching, feltEqual = "Yes", choose 
 
   // Equality check (row 9), right after matching.
   await expect(page.getByText("You rated Gamble A and Gamble B as equally attractive.")).toBeVisible();
-  await expect(page.getByText("Your answer will not affect whether your Prolific submission is approved")).toBeVisible();
+  await expect(page.getByText("Your answer will not affect whether your Prolific submission is approved.", { exact: true })).toBeVisible();
   await page.locator('[data-name="felt_equal"]').getByText(feltEqual, { exact: true }).click();
   if (feltEqual === "No") {
     // Which and why are required once No is picked.
