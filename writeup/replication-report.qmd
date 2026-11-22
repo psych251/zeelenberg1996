@@ -1599,6 +1599,23 @@ if (nrow(errors) > 0) {
 }
 ```
 
+### Robustness check
+
+On November 16, 2026, the Phase 1 analysis was reviewed with the course's adversarial protocol review, run by separate Claude Code agents that had not built the project and could not edit the repository. The review had two passes: a first review, and a second that checked the resulting fixes. In each pass, the agents recomputed every Phase 1 number from the raw CSV files with their own code, and checked the analysis against the preregistration and the original paper.
+
+Neither pass found an error! Every confirmatory and secondary number matched, and nothing had to be fixed before the study continued. The review did raise couple of issues of reporting and interpretation:
+
+| Issue | Response |
+|---|---|
+| The Summary of the replication attempt claimed more than the procedure tested | The Summary now limits its conclusion to this procedure, and reports that only 51 of 195 participants rated the gambles equally and that 75% chose the safe gamble, compared with 58% in the original |
+| The within-1-point cut-off was chosen after seeing the data, reported only with its chi-square p (.038), and used as a planning value for Phase 2 | The equal-ratings table now also reports Fisher's exact p (.071 for the within-1-point group). A new table shows that the effect shrinks as the cut-off widens: 31, 26, 14, 7 and 8 points for ratings within 0, 1, 2, 3 and 4 points, against 7 points for everyone. Phase 2 is planned around 19 points, half the original effect |
+| The original's coded analysis of the written reasons (two judges and binomial tests, pp. 152–153) was not replicated, although the reasons were collected | The reasons are included in the public data and could be coded later |
+| The count of 11 participants who wanted to learn both outcomes and 5 who wanted to avoid that, cited in the Phase 2 Rationale, had no analysis behind it | Not addressed. The count comes from an informal reading of the reasons, not a coded analysis, and should be read as such |
+| Nothing guarded against duplicated rows in the exported data or missing response times | The analysis now stops if any trial row or any participant appears twice in the export, and counts and keeps completers with a missing response time |
+
+No Phase 1 number changed as a result of the review.
+
+
 ## Discussion
 
 ### Summary of replication attempt
