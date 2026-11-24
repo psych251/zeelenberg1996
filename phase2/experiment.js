@@ -62,7 +62,10 @@ const EXPERIMENT = {
   // the Phase 2 pilot's ("zeelenberg1996-phase2-pilot"). It must match experiment_id_phase2 in
   // writeup/replication-report.qmd and EXPERIMENT_ID in tests/phase2.spec.js. Once this is live,
   // every visit to the Phase 2 page is saved as real data: check changes with the emulator only.
-  id: "zeelenberg1996-phase2",
+  // TEMPORARY, for the Prolific pilot of the final version (Pilot B): its data go to their own
+  // collection. Before launch, set this back to "zeelenberg1996-phase2" (and the completion code
+  // below back to the main study's), so that it matches the report and the prereg-phase2 tag again.
+  id: "zeelenberg1996-phase2-pilot-b",
 
   // Trials per Firestore write. 1 = save every trial the moment it finishes (dropouts leave
   // partial data). The free tier allows 20,000 writes/day: with 200 participants x 100 trials

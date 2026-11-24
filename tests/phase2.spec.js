@@ -13,7 +13,8 @@ const { test, expect } = require("@playwright/test");
 const EMULATOR = process.env.EMULATOR === "1" || !!process.env.FIRESTORE_EMULATOR_HOST;
 const PROJECT = "demo-psych251";
 // Must match EXPERIMENT.id in phase2/experiment.js (and experiment_id_phase2 in the report).
-const EXPERIMENT_ID = "zeelenberg1996-phase2";
+// TEMPORARY: the Prolific pilot's id. Set back to "zeelenberg1996-phase2" with experiment.js.
+const EXPERIMENT_ID = "zeelenberg1996-phase2-pilot-b";
 const FS = `http://localhost:8080/v1/projects/${PROJECT}/databases/(default)/documents`;
 const CONDITIONS = ["risky_feedback", "safe_feedback"];
 const VERSIONS = ["x_on_safe", "x_on_risky"];
