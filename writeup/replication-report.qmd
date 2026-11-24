@@ -110,6 +110,8 @@ condition_labels <- c(risky_feedback = "Risky feedback",
     <https://doi.org/10.1006/obhd.1996.0013>
 -   **Preregistration:** [OSF registration](https://doi.org/10.17605/OSF.IO/YGPJ3)
     *(registered 2026-11-01, before final data collection)*
+-   **Phase 2 preregistration:** [OSF registration](https://doi.org/10.17605/OSF.IO/Z5UVX)
+    *(registered 2026-11-24, before Phase 2 data collection)*
 -   **Phase 1 live experiment:** <https://psych251.github.io/zeelenberg1996/>
     (take the study exactly as participants did)
 -   **Phase 2 live experiment:** <https://psych251.github.io/zeelenberg1996/phase2/>
@@ -2298,6 +2300,7 @@ End with what the two phases together say about the original finding.
 
 # Data and code availability
 
+<!--
 ::: {.callout-tip icon="false"}
 ## Guidance
 
@@ -2305,11 +2308,13 @@ Edit the statement below to match what you are actually sharing.
 Anonymized data and all code should be public; if something cannot be
 shared, say what and why.
 :::
+-->
 
 The experiment code, the anonymized data, and the code that produces
 every number in this report are available at
-<https://github.com/psych251/your-repo>. The experiment itself can be
-taken at <https://psych251.github.io/your-repo/>. The data contain no
+<https://github.com/psych251/zeelenberg1996>. The experiment itself can be
+taken at <https://psych251.github.io/zeelenberg1996/> (Phase 1) and 
+at <https://psych251.github.io/zeelenberg1996/phase2/> (Phase 2). The data contain no
 names, email addresses, IP addresses, or Prolific IDs; the file linking
 participants to their Prolific IDs is kept privately for payment and is
 not shared.
