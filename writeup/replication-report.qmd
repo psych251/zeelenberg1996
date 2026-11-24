@@ -1760,7 +1760,7 @@ original's otherwise.
 
 -->
 
-I plan 93 analysed participants per condition, 186 in total, which gives 80% power to detect an effect half the size of the original (19 points), the smallest effect I would count as a successful rescue. Phase 1's median duration was 7.2 minutes; the added matching tries and end questions should lengthen the study to 8.5 minutes. At $9 per hour plus Prolific's fee, the main study will cost about $350.
+I plan 93 analysed participants per condition, 186 in total, which gives 80% power to detect an effect half the size of the original (19 points), the smallest effect I would count as a successful rescue. Phase 1's median duration was 7.2 minutes; the added matching tries and end questions should lengthen the study to 9 minutes. At $8 per hour plus Prolific's fee, the main study will cost about $350.
 
 If the Phase 1 failure was caused by matching, the Phase 2 estimate should move toward the original. If matching was not the cause, the estimate should stay near Phase 1's 7 points. Either way, the 95% confidence interval should narrow from about ±15 points in Phase 1 to about ±12. Participants who say the gambles do not feel equally attractive, and those excluded under the Phase 1 rules, will be replaced until 186 participants remain.
 
@@ -1803,6 +1803,27 @@ tibble(
   ), accuracy = 1)
 ) |>
   knitr::kable(caption = sprintf("Power of the Phase 2 key test at %d per condition, two-sided alpha = .05.", phase2_n_per_group))
+```
+
+```{r}
+#| label: phase2-budget
+# Phase 2 cost. Pay is $8 per hour for the 9 minutes entered on Prolific, $1.20 per person
+# (Phase 1 paid $9 per hour: see the budget chunk under Phase 1's Planned sample). The table
+# covers the planned analysed sample only; excluded participants who are replaced add to it.
+p2_n       <- 2 * phase2_n_per_group   # 186 analysed participants
+p2_minutes <- 9                        # study time entered on Prolific (the welcome says about nine minutes)
+p2_hourly  <- 8                        # US$ per hour
+p2_fee     <- 1/3                      # Prolific's service fee on top of pay, as in Phase 1's budget
+p2_pay     <- p2_minutes / 60 * p2_hourly
+tibble(Minutes = p2_minutes,
+       `Pay per person` = p2_pay,
+       `Paid to participants` = p2_n * p2_pay,
+       `Total with fee` = p2_n * p2_pay * (1 + p2_fee)) |>
+  knitr::kable(digits = 2,
+               caption = sprintf(paste("Phase 2: estimated cost of %d analysed participants for a %d-minute study at",
+                                       "$%d per hour, including Prolific's service fee. Excluded participants who are",
+                                       "replaced add to this."),
+                                 p2_n, p2_minutes, p2_hourly))
 ```
 
 ## Analysis plan
